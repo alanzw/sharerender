@@ -1,0 +1,230 @@
+Camera
+{
+   camera_final_damper_enabled = 1
+   camera_final_damper_k = 10.000000
+   camera_final_damper_overdamp = 1.000000
+   camera_final_damper_velocity_factor = 20.000000
+   camera_rotation_auto_strength = 0.700000
+   camera_rotation_fade_end = 769.000000
+   camera_rotation_fade_start = 768.000000
+   camera_rotation_safe = 1024.000000
+   camera_rotation_spring = 0.000000
+   camera_rotation_strength = 0.000000
+   camera_spawn_scroll_speed = 15.000000
+}
+
+Controllers
+{
+   binds_default_for_controller_type_100 = 0
+   binds_default_for_controller_type_101 = 0
+   binds_default_for_controller_type_102 = 0
+   binds_default_for_controller_type_103 = 0
+   binds_default_for_controller_type_104 = 0
+   binds_default_for_controller_type_105 = 0
+   binds_default_for_controller_type_106 = 0
+   binds_default_for_controller_type_107 = 0
+   binds_default_for_controller_type_108 = 0
+   joystick1_axis_rudder_speed_factor = 26
+   joystick1_axis_rx_speed_factor = 19
+   joystick1_axis_ry_speed_factor = 26
+   joystick1_axis_throttle_speed_factor = 19
+   joystick1_axis_x_speed_factor = 50
+   joystick1_axis_y_speed_factor = 50
+   joystick2_axis_rudder_speed_factor = 50
+   joystick2_axis_rx_speed_factor = 50
+   joystick2_axis_ry_speed_factor = 50
+   joystick2_axis_throttle_speed_factor = 50
+   joystick2_axis_x_speed_factor = 50
+   joystick2_axis_y_speed_factor = 50
+   joystick3_axis_rudder_speed_factor = 50
+   joystick3_axis_rx_speed_factor = 50
+   joystick3_axis_ry_speed_factor = 50
+   joystick3_axis_throttle_speed_factor = 50
+   joystick3_axis_x_speed_factor = 50
+   joystick3_axis_y_speed_factor = 50
+   joystick4_axis_rudder_speed_factor = 50
+   joystick4_axis_rx_speed_factor = 50
+   joystick4_axis_ry_speed_factor = 50
+   joystick4_axis_throttle_speed_factor = 50
+   joystick4_axis_x_speed_factor = 50
+   joystick4_axis_y_speed_factor = 50
+   joystick_enabled = 1
+   joystick_sensitivy = 1.000000
+   keyboard_enabled = 1
+   mouse_enabled = 1
+   mouse_force_given_boundary = 0
+   mouse_sensitivity = 1.000000
+   multiple_input_devices_enabled = 0
+   player1_mouse_ID = 2
+   player2_mouse_ID = 1
+   player3_mouse_ID = 0
+   player4_mouse_ID = 0
+}
+
+Debug
+{
+   console_history_save = 1
+   console_loglevel = 3
+   loglevel = 5
+   raise_console_loglevel = 0
+   show_player_pos = 0
+}
+
+Display
+{
+   anisotrophy = 1
+   antialias_active_samples = 1
+   antialias_samples = 1
+   brightness = 1.000000
+   contrast = 1.000000
+   gamma = 1.524194
+   maximize_window = 0
+   render_use_vsync = 0
+   saturation = 1.000000
+   screen_bpp = 32
+   screen_height = 600
+   screen_width = 800
+   window_titlebar = 0
+   windowed = 1
+}
+
+Effects
+{
+   decal_fade_time = 10000
+   decal_max_amount = 500
+   weapon_eject_effect_level = 50
+}
+
+GUI
+{
+   gui_tip_message_level = 1
+   scorewindow_name_input = 1
+   use_old_loadgamemenu = 0
+}
+
+Game
+{
+   corpse_disappear_time = 15
+   force_mission_failure = 0
+   forcewear_enabled = 0
+   friendly_fire = 0
+   game_extremely_hard_available = 0
+   game_has_been_completed = 0
+   game_very_hard_available = 0
+   savegame_slot = 3
+   show_tutorial_hints = 1
+}
+
+Graphics
+{
+   better_glow_sampling = 1
+   environment_animations = 0
+   extra_gamma_effects = 0
+   fakeshadows_texture_quality = 0
+   gore_level = 100
+   green_blood = 0
+   high_quality_lightmap = 1
+   hit_effect_image = 0
+   layer_effects_level = 100
+   lighting_level = 100
+   lighting_texture_quality = 0
+   particle_effects_level = 100
+   procedural_fallback = 1
+   reflection_quality = 0
+   render_distortion = 0
+   render_distortion_reflection = 0
+   render_glow = 0
+   render_glow_blur_size = 1.250000
+   render_glow_hdr_range = 0.600000
+   render_glow_hdr_scale = 2.000000
+   render_glow_reflection = 0
+   render_glow_scale = 1.500000
+   render_half_resolution = 1
+   render_half_resolution_reflection = 0
+   render_max_pointlights = 5
+   render_particle_reflection = 0
+   render_pointlight_normalmaps = 1
+   render_pointlight_normalmaps_normalize = 1
+   render_pointlight_normalmaps_specular = 0
+   render_reflection = 0
+   render_sky_bloom = 1
+   render_spot_normalmaps = 1
+   render_spot_reflection = 0
+   render_spot_shadow_reflection = 0
+   reset_renderer_when_loaded = 0
+   shadows_level = 100
+   shadows_texture_quality = 100
+   texture_detail_level = 0
+   weather_effects = 1
+}
+
+Locale
+{
+   menu_language = 0
+   show_subtitles = 1
+   speech_language = 0
+   subtitle_language = 0
+}
+
+Net
+{
+   editor_sync_server = 
+   net_player_name = 
+}
+
+Physics
+{
+   physics_enabled = 1
+   physics_fluids_enabled = 1
+   physics_max_fluid_particles = 500
+   physics_max_model_particles = 200
+   physics_max_model_particles_spawn_per_tick = 1
+   physics_particles = 1
+   physics_use_hardware = 0
+   physics_use_hardware_fully = 0
+   physics_use_multithreading = 1
+}
+
+Players
+{
+   1st_player_joystick_aimer_invert = 0
+   2nd_player_joystick_aimer_invert = 0
+   3rd_player_joystick_aimer_invert = 0
+   4th_player_joystick_aimer_invert = 0
+}
+
+Reserved
+{
+   camera_rotation_auto_fade_end = 0.000000
+   camera_rotation_auto_fade_start = 0.000000
+}
+
+Sounds
+{
+   ambient_volume = 90
+   fx_enabled = 1
+   fx_volume = 100
+   master_volume = 100
+   music_enabled = 1
+   music_shuffle = 0
+   music_volume = 95
+   sound_max_hardware_channels = 64
+   sound_mixrate = 44100
+   sound_required_hardware_channels = 32
+   sound_software_channels = 32
+   sound_speaker_type = headphones
+   sound_use_eax = 0
+   sound_use_hardware = 0
+   sounds_enabled = 1
+   speech_enabled = 1
+   speech_volume = 100
+}
+
+Video
+{
+   high_quality_video = 0
+   menu_logo_video_enabled = 0
+   menu_video_enabled = 1
+   video_enabled = 1
+}
+

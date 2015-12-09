@@ -1,0 +1,40 @@
+///////////////////////////////////////////////////////////
+// H.264 encoder parameter file
+// syntax: [parameter [=] value] [[#|//] comment]
+///////////////////////////////////////////////////////////
+
+frameNum          = 100			//It is delimiter. Reconfigure  parameter will be  set after only this  string is encountered. Reconfigure will happen after this frame number. 
+///////////////////////////////////////////////////////////
+// Profile, Level
+
+profile           = 100        // 66=Baseline, 77=Main, 100=High, 0=auto(=lowest possible profile)
+level             = 40        // 10,11,12,13,20,21,22,30,31,32,40,41,42,50,51=level_idc, 0=auto(=lowest possible level)
+
+// Input File Details
+width             = 1280      // Width of Input Frame
+height            = 720      // Height of Input Frame
+inFile   	      =../YUV/720p/nvidia_ces_720p.yuv
+
+///////////////////////////////////////////////////////////
+// bitstream characteristics (Type I HRD)
+
+maxbitrate        = 5000000  // Peakbitrate, maximum bitrate (bits/sec), 0=use encoder defined default (level limit)
+vbvBufferSize     = 5000000  // vbvBufferSize, decoder buffer size (bits), 0=use encoder defined default (level limit)
+vbvInitialDelay   = 1000000  // vbvInitialDelay, initial decoder buffer fullness (bits), 0=use encoder defined default (50%)
+
+///////////////////////////////////////////////////////////
+// rate control
+
+rcMode            = 8       // 0=fixed QP, 1=VBR, 2=CBR, 4=VBR_MINQP, 8=Multi pass encoding optimized for image quality, 16= Multi pass encoding optimized for maintaining frame size, 32=Multi pass VBR
+bitrate        	  = 5000000  // average bit rate (bits/s) (ignored if RCMode != 1)
+
+
+frameNum          = 200		//It is delimiter. Reconfigure  parameter will be  set after only this  string is encountered. Reconfigure will happen after this frame number. 
+
+// Input File Details
+width             = 704      // Width of Input Frame
+height            = 576      // Height of Input Frame
+inFile   	      =../YUV/576p/SOCCER_704x576_60_orig_02.yuv
+
+#FrameFieldMode   = 1 
+#BottomFieldFirst = 0 

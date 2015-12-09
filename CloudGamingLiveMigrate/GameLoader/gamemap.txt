@@ -1,0 +1,5 @@
+#option: [path] [game name] [use dll name] [support d3d or not]
+#example D:/Trine Trine.exe  logicServer.dll true
+D:/Trine Trine.exe logicServer.dll true
+E:/DemoUnity DemoUnity.exe logicServer.dll true
+E:/Sprill Sprill.exe logicServer.dll true

@@ -1,0 +1,158 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{CF2A9FE7-7F25-462D-982C-6F9FD5B65EA5}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>LibVideo</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;..\..\DepsWin32\include;$(CUDA_PATH)/include;$(DXSDK_DIR)/include;</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LibraryPath>$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib;..\..\DepsWin32\lib;$(CUDA_PATH)/Lib/win32;$(DXSDK_DIR)/Lib/x86;</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;..\..\DepsWin32\include;$(CUDA_PATH)/include;$(DXSDK_DIR)/include;</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LibraryPath>$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib;..\..\DepsWin32\lib;$(CUDA_PATH)/Lib/win32;$(DXSDK_DIR)/Lib/x86;</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>
+      </AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>
+      </AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="AVCodecCommon.h" />
+    <ClInclude Include="ChannelManager.h" />
+    <ClInclude Include="Commonwin32.h" />
+    <ClInclude Include="Config.h" />
+    <ClInclude Include="CudaEncoder.h" />
+    <ClInclude Include="CudaFilter.h" />
+    <ClInclude Include="CudaPipeline.h" />
+    <ClInclude Include="Defines.h" />
+    <ClInclude Include="Encoder.h" />
+    <ClInclude Include="EncoderManager.h" />
+    <ClInclude Include="EventNetwork.h" />
+    <ClInclude Include="FilterRGB2YUV.h" />
+    <ClInclude Include="Generator.h" />
+    <ClInclude Include="HookCommon.h" />
+    <ClInclude Include="HookFunction.h" />
+    <ClInclude Include="NVENCEncoder.h" />
+    <ClInclude Include="NVEncodeAPI.h" />
+    <ClInclude Include="Pipeline.h" />
+    <ClInclude Include="PipelineBase.h" />
+    <ClInclude Include="RenderLog.h" />
+    <ClInclude Include="RenderPool.h" />
+    <ClInclude Include="RtspConf.h" />
+    <ClInclude Include="RtspContext.h" />
+    <ClInclude Include="VConventer.h" />
+    <ClInclude Include="VideoCommon.h" />
+    <ClInclude Include="VideoGenerator.h" />
+    <ClInclude Include="VideoPart.h" />
+    <ClInclude Include="VSource.h" />
+    <ClInclude Include="VSourceCommon.h" />
+    <ClInclude Include="Wrapper.h" />
+    <ClInclude Include="X264Encoder.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="AVCodecCommon.cpp" />
+    <ClCompile Include="ChannelManager.cpp" />
+    <ClCompile Include="Commonwin32.cpp" />
+    <ClCompile Include="Config.cpp" />
+    <ClCompile Include="CThread.cpp" />
+    <ClCompile Include="CudaEncoder.cpp" />
+    <ClCompile Include="CudaFilter.cpp" />
+    <ClCompile Include="CudaPipeline.cpp" />
+    <ClCompile Include="Encoder.cpp" />
+    <ClCompile Include="EncoderManager.cpp" />
+    <ClCompile Include="EventNetwork.cpp" />
+    <ClCompile Include="FilterRGB2YUV.cpp" />
+    <ClCompile Include="Generator.cpp" />
+    <ClCompile Include="HookFunction.cpp" />
+    <ClCompile Include="Pipeline.cpp" />
+    <ClCompile Include="PipelineBase.cpp" />
+    <ClCompile Include="RenderPool.cpp" />
+    <ClCompile Include="RtspConf.cpp" />
+    <ClCompile Include="RtspContext.cpp" />
+    <ClCompile Include="VConventer.cpp" />
+    <ClCompile Include="videocommon.cpp" />
+    <ClCompile Include="VideoGenerator.cpp" />
+    <ClCompile Include="VideoPart.cpp" />
+    <ClCompile Include="VSource.cpp" />
+    <ClCompile Include="Wrapper.cpp" />
+    <ClCompile Include="X264Encoder.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LibCore\LibCore.vcxproj">
+      <Project>{16461a0e-f94a-43ce-ab83-66bf54ea57e8}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
