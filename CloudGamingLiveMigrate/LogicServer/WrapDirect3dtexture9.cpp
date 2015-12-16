@@ -291,6 +291,9 @@ HRESULT WrapperDirect3DTexture9::SendTextureData() {
 
 HRESULT WrapperDirect3DTexture9::SendTextureData(ContextAndCache *ctx) {
 	HRESULT hr = D3D_OK;
+	if(ctx->get_connect_socket() == NULL)
+		return hr;
+
 #ifndef SEND_FULL_TEXTURE
 #ifdef ENABLE_TEXTURE_LOG
 	infoRecorder->logTrace("trying to call GetLevelCount()\n");

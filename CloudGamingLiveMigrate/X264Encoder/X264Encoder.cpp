@@ -227,7 +227,7 @@ video_quit:
 		}
 		releaseData(data);
 		
-		infoRecorder->logError("[X264Encoder]: the packet pts is:%d.\n", pts);
+		infoRecorder->logTrace("[X264Encoder]: the packet pts is:%d.\n", pts);
 
 		pic_in->pts = pts;
 		av_init_packet(&pkt);
@@ -244,7 +244,7 @@ video_quit:
 				pkt.pts = pts;
 			}
 			pkt.stream_index = 0;
-			infoRecorder->logError("[X264Encoder]: to send frame packet. pkt size:%d.\n", pkt.size);
+			infoRecorder->logTrace("[X264Encoder]: to send frame packet. pkt size:%d.\n", pkt.size);
 			// send the nal data
 			writer->sendPacket(0, &pkt, pts);
 
@@ -271,12 +271,6 @@ video_quit:
 
 	BOOL X264Encoder::onThreadStart(){
 		// init the mutex
-#if 0
-		if(!isAssigned()){
-			infoRecorder->logError("[X264Encoder]: the encoder is not assigned.\n");
-			return FALSE;  // exit the thread
-		}
-#endif
 
 		if(nalbuf_a == NULL){
 			// error

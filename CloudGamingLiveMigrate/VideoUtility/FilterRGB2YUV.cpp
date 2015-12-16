@@ -4,14 +4,10 @@
 #include <map>
 #include "avcodeccommon.h"
 #include "pipeline.h"
-//#include "ccg_config.h"
 #include "rtspconf.h"
 #include "../VideoGen/rtspcontext.h"
-
 #include "encoder.h"
 #include "FilterRGB2YUV.h"
-
-//#include "vsource.h"
 #include "avcodeccommon.h"
 #include "vconventer.h"
 
@@ -20,6 +16,9 @@
 #define USE_NV12_RAW
 
 #define USE_SWS_SCALE
+
+
+//#define ENABLE_LOG_FILTER
 
 //////////////////////////////////////////////////////////////////////////
 //   for filter, the dst pipeline is created by itself, the src pipeline is form outside
@@ -34,7 +33,6 @@ namespace cg{
 	HANDLE Filter::initMutex;// = NULL;
 	HANDLE Filter::filterMutex;
 	std::map<std::string, Filter *> Filter::filterMap;
-
 
 	void RGB_TO_Y_CPU(const unsigned char b, const unsigned char g, const unsigned char r, unsigned char & y){
 		y = static_cast<unsigned char >((((int ) 66 * r) + (int)(129 * g) + (int)(25 * b) + 128) + 16);
@@ -104,17 +102,13 @@ namespace cg{
 		}
 	}
 
-
-
 	Filter::Filter(){
 		outputW = 0;
 		outputH = 0;
 		srcPipe = NULL;
 		dstPipe = NULL;
-
 		outputFormat =PIX_FMT_NONE; 
-
-		this->swsCtx = NULL;
+		swsCtx = NULL;
 
 		InitializeCriticalSection(&fmtSection);
 		myname = std::string("Filter");
@@ -144,7 +138,9 @@ namespace cg{
 
 	// 
 	bool Filter::initDestinationPipeline(){
+#ifdef ENABLE_LOG_FILTER
 		infoRecorder->logError("[Filter]: init the filter pipeline, w:%d, h:%d, stride:%d.\n", outputW, outputH, outputW);
+#endif
 		struct pooldata * data = NULL;
 		if((dstPipe = new pipeline(sizeof(VsourceConfig), "filter")) == NULL){
 			infoRecorder->logError("[Filter]: init the destination pipeline failed.\n");
@@ -166,8 +162,9 @@ namespace cg{
 			dstPipe = NULL;
 			return false;
 		}
-
+#ifdef ENABLE_LOG_FILTER
 		infoRecorder->logError("[Filter]: to init each frame.\n");
+#endif
 		for(; data != NULL; data = data->next){
 			ImageFrame * frame = new ImageFrame();
 			if(frame->init(outputW, outputH * 2, outputW) == NULL){
@@ -179,7 +176,6 @@ namespace cg{
 		return true;
 	}
 
-
 	// the new init function to create the sws, the pipeline 
 	int Filter::init(int iheight, int iwidth, int outH, int outW){
 		infoRecorder->logError("[Filter]: init the filter.\n");
@@ -188,10 +184,6 @@ namespace cg{
 
 		outputH = outH;
 		outputW = outW;
-
-#ifdef _DEBUG
-		//DebugBreak();
-#endif
 
 		// create the default conventers
 #ifndef USE_NV12_RAW
@@ -216,7 +208,9 @@ namespace cg{
 		}while(0);
 #else
 		// create YUV420 filter
+#ifdef ENABLE_LOG_FILTER
 		infoRecorder->logError("[Filter]: to create YUV420P filter.\n");
+#endif
 		do{
 			char pixelFmt[64];
 			// read the pixel format from config file
@@ -244,17 +238,17 @@ namespace cg{
 			}
 		}while(0);
 		// create NV12 filter
+#ifdef ENABLE_LOG_FILTER
 		infoRecorder->logError("[Filter]: to create NV12 filter.\n");
+#endif
 		do{
 			char pixelFmt[64];
 			// read the pixel format from config file
 			if(conf->confReadV("filter-source-pixelformat", pixelFmt, sizeof(pixelFmt)) != NULL){
 				if(strcasecmp("rgba", (const char *)pixelFmt) == 0){
-
 					infoRecorder->logTrace("[Filter]: RGBA source specificed.\n");
 				}
 				else if(strcasecmp("bgra", pixelFmt) == 0){
-
 					infoRecorder->logTrace("[Filter]: BGRA source specificed.\n");
 				}
 			}
@@ -268,14 +262,9 @@ namespace cg{
 			infoRecorder->logError("[Filter]: cannot initialize swsscale.\n");
 			return -1;
 		}
-
-		//initDestinationPipeline();
-
 		inited = true;
-
 		return 0;
 	}
-
 
 	// this the thread procedure for filter
 	// param[0]: source pipe name
@@ -300,16 +289,13 @@ namespace cg{
 		ImageFrame * dstframe = NULL;
 
 		// image info
-
 		unsigned char * src[] = { NULL, NULL, NULL, NULL };
 		unsigned char * dst[] = { NULL, NULL, NULL, NULL };
 		int srcstride[] = { 0, 0, 0, 0 };
 		int dststride[] = { 0, 0, 0, 0 };
 
 		struct SwsContext * swsCtx = NULL;
-
 		struct SwsContext * n12SwsCtx = NULL;// for cuda encoder
-
 		HANDLE condMutex = NULL;
 		HANDLE cond = NULL;
 
@@ -326,42 +312,32 @@ namespace cg{
 			infoRecorder->logError("RGB2YUV filter: cannot find filter pipeline \n");
 			goto filter_quit;
 		}
-		//if ((dstpipe = pipeline::lookup(filterpipe[1])) == NULL){
-		//	infoRecorder->logError("RGB2YUV filter: cannot find pipeline '%s'\n", filterpipe[1]);
-		//	goto filter_quit;
-		//}
+		
 		if ((filter = Filter::lookup(filterpipe[1])) == NULL){
 			infoRecorder->logError("[Filter]: cannot find the filter.\n");
 			goto filter_quit;
 		}
 
+#ifdef ENABLE_LOG_FILTER
 		infoRecorder->logTrace("RGB2YUV filter: pipe from '%s' to '%s' (output-resolution=%dx%d)\n",
 			srcpipe->name(), dstpipe->name(), filter->getW(), filter->getH());
+#endif
 
 		condMutex = CreateMutex(NULL, FALSE, NULL);
 		cond = CreateEvent(NULL, FALSE, FALSE, NULL);
-
 		// register the event 
 		srcpipe->client_register(ccg_gettid(), cond);
-
-#ifndef SHARE_CONVENTER
-		// if no sharing
-#endif
-
 
 		while (true){
 			// wait for notification
 			srcdata = srcpipe->load_data();
-
 			if (srcdata == NULL){
 				infoRecorder->logError("[Filter]: to wait %p, src pipe:%s\n", cond, srcpipe->name());
 				srcpipe->wait(cond, condMutex);
-				//ResetEvent(cond);
 				srcdata = srcpipe->load_data();
 				if (srcdata == NULL){
 					infoRecorder->logError("RGB2YUB fitler: unexpected NULL frame received (from '%s', data = %d, buf = %d).\n",
 						srcpipe->name(), srcpipe->data_count(), srcpipe->buf_count());
-					//exit(-1);
 					continue;
 					// should never be here
 					goto filter_quit;
@@ -374,7 +350,6 @@ namespace cg{
 			// basic info 
 			dstframe->imgPts = srcframe->imgPts;
 
-
 			if (filter->getOutputFormat() == PIX_FMT_YUV420P){
 				dstframe->pixelFormat = PIX_FMT_YUV420P;
 			}
@@ -385,9 +360,7 @@ namespace cg{
 			// scale image: xxx: RGBA or BGRA
 			if (srcframe->pixelFormat == PIX_FMT_RGBA ||
 				srcframe->pixelFormat == PIX_FMT_BGRA){
-
 #ifdef SHARE_CONVENTER
-
 					swsCtx = Conventer::lookupFrameConventer(srcframe->realWidth,
 						srcframe->realHeight, srcframe->pixelFormat, dstframe->pixelFormat);
 
@@ -567,17 +540,16 @@ filter_quit:
 			outputFormat = PIX_FMT_YUV420P;
 			dstframe->pixelFormat = PIX_FMT_YUV420P;
 		}
-
+#ifdef ENABLE_LOG_FILTER
 		infoRecorder->logError("[Filter]: output format: %s.\n", outputFormat == PIX_FMT_YUV420P ? "YUV420P" : "NV12");
+#endif
 		// scale the image: xxx: RGBA or BGRA
 		if(iframe->pixelFormat == PIX_FMT_RGBA || iframe->pixelFormat == PIX_FMT_BGRA){
 			if(swsCtx == NULL){
 				swsCtx = Conventer::lookupFrameConventer(iframe->realWidth, iframe->realHeight, iframe->pixelFormat, dstframe->pixelFormat);
-
 				if(swsCtx == NULL){
 					// not found, create new
 					swsCtx = Conventer::createFrameConventer(iframe->realWidth, iframe->realHeight, iframe->pixelFormat, this->getW(), this->getH(), dstframe->pixelFormat);
-
 				}
 				if(swsCtx == NULL){
 					infoRecorder->logError("[Filter]: fatal - cannot create frame conventor.\n");
@@ -585,8 +557,9 @@ filter_quit:
 			}
 			// get the swsctx
 			if(dstframe->pixelFormat == PIX_FMT_YUV420P){
-
+#ifdef ENABLE_LOG_FILTER
 				infoRecorder->logError("[Filter]: to convent to YUV420P: h:%d, w:%d, v stride:%d, source stride:%d, source H:%d, source W:%d.\n", getH(), getW(), getW() >> 1, iframe->realStride, iframe->realHeight, iframe->realWidth);
+#endif
 				src[0] = iframe->imgBuf;
 				src[1] = NULL;
 				srcstride[0] = iframe->realStride;
@@ -613,12 +586,9 @@ filter_quit:
 				BYTE * bmp = ConvertRGBAToBMPBuffer(iframe->imgBuf, iframe->realWidth, iframe->realHeight, &newSize);
 				SaveBMP(bmp, iframe->realWidth, iframe->realHeight, newSize, name);
 				//delete []bmp;
-
 #endif
-
 				sws_scale(swsCtx, src, srcstride, 0, iframe->realHeight,
 					dst, dstframe->lineSize);
-
 #if 0
 				BYTE * rgb24 = new BYTE[getH() * getW() * 3];
 				YV12ToBGR24_Native(dstframe->imgBuf, rgb24, getW(), getH());
@@ -633,12 +603,9 @@ filter_quit:
 				delete[] bmp;
 #endif
 
-
 			}
 			else if(dstframe->pixelFormat == PIX_FMT_NV12){
-
 #ifdef USE_SWS_SCALE
-
 				src[0] = iframe->imgBuf;
 				src[1] = 0; //iframe->imgBuf + iframe->realStride * iframe->realHeight;
 				srcstride[0] = iframe->realStride;
@@ -688,14 +655,15 @@ filter_quit:
 		}
 		srcPipe->release_data(srcdata);
 		dstPipe->store_data(dstdata);
+#ifdef ENABLE_LOG_FILTER
 		infoRecorder->logError("[Filter]: notify encoder.\n");
+#endif
 		dstPipe->notify_all();
 		return TRUE;
 	}
 
 	// deal the msg
 	void Filter::onThreadMsg(UINT msg, WPARAM wParam, LPARAM lParam){
-		//CThread::onThreadMsg(msg, wParam, lParam);
 		//do nothing
 	}
 

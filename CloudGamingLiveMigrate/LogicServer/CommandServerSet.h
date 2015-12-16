@@ -119,7 +119,7 @@ public:
 	inline bool isSend(unsigned int mask){ return (1 << index) & mask; }
 	inline void setSend(unsigned int &mask){ mask |= (1 << index);}
 
-	void write_vec(int op_code, float * vec, int size, CommandRecorder * cr_);
+	void	write_vec(int op_code, float * vec, int size, CommandRecorder * cr_);
 
 	int flush(CommandRecorder * cr);
 	int flush();

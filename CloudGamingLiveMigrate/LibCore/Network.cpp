@@ -182,7 +182,7 @@ namespace cg{
 
 			int len = send(connect_socket, buffer->com_buffer_, out_len, 0);
 			QueryPerformanceCounter(&end);
-			cg::core::infoRecorder->logError("[Network]::send_packet(), %d bytes send, org size:%d, time:%d\n", len, buffer->get_size(), end.QuadPart-start.QuadPart);
+			cg::core::infoRecorder->logTrace("[Network]::send_packet(), %d bytes send, org size:%d, time:%d\n", len, buffer->get_size(), end.QuadPart-start.QuadPart);
 			return len;
 #else
 
@@ -397,7 +397,7 @@ namespace cg{
 			if(connect_socket == -1)return;
 
 			int len1 = send(connect_socket, buf, len, 0);
-			cg::core::infoRecorder->logError("send size:%d\n", len1);
+			//cg::core::infoRecorder->logError("send size:%d\n", len1);
 		}
 
 		void Network::recv_raw_buffer(string& buf, int& len) {

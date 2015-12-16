@@ -247,7 +247,7 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Lock(THIS_ UINT OffsetToLock,UINT Siz
 }
 
 STDMETHODIMP WrapperDirect3DVertexBuffer9::Unlock(THIS) {
-	#ifdef ENABLE_VERTEX_BUFFER_LOG
+#ifdef ENABLE_VERTEX_BUFFER_LOG
 	infoRecorder->logTrace("WrapperDirect3DVertexBuffer9::Unlock(), id:%d, UnlockSize=%d Bytes, total len:%d, start:%d.\n", this->id,m_LockData.SizeToLock, Length, m_LockData.OffsetToLock);
 #endif
 

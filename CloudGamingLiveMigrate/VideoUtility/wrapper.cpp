@@ -174,7 +174,7 @@ namespace cg{
 			}
 		}
 		else{
-			core::infoRecorder->logError("[D3DWrapper]: capture image.\n");
+			core::infoRecorder->logTrace("[D3DWrapper]: capture image.\n");
 			// get the image, store to image pipeline
 
 			sframe->type = IMAGE;
@@ -303,7 +303,7 @@ namespace cg{
 #endif
 			sourcePipe->store_data(data);
 			sourcePipe->notify_all();
-			cg::core::infoRecorder->logError("[D3DWrapper]: capture image succ.\n");
+			//cg::core::infoRecorder->logError("[D3DWrapper]: capture image succ.\n");
 			return true;
 		}
 	}

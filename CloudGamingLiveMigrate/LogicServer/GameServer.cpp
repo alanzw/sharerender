@@ -102,6 +102,28 @@ void StartHook() {
 	DetourAttach(&(PVOID&)ExitProcessNext, ExitProcessCallback);
 	DetourTransactionCommit();
 }
+DWORD WINAPI RenderConnectionLitener(LPVOID param){
+	infoRecorder->logTrace("[RenderConnectionLitener]: to listen render connection.\n");
+	int renderPort = (int)param;
+	SOCKET listenSock = socket(AF_INET, SOCK_STREAM, 0);
+	SOCKADDR_IN addr;
+	memset(&addr, 0, sizeof(addr));
+	addr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
+	addr.sin_family = AF_INET;
+	addr.sin_port = htons(renderPort);
+
+	bin(listenSock, (SOCKADDR*)&addr, sizeof(SOCKADDR));
+	listen(listenSock, 10);
+
+	int addrLen = sizeof(SOCKADDR);
+	SOCKADDR_IN addrClient;
+	SOCKET sockConn = accept(listenSock, (SOCKADDR *)&addrClient, &addrLen);
+	// get a render connection
+
+
+	return 0;
+}
+
 DWORD WINAPI GameClientEventProc(LPVOID param){
 	infoRecorder->logTrace("[GameClientProc]: enter the event dealing thread for game client.\n");
 	// connect to loader

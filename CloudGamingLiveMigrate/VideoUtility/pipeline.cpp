@@ -8,6 +8,9 @@
 #include "../libcore/InfoRecorder.h"
 #include "../LibCore/TimeTool.h"
 
+//#define ENABLE_PIPELINE_LOG
+
+
 using namespace std;
 using namespace cg;
 using namespace cg::core;
@@ -15,168 +18,6 @@ using namespace cg::core;
 static HANDLE pipelinemutex = NULL;
 static std::map<std::string, pipeline *> pipelinemap;
 
-#if 0
-
-int pipeline::do_register(const char * provider, pipeline * pipe){
-	DWORD ret = WaitForSingleObject(pipelinemutex, INFINITE);  // lock
-	infoRecorder->logError("[pipeline]: register called, provider:%s.\n", provider);
-	if (pipelinemap.find(provider) != pipelinemap.end()){
-		// already registered
-		ReleaseMutex(pipelinemutex);
-		Log::slog("pipeline: duplicated pipeline '%s'\n", provider);
-		return -1;
-	}
-	pipelinemap[provider] = pipe;
-	ReleaseMutex(pipelinemutex);
-	pipe->myname = provider;
-	Log::log("pipeline: new pipeline '%s' registered.\n", provider);
-	return 0;
-}
-
-void
-	pipeline::do_unregister(const char *provider) {
-		DWORD ret = WaitForSingleObject(pipelinemutex, INFINITE);  // lock
-		pipelinemap.erase(provider);
-		ReleaseMutex(pipelinemutex);
-		Log::log("pipeline: pipeline '%s' unregistered.\n", provider);
-		return;
-}
-
-pipeline *
-	pipeline::lookup(const char *provider) {
-		map<string, pipeline*>::iterator mi;
-		pipeline *pipe = NULL;
-		DWORD ret = WaitForSingleObject(pipelinemutex, INFINITE);
-		if ((mi = pipelinemap.find(provider)) == pipelinemap.end()) {
-			ReleaseMutex(pipelinemutex);
-			return NULL;
-		}
-		pipe = mi->second;
-		ReleaseMutex(pipelinemutex);
-		return pipe;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-pipeline::pipeline(int privdata_size): PipelineBase(privdata_size) {
-	//this->condMutex = CreateMutex(NULL, false, "cond mutex");
-	char t[100] = {0};
-	sprintf(t, "pipe-%d", GetCurrentThreadId());
-	infoRecorder->logError("[pipeline]: constructor called, name:%s.\n", t);
-	do_register(t, this);
-#if 0
-	InitializeCriticalSection(&condMutex);
-
-	this->poolmutex = CreateMutex(NULL, FALSE, NULL);
-
-	bufpool = NULL;
-	datahead = datatail = NULL;
-	privdata = NULL;
-	privdata_size = 0;
-	if (privdata_size > 0) {
-		alloc_privdata(privdata_size);
-	}
-	return;
-#endif
-}
-
-pipeline::~pipeline() {
-	bufpool = datapool_free(bufpool);
-	datahead = datapool_free(datahead);
-
-#if 0
-	datatail = NULL;
-	if (privdata) {
-		free(privdata);
-		privdata = NULL;
-		privdata_size = 0;
-	}
-	DeleteCriticalSection(&condMutex);
-	if (waitMutex){
-		CloseHandle(waitMutex);
-		waitMutex = NULL;
-	}
-	if (waitEvent){
-		CloseHandle(waitEvent);
-		waitEvent = NULL;
-	}
-
-	map<long, HANDLE>::iterator mi;
-	for (mi = condMap.begin(); mi != condMap.end(); mi++){
-		if (mi->second){
-			CloseHandle(mi->second);
-			mi->second = NULL;
-		}
-	}
-
-	if (poolmutex){
-		CloseHandle(poolmutex);
-		poolmutex = NULL;
-	}
-
-
-	return;
-#endif
-}
-
-void pipeline::Release(){
-	if (pipelinemutex){
-		CloseHandle(pipelinemutex);
-		pipelinemutex = NULL;
-	}
-}
-
-
-struct pooldata * pipeline::datapool_init(int n, int datasize) {
-	infoRecorder->logError("[pipeline]: datapool_init called, n X datasize: %d X %d", n, datasize);
-	int i;
-	struct pooldata *data;
-	//
-	if (n <= 0 || datasize <= 0)
-		return NULL;
-	//
-	bufpool = NULL;
-
-
-	// the data is IDirect3DSurface9 *
-	for (i = 0; i < n; i++) {
-		if ((data = (struct pooldata*) malloc(sizeof(struct pooldata) + datasize)) == NULL)
-		{
-			bufpool = datapool_free(bufpool);
-			return NULL;
-		}
-		memset(data, 0, sizeof(struct pooldata) + datasize);
-
-		//bzero(data, sizeof(struct pooldata) + datasize);
-		data->ptr = ((unsigned char*)data) + sizeof(struct pooldata);
-
-
-		data->next = bufpool;
-		bufpool = data;
-	}
-	datacount = 0;
-	bufcount = n;
-	return bufpool;
-}
-
-struct pooldata * pipeline::datapool_free(struct pooldata *head) {
-	struct pooldata *next;
-	//
-	if (head == NULL)
-		return NULL;
-	//
-	do {
-		next = head->next;
-		free(head);
-		head = next;
-	} while (head != NULL);
-	//
-	bufpool = datahead = datatail = NULL;
-	datacount = bufcount = 0;
-	//
-	return NULL;
-}
-#else
 
 pipeline::pipeline(int privdata_size, char * prefix){
 	if(pipelinemutex == NULL){
@@ -190,26 +31,29 @@ pipeline::pipeline(int privdata_size, char * prefix){
 	}
 	WaitForSingleObject(poolmutex, INFINITE);
 	ReleaseMutex(poolmutex);
-
+#ifdef ENABLE_PIPELINE_LOG
 	infoRecorder->logError("[pipeline]: pool mutex:%p.\n", poolmutex);
-	//DebugBreak();
+#endif
+
 	int i = 0; 
+	char t[100] = {0};
+
 	i++;
 	bufpool = NULL;
 	datahead = datatail = NULL;
 	privdata = NULL;
-	//privdata_size = 0;
+
 	if(privdata_size > 0){
 		alloc_privdata(privdata_size);
 	}
 
-
-	char t[100] = {0};
 	if(!prefix)
 		sprintf(t, "pipe-%d", GetCurrentThreadId());
 	else
 		sprintf(t,"pipe-%s-%d", prefix, GetCurrentThreadId());
+#ifdef ENABLE_PIPELINE_LOG
 	infoRecorder->logError("[pipeline]: constructor called, name:%s.\n", t);
+#endif
 	do_register(t, this);
 }
 
@@ -218,12 +62,15 @@ pipeline::~pipeline(){
 		datapool_free(bufpool);
 		bufpool = NULL;
 	}
+
 	datatail = NULL;
+
 	if(privdata){
 		free(privdata);
 		privdata = NULL;
 		privdata_size = 0;
 	}
+
 	DeleteCriticalSection(&condMutex);
 
 	map<long, HANDLE>::iterator mi;
@@ -252,9 +99,7 @@ struct pooldata * pipeline::allocate_data(){
 		// no more available free data - force to release the eldest one
 		data = load_data_unlocked();
 		if (data == NULL) {
-			Log::slog("data pool: FATAL - unexpected NULL data returned (pipe '%s', data=%d, free=%d).\n",
-				this->name(), datacount, bufcount);
-			//exit(-1);
+			infoRecorder->logError("data pool: FATAL - unexpected NULL data returned (pipe '%s', data=%d, free=%d).\n", this->name(), datacount, bufcount);
 		}
 	}
 	else {
@@ -264,14 +109,14 @@ struct pooldata * pipeline::allocate_data(){
 		bufcount--;
 	}
 	ReleaseMutex(poolmutex);
-
 	return data;
-
 }
 void
 	pipeline::store_data(struct pooldata *data) {
 		// store a data into data pool (at the end)
-		Log::log("[pipeline]: pipe '%s' store data.\n", name());
+#ifdef ENABLE_PIPELINE_LOG
+		infoRecorder->logError("[pipeline]: pipe '%s' store data.\n", name());
+#endif
 		data->next = NULL;
 		WaitForSingleObject(poolmutex, INFINITE);
 
@@ -285,7 +130,9 @@ void
 			datatail = data;
 		}
 		datacount++;
-		infoRecorder->logError("[pipeline]: %s stored data, data count:%d\n", name(), datacount);
+#ifdef ENABLE_PIPELINE_LOG
+		infoRecorder->logTrace("[pipeline]: %s stored data, data count:%d\n", name(), datacount);
+#endif
 		ReleaseMutex(poolmutex);
 		return;
 }
@@ -294,12 +141,14 @@ void
 struct pooldata *
 	pipeline::load_data_unlocked() {
 		// load a data from data (work) pool
-		//Log::log("[pipeline]: to load data, data count:%d\n", datacount);
-
+#ifdef ENABLE_PIPELINE_LOG
+		infoRecorder->logTrace("[pipeline]: to load data, data count:%d\n", datacount);
 		if(datacount == 0){
 			infoRecorder->logError("[pipeline]: %s to load data, but data count is %d.\n",name(), datacount);
 		}
-		struct pooldata *data;
+#endif
+		struct pooldata *data = NULL;
+
 		if (datatail == NULL) {
 			return NULL;
 		}
@@ -315,8 +164,10 @@ struct pooldata *
 
 struct pooldata *
 	pipeline::load_data() {
+#ifdef ENABLE_PIPELINE_LOG
 		infoRecorder->logTrace("[pipeline]: pipe '%s' load data.\n", name());
-		struct pooldata *data;
+#endif
+		struct pooldata *data = NULL;
 
 		WaitForSingleObject(poolmutex, INFINITE);
 		data = load_data_unlocked();
@@ -326,7 +177,9 @@ struct pooldata *
 
 void
 	pipeline::release_data(struct pooldata *data) {
+#ifdef ENABLE_PIPELINE_LOG
 		infoRecorder->logError("[pipeline]: pipe '%s' release data.\n", name());
+#endif
 		// return a data to buffer pool
 		WaitForSingleObject(poolmutex, INFINITE);
 		data->next = bufpool;
@@ -391,13 +244,10 @@ int
 
 void
 	pipeline::client_register(long tid, HANDLE cond) {
-		//WaitForSingleObject(condMutex,INFINITE);
 		EnterCriticalSection(&condMutex);
 		waitEvent = cond;
 		clientThreadId = tid;
 		condMap[tid] = cond;
-		//waitMutex = cond;
-		//ReleaseMutex(condMutex);
 		LeaveCriticalSection(&condMutex);
 		return;
 }
@@ -405,9 +255,7 @@ void
 void
 	pipeline::client_unregister(long tid) {
 		EnterCriticalSection(&condMutex);
-		//WaitForSingleObject(condMutex, INFINITE);
 		condMap.erase(tid);
-		//ReleaseMutex(condMutex);
 		LeaveCriticalSection(&condMutex);
 		return;
 }
@@ -415,62 +263,60 @@ void
 int
 	pipeline::wait(HANDLE cond, HANDLE mutex) {
 		DWORD ret;
-		infoRecorder->logError("[pipeline]: pipe %s is waiting for event:0x%p\n", this->name(), cond);
+#ifdef ENABLE_PIPELINE_LOG
+		infoRecorder->logTrace("[pipeline]: pipe %s is waiting for event:0x%p\n", this->name(), cond);
+#endif
 		WaitForSingleObject(mutex, INFINITE);
-
 		ret = WaitForSingleObject(cond, INFINITE);
 		if (ret == WAIT_OBJECT_0){
-			infoRecorder->logError("[pipeline]: %s's wait single is signed.\n", name());
+#ifdef ENABLE_PIPELINE_LOG
+			infoRecorder->logTrace("[pipeline]: %s's wait single is signed.\n", name());
+#endif
 		}
 		else if (WAIT_FAILED == ret){
 			infoRecorder->logError("[pipeline]: %s wait failed. last error:%d.\n", name(), GetLastError());
-			Log::log("[pipeline]: pipe %s wait failed.\n", name());
 		}
-		//ret = pthread_cond_wait(cond, mutex);
-
 		ReleaseMutex(mutex);
-		infoRecorder->logError("[pipeline]: pipe %s exit waiting..\n", name());
+#ifdef ENABLE_PIPELINE_LOG
+		infoRecorder->logTrace("[pipeline]: pipe %s exit waiting..\n", name());
+#endif
 		return ret;
 }
 
 int
 	pipeline::timedwait(HANDLE cond, HANDLE mutex, const struct cg::core::timespec *abstime) {
 		int ret = 0;
-		infoRecorder->logError("[pipeline]: pipe %s is timed waiting, time :%d ms...\n", this->name(), abstime->tv_nsec / 1000000 + abstime->tv_sec * 1000);
+#ifdef ENABLE_PIPELINE_LOG
+		infoRecorder->logTrace("[pipeline]: pipe %s is timed waiting, time :%d ms...\n", this->name(), abstime->tv_nsec / 1000000 + abstime->tv_sec * 1000);
+#endif
 		WaitForSingleObject(mutex, INFINITE);
 		ret = WaitForSingleObject(cond, abstime->tv_nsec / 1000000 + abstime->tv_sec * 1000);
 		if (ret == WAIT_OBJECT_0){
-			Log::log("[pipeline]: pipe %s timed wait single is signed.\n", name());
+#ifdef ENABLE_PIPELINE_LOG
+			infoRecorder->logTrace("[pipeline]: pipe %s timed wait single is signed.\n", name());
+#endif
 		}
 		else if (ret == WAIT_TIMEOUT){
-			Log::log("[pipeline]: pipe %s timed wait timed out.\n", name());
+			infoRecorder->logError("[pipeline]: pipe %s timed wait timed out.\n", name());
 		}
 		else if (ret == WAIT_FAILED){
-			Log::log("[pipeline]: pipe %s timed wait failed.\n", name());
+			infoRecorder->logError("[pipeline]: pipe %s timed wait failed.\n", name());
 		}
 
-		//ret = pthread_cond_timedwait(cond, mutex, abstime);
-
 		ReleaseMutex(mutex);
-		infoRecorder->logError("[pipeline]: pipe %s exit timed waiting..\n", name());
+#ifdef ENABLE_PIPELINE_LOG
+		infoRecorder->logTrace("[pipeline]: pipe %s exit timed waiting..\n", name());
+#endif
 		return ret;
 }
 
 void
 	pipeline::notify_all() {
-
-		//WaitForSingleObject(condMutex, INFINITE);
 		EnterCriticalSection(&condMutex);
-#if 0
-		map<long, HANDLE>::iterator mi;
-		for (mi = condmap.begin(); mi != condmap.end(); mi++) {
-			SetEvent(mi->second);
-		}
-#else
-		infoRecorder->logError("[pipeline]: %s notifier the waited event:0x%p.\n", name(), waitEvent);
-		SetEvent(waitEvent);
+#ifdef ENABLE_PIPELINE_LOG
+		infoRecorder->logTrace("[pipeline]: %s notifier the waited event:0x%p.\n", name(), waitEvent);
 #endif
-		//ReleaseMutex(condMutex);
+		SetEvent(waitEvent);
 		LeaveCriticalSection(&condMutex);
 		return;
 }
@@ -478,14 +324,13 @@ void
 void
 	pipeline::notify_one(long tid) {
 		map<long, HANDLE>::iterator mi;
-		Log::log("[pipeline]: pipe %s is notifying thread %d...\n", this->name(), tid);
-		//WaitForSingleObject(condMutex, INFINITE);
+#ifdef ENABLE_PIPELINE_LOG
+		infoRecorder->logTrace("[pipeline]: pipe %s is notifying thread %d...\n", this->name(), tid);
+#endif
 		EnterCriticalSection(&condMutex);
-
 		if ((mi = condMap.find(tid)) != condMap.end()) {
 			SetEvent(mi->second);
 		}
-		//ReleaseMutex(condMutex);
 		LeaveCriticalSection(&condMutex);
 		return;
 }
@@ -493,10 +338,8 @@ void
 int
 	pipeline::client_count() {
 		int n;
-		//WaitForSingleObject(condMutex, INFINITE);
 		EnterCriticalSection(&condMutex);
 		n = (int)condMap.size();
-		// ReleaseMutex(condMutex);
 		LeaveCriticalSection(&condMutex);
 		return n;
 }
@@ -580,17 +423,21 @@ struct pooldata * pipeline::datapool_free(struct pooldata *head) {
 
 int pipeline::do_register(const char * provider, pipeline * pipe){
 	DWORD ret = WaitForSingleObject(pipelinemutex, INFINITE);  // lock
-	infoRecorder->logError("[pipeline]: register called, provider:%s.\n", provider);
+#ifdef ENABLE_PIPELINE_LOG
+	infoRecorder->logTrace("[pipeline]: register called, provider:%s.\n", provider);
+#endif
 	if (pipelinemap.find(provider) != pipelinemap.end()){
 		// already registered
 		ReleaseMutex(pipelinemutex);
-		Log::slog("pipeline: duplicated pipeline '%s'\n", provider);
+		infoRecorder->logError("pipeline: duplicated pipeline '%s'\n", provider);
 		return -1;
 	}
 	pipelinemap[provider] = pipe;
 	ReleaseMutex(pipelinemutex);
 	pipe->myname = provider;
-	Log::log("pipeline: new pipeline '%s' registered.\n", provider);
+#ifdef ENABLE_PIPELINE_LOG
+	infoRecorder->logTrace("pipeline: new pipeline '%s' registered.\n", provider);
+#endif
 	return 0;
 }
 
@@ -599,7 +446,9 @@ void
 		DWORD ret = WaitForSingleObject(pipelinemutex, INFINITE);  // lock
 		pipelinemap.erase(provider);
 		ReleaseMutex(pipelinemutex);
-		Log::log("pipeline: pipeline '%s' unregistered.\n", provider);
+#ifdef ENABLE_PIPELINE_LOG
+		infoRecorder->logTrace("pipeline: pipeline '%s' unregistered.\n", provider);
+#endif
 		return;
 }
 
@@ -623,4 +472,3 @@ void pipeline::Release(){
 		pipelinemutex = NULL;
 	}
 }
-#endif

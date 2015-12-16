@@ -23,9 +23,7 @@ struct WindowParam{
 	DWORD dwStyle;
 	int x,y;
 	int width, height;
-	
 };
-
 
 
 int WrapperDirect3D9::ins_count = 0;
@@ -51,8 +49,6 @@ HashSet WrapperDirect3DDevice9::m_list;
 HashSet WrapperDirect3DCubeTexture9::m_list;
 HashSet WrapperDirect3DSwapChain9::m_list;
 HashSet WrapperDirect3DSurface9::m_list;
-
-
 
 SmallHash<HWND, WindowParam *> windowMap;
 
@@ -172,12 +168,10 @@ IDirect3D9* WINAPI Direct3DCreate9Callback(UINT SDKVersion) {
 #endif
 		csSet->beginCommand(DirectCreate_Opcode, 0);
 		csSet->endCommand();
-		//infoRecorder->logTrace("[Global]: start to hook the whole d3d.\n");
 #endif
 	}else{
 		infoRecorder->logTrace("[Global]: create d3d failed.\n");
 	}
-	//DebugBreak();
 	return pv;
 }
 
@@ -320,7 +314,6 @@ void WINAPI ExitProcessCallback(UINT uExitCode) {
 
 	//do the clean job here
 
-	
 #ifndef MULTI_CLIENTS
 	cs.shut_down();
 #else
