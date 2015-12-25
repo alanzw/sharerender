@@ -51,4 +51,27 @@ public:
 	void setName(char * name){ gameName = _strdup(name);}
 };
 
+class ListenServer{
+	evutil_socket_t sock;
+	cg::BaseContext * ctx;
+	event_base * base;
+	evconnlistener * listener;
+	void * _csSet;
+
+	
+public:
+	ListenServer();
+	~ListenServer();
+	cg::BaseContext * getCtx(){ return ctx; }
+
+	bool addRenderConnection(SOCKET sock);
+	bool declineRenderConnection(SOCKET sock);
+	bool startListen(int port);
+	inline void setCSSet(void * csSet){ _csSet = csSet; }
+	inline void setEventBase(event_base * b){ base = b; }
+	void dispatch();
+	bool dealEvent(cg::BaseContext * ctx);
+	
+};
+
 #endif

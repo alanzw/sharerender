@@ -80,10 +80,13 @@ ContextAndCache::~ContextAndCache(){
 	if(lockMutex){
 		CloseHandle(lockMutex);
 	}
-
+	if(taskQueue){
+		delete taskQueue;
+		taskQueue = NULL;
+	}
 	close_socket(connect_socket);
 	close_socket(listen_socket);
-	clean_up();
+	//clean_up();
 }
 
 
@@ -513,14 +516,12 @@ int CommandServerSet::addServer(SOCKET s){
 		ctx->set_cache_filter();
 		infoRecorder->logError("[CommandServerSet]: to set the connection socket.\n");
 		ctx->set_connect_socket(s);
-
 		ctx_mgr_->addCtx(ctx);
 
 		// send something
 		char msg[100]= {0};
 		sprintf(msg, "Hello, Everybody!");
 		send(s, msg, strlen(msg), 0);
-
 		setCtxEvent();
 	}
 	else{
@@ -538,10 +539,23 @@ int CommandServerSet::declineServer(SOCKET s){
 		return -1;
 	if(ctx_mgr_->isSocketMapped(s)){
 		// to decline
-		if(ctx_mgr_->declineCtx(s))
-			return 0;
-		else
+		ctx = ctx_mgr_->declineCtx(s);
+		
+		if(!ctx){
+			// error
+			infoRecorder->logError("[CommandServerSet]: remove ctx failed, but the socket is mapped.\n");
 			return -1;
+		}
+		// release the context
+		infoRecorder->logError("[CommandServerSet]: to release the context with sock:%p, ctx:%p.\n", s, ctx);
+		delete ctx;
+		ctx = NULL;
+
+		//unmap the socket
+		if(!ctx_mgr_->unmapSocket(s)){
+			infoRecorder->logError("[CommandServerSet]: unmap the socket is failed.\n");
+			return -1;
+		}
 	}
 	else{
 		// invalid socket

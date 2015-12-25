@@ -68,7 +68,31 @@ public:
 	inline void setStatus(QueueStatus s){ qStatus = s;}
 	inline QueueStatus getStatusw(){ return qStatus; }
 	inline void setContext(void * c){ ctx = c;}
+	// the reset function will clear the queue, destory the thread
+	bool reset(){
+		if(!CloseHandle(threadHandle)){
+			// close the thread get an error
+			infoRecorder->logError("[TaskQueue]: exit the working thread error with%:d\n", GetLastError());
+		}else{
+			return false;
+		}
 
+		return true;
+	}
+	~TaskQueue(){
+		reset();
+		threadHandle = NULL;
+		DeleteCriticalSection(&cs);
+		DeleteCriticalSection(&mu);
+		if(evt){
+			CloseHandle(evt);
+			evt = NULL;
+		}
+		count = 0;
+		threadId = 0;
+		ctx = NULL;
+		isLocked = false;
+	}
 	TaskQueue(): taskQueue(){
 		InitializeCriticalSection((LPCRITICAL_SECTION)&cs);
 		InitializeCriticalSection((LPCRITICAL_SECTION)&mu);

@@ -249,13 +249,12 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Lock(THIS_ UINT OffsetToLock,UINT Siz
 STDMETHODIMP WrapperDirect3DVertexBuffer9::Unlock(THIS) {
 #ifdef ENABLE_VERTEX_BUFFER_LOG
 	infoRecorder->logTrace("WrapperDirect3DVertexBuffer9::Unlock(), id:%d, UnlockSize=%d Bytes, total len:%d, start:%d.\n", this->id,m_LockData.SizeToLock, Length, m_LockData.OffsetToLock);
-#endif
+#endif  //ENABLE_VERTEX_BUFFER_LOG
 
 	// update the vertex buffer
 #ifdef BUFFER_UNLOCK_UPDATE
 	// the buffer is updated, read data to ram_buffer
 	int last = 0, cnt = 0, c_len = 0, size = 0, base = 0;
-
 
 #if 1
 	// copy from video buffer

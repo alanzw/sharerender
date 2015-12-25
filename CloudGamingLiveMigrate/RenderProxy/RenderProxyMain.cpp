@@ -9,8 +9,6 @@
 #include "../LibDistrubutor/Context.h"
 #include "DisForRender.h"
 
-//#include "../LibDistrubutor/DistributorForRender.h"
-
 #ifndef _DEBUG
 #pragma comment(lib, "event.lib")
 #pragma comment(lib, "event_core.lib")
@@ -59,8 +57,6 @@
 
 #endif
 
-
-
 #pragma comment(lib,"d3d9.lib")
 #pragma comment(lib,"d3dx9.lib")
 
@@ -71,8 +67,6 @@
 char buffer[maxl] = "hello, world";
 char b2[maxl];
 char b3[maxl];
-
-
 bool client_render = true;
 bool fromserver = false;
 
@@ -102,124 +96,9 @@ LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam){
 
 void SetKeyboardHook(HINSTANCE hmode, DWORD dwThreadId) {
 	// set the keyboard hook
-	//MessageBox(NULL,"Enter hook", "WARNING", MB_OK);
-	//infoRecorder->logError("set the keyboard hook!\n");
 	kehook = SetWindowsHookEx(WH_KEYBOARD, HookProc, hmode, dwThreadId);
 }
 
-void usage() {
-	puts("\nUsage:");
-	puts("\tgame_client game_name [window_style y/n] [client_id(1-8)]");
-
-}
-#if 0
-int main(int argc, char** argv) {
-	init_fptable();
-
-	infoRecorder = new InfoRecorder(argv[1]);
-	Log::init("game_client.log");
-
-	if(argc == 1) {
-		//printf("start game: %s\n", argv[1]);
-		cc.load_port(1);
-		//dic = new CommonNet(2, 1);
-		game_name = "SprillRichi";
-	}
-	else if(argc == 2) {
-		printf("start game: %s\n", argv[1]);
-		cc.load_port(1);
-		//dic = new CommonNet(2, 1);
-		game_name = argv[1];
-	}
-	else if(argc == 3) {
-		printf("start game: %s\n", argv[1]);
-		use_server_style = true;
-		
-		game_name = string(argv[1]);
-
-		cc.load_port(1);
-		//dic = new CommonNet(2, 1);
-	}
-	else if(argc == 4) {
-		printf("start game: %s\n", argv[1]);
-		use_server_style = true;
-		
-		game_name = string(argv[1]);
-
-		int c_id = atoi(argv[3]);
-
-		if(c_id > 1) {
-			client_render = false;
-		}
-
-		cc.load_port(c_id);
-	}
-	else {
-		// listen the video client to connect
-
-		usage();
-		return 0;
-	}
-	
-	cc.init();
-	
-	WaitForSingleObject(videoInitMutex, INFINITE);
-	ReleaseMutex(videoInitMutex);
-	///devicehandle = CreateMutex(NULL, false, "devicehandle");
-	presentMutex = CreateMutex(NULL, FALSE, NULL);
-
-	cc.send_raw_buffer(game_name);
-
-	char tm[100];
-	cc.recv_raw_buffer(tm, 100);
-	infoRecorder->logError("recv:%s\n", tm);
-
-	// create the present event
-	if (presentEvent == NULL){
-		presentEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-		if (!presentEvent){
-			infoRecorder->logTrace("[main]: create Present Event failed.\n");
-		}
-	}
-	DWORD dwThreadId;
-	HANDLE videoThread = chBEGINTHREADEX(NULL, 0, VideoServer, NULL, 0, &dwThreadId);
-
-	MSG xmsg = {0};
-	while(xmsg.message != WM_QUIT) {
-		if(PeekMessage(&xmsg, NULL, 0U, 0U, PM_REMOVE)) {
-			TranslateMessage(&xmsg);
-			DispatchMessage(&xmsg);
-		}
-		else {
-			cc.take_command(op_code, obj_id);
-			//infoRecorder->logTrace("op_code=%d, obj_id=%d\n", op_code, obj_id);
-			
-			if(op_code >= 0 && op_code < MaxSizeUntilNow_Opcode) {
-				if(client_render)
-					(*(funcs[op_code].func))();
-			}
-			else {
-				if(op_code == MaxSizeUntilNow_Opcode) {
-					infoRecorder->logError("game_client exit normally.");
-				}
-				else {
-					infoRecorder->logError("game client exit, unexpected op_code");
-				}
-				break;
-			}	
-		}
-	}
-
-	cc.~CommandClient();
-	if (presentEvent)
-		CloseHandle(presentEvent);
-	if (videoInitMutex)
-		CloseHandle(videoInitMutex);
-	//dic->~CommonNet();
-	return 0;
-}
-#else
-//DisClientForRenderProxy * gDisClient = NULL;
 void cleanup(){
 #ifdef DIS_CLIENT
 	if (gDisClient){
@@ -229,54 +108,180 @@ void cleanup(){
 	}
 #endif
 }
-#if 0
 
-// the main function for renderproxy
-int main(int argc, char ** argv){
-	//Log::init("renderproxy.log");
-	infoRecorder = new InfoRecorder("RenderProxy");
-#ifdef DIS_CLIENT
-	DisClientForRenderProxy * disClient = NULL;
-	disClient = DisClientForRenderProxy::GetDisForRenderProxy();
-	if (disClient == NULL){
-		infoRecorder->logTrace("[RenderProxy]: get NULL distributor client for render.\n");
-		return -1;
-	}
-	gDisClient = disClient;
-#endif
-	atexit(cleanup);
+/*cmd option:
+-u: url option
+-e: encoder option
+-p: request port
+-n: requested game name
+-r: enable rtsp or not
+-v: rtsp port
+-m: work mode, 0 for distributer mode, request the distributor, 1 for request game loader, 2 for request game process
 
-	init_fptable();
-#ifdef DIS_CLIENT
-	disClient->init(0);   // init the distributor client for render 
-	disClient->enterLogicLoop();
-#endif
+*/
+enum RENDERMODE{
+	DIS_MODE,
+	REQ_LOADER,
+	REQ_PROCESS
+};
 
-	// only for test
-
-
-	// destory
-#if 0
-	disClient->closeClient();
-	if (disClient){
-		//DisClientForRenderProxy::Release();
-		delete disClient;
-		disClient = NULL;
-	}
-#endif
-	return 0;
+void printHelp(){
+	// two work mode, each has special arguments
+	printf("RenderProxy --help or RenderProxy -h\n");
+	printf("RenderProxy default works in DIS_MODE(0), use -m to change the work mode.\n");
+	printf("arguments:\n");
+	printf("\t-u: the url to request, in DIS_MODE, the url means the distributor url, in REQ_LOADER or REQ_PROCESS, the url means the graphic server.\n");
+	printf("\t-e: the encoder option, 1 for X264, 2 for cuda, 3 for nvenc.\n");
+	printf("\t-p: the request port, only used in REQ_LOADER or REQ_PROCESS mode.\n");
+	printf("\t-n: the request game name, only use in REQ_LOADER or REQ_PROCESS.\n");
+	printf("\t-m: specific the work mode, 0 for DIS_MODE, 1 for REQ_LAODER, 2 for REQ_PROCESS.\n");
 }
-#else
+
+bool dealCmd(int argc, char ** argv){
+	char * url = NULL;
+	int encoderOption = -1;
+	int requestPort = 6000;
+	char * requestName = NULL;
+	bool enableRtsp = false;
+	int rtspPort = 0;
+	RENDERMODE mode = DIS_MODE;
+	
+	for(int i = 0; i < argc; i++){
+		if(!strcmp(argv[i], "-v") || ! strcmp(argv[1], "-V")){
+			// the rtsp port
+			rtspPort = atoi(argv[i+1]);
+		}
+		else if(!strcmp(argv[i], "-u") || !strcmp(argv[i], "-U")){
+			// the url
+			url = argv[i+1];
+		}else if(!strcmp(argv[i], "-e") || !strcmp(argv[i], "-E")){
+			// encoder option
+			encoderOption = atoi(argv[i+1]);
+		}else if(!strcmp(argv[i], "-p") || !strcmp(argv[i], "-P")){
+			// the port to request
+			requestPort = atoi(argv[i+1]);
+		}else if(!strcmp(argv[i], "-n") || !strcmp(argv[i], "-N")){
+			// the requested game name
+			requestName = argv[i+1];
+		}else if(!strcmp(argv[i], "-r") || !strcmp(argv[i], "-R")){
+			// the rtsp option
+			enableRtsp = (atoi(argv[i+1]) ? true : false );
+		}else if(!strcmp(argv[i], "-m") || !strcmp(argv[i], "-M")){
+			// the work mode
+			mode = (RENDERMODE)atoi(argv[i+1]);
+		}
+		else if(!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h")){
+			printHelp();
+		}
+		else{
+			// invalid arguments, ignore
+		}
+	}
+
+	// build the render proxy with given arguments
+	RenderProxy * proxy = RenderProxy::GetProxy();
+	event_base * base = NULL; // not used when directly request graphic server
+	// for request graphic mode
+	evutil_socket_t socketForCmd = NULL;
+	RenderChannel * ch = NULL;
+	char cmd[1024] = {0};
+	int n = 0;
+
+	switch(mode){
+	case DIS_MODE:
+		{
+			base = event_base_new();
+			proxy->setEventBase(base);
+			if(encoderOption != -1){
+				proxy->setEncodeOption(encoderOption);
+			}
+			// use the url if any
+			if(url){
+				proxy->start(url);
+			}
+			else{
+				proxy->start();
+			}
+			// start to listen to RTSP port
+			proxy->dispatch();
+		}
+		break;
+	case REQ_LOADER:
+		{
+			socketForCmd = connectToGraphic(url, requestPort);
+			ch = new RenderChannel();
+
+			ch->rtspObject = _strdup(requestName);
+			ch->taskId = 0;
+			if(encoderOption != -1)
+				ch->setEncoderOption(encoderOption);
+
+			/// send start task cmd
+			strcpy(cmd, START_GAME);
+			strcat(cmd, "+");
+			strcat(cmd, requestName);
+			printf("[RenderProxy]: send cmd '%s'\n.", cmd);
+			n = send(socketForCmd, cmd, strlen(cmd), 0);
+
+			if(!ch->initRenderChannel(0, requestName, socketForCmd)){
+				infoRecorder->logError("[Main]: create render channel failed.\n");
+				break;
+			}
+			// do the rendering 
+			ch->startChannelThread();
+			//wait the render channel to exit
+			WaitForSingleObject(ch->channelThreadHandle, INFINITE);
+		}
+		break;
+	case REQ_PROCESS:
+		{
+			socketForCmd = connectToGraphic(url, requestPort);
+			ch = new RenderChannel();
+
+			ch->rtspObject = _strdup(requestName);
+			ch->taskId = 0;
+			if(encoderOption != -1)
+				ch->setEncoderOption(encoderOption);
+
+			if(!ch->initRenderChannel(0, requestName, socketForCmd)){
+				infoRecorder->logError("[Main]: create render channel failed.\n");
+				break;
+			}
+			// do the rendering 
+			ch->startChannelThread();
+			//wait the render channel to exit
+			WaitForSingleObject(ch->channelThreadHandle, INFINITE);
+		}
+		break;
+	default:
+		{
+			infoRecorder->logError("[Main]: invalid work mode.\n");
+		}
+	break;
+	}
+	// clean up when exit
+	if(proxy){
+		delete proxy;
+		proxy = NULL;
+	}
+	if(ch){
+		delete ch;
+		ch = NULL;
+	}
+	return true;
+}
+
 int main(int argc, char ** argv){
+	// init the logger
 	infoRecorder = new InfoRecorder("RenderProxy");
-	// init the ftable
 	// start the network
 	WSADATA WSAData;
 	WSAStartup(0x101, &WSAData);
-
+	// register the clean method
 	atexit(cleanup);
+	// init the function table
 	init_fptable();
-
+#if 0
 	// no other argv, work in distributed mode
 	if(argc == 1){
 
@@ -309,22 +314,16 @@ int main(int argc, char ** argv){
 		proxy->dispatch();
 	}else if(argc == 4){
 		// argv: RenderProxy [logic url] [name] [encode option]
-		char * url  = NULL;
-		char * object = NULL;
+		char * url  = argv[1];
+		char * object = argv[2];
 		int encodeOption = atoi(argv[3]);
 
-		url = argv[1];
-		object = argv[2];
-		char * id = argv[3];
-
-		evutil_socket_t socketForCmd = NULL;
-		socketForCmd = connectToGraphic(url, 60000);
-
+		evutil_socket_t socketForCmd = connectToGraphic(url, 60000);
 		RenderChannel *ch = new RenderChannel();
+
 		ch->rtspObject = _strdup(object);
 		ch->taskId = 0;
 		ch->setEncoderOption(encodeOption);
-
 
 		/// send start task cmd
 		char cmd[1024] = {0};
@@ -333,7 +332,6 @@ int main(int argc, char ** argv){
 		strcat(cmd, object);
 		printf("[RenderProxy]: send cmd '%s'\n.", cmd);
 		int n = send(socketForCmd, cmd, strlen(cmd), 0);
-
 
 		if(!ch->initRenderChannel(0, object, socketForCmd)){
 			infoRecorder->logError("[Main]: create render channel failed.\n");
@@ -366,17 +364,14 @@ int main(int argc, char ** argv){
 		// do the rendering
 		ch->startChannelThread();
 		// wait the render channel to exit
-
 		WaitForSingleObject(ch->channelThreadHandle, INFINITE);
-
 	}else{
 		printf("[Usage:\n");
 		printf("RenderProxy\tWork in distributed mode.\n");
 		printf("RenderProxy [url] [port] [GameName] [enableRtsp]\tWork in single render mode.\n");
-		
 	}
+#else
+	dealCmd(argc, argv);
+#endif
 	return 0;
 }
-
-#endif
-#endif

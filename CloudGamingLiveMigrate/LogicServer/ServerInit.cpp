@@ -25,7 +25,6 @@ struct WindowParam{
 	int width, height;
 };
 
-
 int WrapperDirect3D9::ins_count = 0;
 int WrapperDirect3DDevice9::ins_count = 0;
 int WrapperDirect3DVertexBuffer9::ins_count = 0;

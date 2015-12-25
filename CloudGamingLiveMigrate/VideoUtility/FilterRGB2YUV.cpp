@@ -13,8 +13,8 @@
 
 #include "..\LibCore\BmpFormat.h"
 #include "..\LibCore\InfoRecorder.h"
-#define USE_NV12_RAW
 
+#define USE_NV12_RAW
 #define USE_SWS_SCALE
 
 

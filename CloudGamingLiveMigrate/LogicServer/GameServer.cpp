@@ -104,6 +104,7 @@ void StartHook() {
 }
 DWORD WINAPI RenderConnectionLitener(LPVOID param){
 	infoRecorder->logTrace("[RenderConnectionLitener]: to listen render connection.\n");
+#if 0
 	int renderPort = (int)param;
 	SOCKET listenSock = socket(AF_INET, SOCK_STREAM, 0);
 	SOCKADDR_IN addr;
@@ -112,15 +113,49 @@ DWORD WINAPI RenderConnectionLitener(LPVOID param){
 	addr.sin_family = AF_INET;
 	addr.sin_port = htons(renderPort);
 
-	bin(listenSock, (SOCKADDR*)&addr, sizeof(SOCKADDR));
+	bind(listenSock, (SOCKADDR*)&addr, sizeof(SOCKADDR));
 	listen(listenSock, 10);
 
 	int addrLen = sizeof(SOCKADDR);
 	SOCKADDR_IN addrClient;
-	SOCKET sockConn = accept(listenSock, (SOCKADDR *)&addrClient, &addrLen);
-	// get a render connection
+	while(1){
+		SOCKET sockConn = accept(listenSock, (SOCKADDR *)&addrClient, &addrLen);
+		// get a render connection
+		// get the info and add to server
+		if(!csSet){
+			csSet = CommandServerSet::GetServerSet();
+		}
 
+		// running the sending window
+		do{
+			int sndwnd = 8 * 1024 * 1024; // 8MB
+			if(setsockopt(sockConn, SOL_SOCKET, SO_SNDBUF, (const char *)&sndwnd, sizeof(sndwnd))){
+				infoRecorder->logError("**** set TCP sending buffer failed, ERROR code:%d.\n", GetLastError());
+			}
 
+			const char chOpt = 1;
+			if(setsockopt(sockConn, IPPROTO_TCP, TCP_NODELAY, &chOpt, sizeof(char))){
+				infoRecorder->logError("**** set TCP send no delay failed, ERROR code: %d.\n", GetLastError());
+			}
+
+		}while(true);
+
+		csSet->addServer(sockConn);
+
+	}
+
+#else
+	ListenServer * server = new ListenServer();
+	event_base * base = event_base_new();
+	server->setEventBase(base);
+	server->setCSSet(csSet);
+
+	server->startListen(7000); /// 7000 port is specialized for render proxy connection
+	server->dispatch();
+	delete server;
+	server = NULL;
+
+#endif
 	return 0;
 }
 
@@ -212,7 +247,6 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 			}else{
 				// for 2D games
 			}
-			
 			// disable rendering
 			//cmdCtrl->setFrameStep(0);
 			infoRecorder->logError("[DllMain]: render step:%d.\n", cmdCtrl->getFrameStep());
@@ -242,9 +276,8 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 				else if(cmdCtrl->getMode() == 2){
 					// listen to render proxy, to listen 60000 port
 					infoRecorder->logError("[DllMain]: to create server for render proxy.\n");
-					clientThreadHandle = chBEGINTHREADEX(NULL, 0, NULL, NULL, FALSE, &clientThreadId);
+					clientThreadHandle = chBEGINTHREADEX(NULL, 0, RenderConnectionLitener, cmdCtrl, FALSE, &clientThreadId);
 				}
-				
 				// how to set cooperate work mode, render proxy and logic server both do the rendering
 
 			}

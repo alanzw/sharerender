@@ -511,3 +511,99 @@ DWORD GameClient::RTSPThreadProc(LPVOID param){
 
 	return 0;
 }
+
+
+
+/////////////////////for listernServer /////////////////////
+
+static void ListenServerEventCB(struct bufferevent * bev, short events, void * ctx){
+	if(events & BEV_EVENT_ERROR){
+		infoRecorder->logError("[ListenServerEventCB]: error from bufferevent.\n");
+	}
+	if(events & BEV_EVENT_EOF){
+		// connection closed
+
+		ListenServer * server = (ListenServer *)ctx;
+		// remove the closed context
+		server->declineRenderConnection(bufferevent_getfd(bev));
+
+	}
+	if(events & (BEV_EVENT_EOF | BEV_EVENT_ERROR)){
+		bufferevent_free(bev);
+	}
+
+}
+
+static void ListenServerAcceptConnCB(struct evconnlistener * listener, evutil_socket_t fd, struct sockaddr *address, int socklen, void * ctx){
+	// got a new connection for rendering
+	ListenServer * server = (ListenServer *)ctx;
+	struct event_base * base = evconnlistener_get_base(listener);
+	struct bufferevent * bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE);
+
+	// set callbacks for buffer event ???
+	bufferevent_setcb(bev, NULL, NULL, ListenServerEventCB, ctx);
+	bufferevent_enable(bev, EV_READ|EV_WRITE);
+
+	// add context
+	server->addRenderConnection(fd);
+
+}
+static void ListenerServerAcceptErrorCB(struct evconnlistener * listener, void *ctx){
+	struct event_base * base = evconnlistener_get_base(listener);
+	int err =  EVUTIL_SOCKET_ERROR();
+	// log the error
+	infoRecorder->logError("[ListenerServerAcceptErrorCB]: error %d (%s) on listener. Shutting down.\n", err, evutil_socket_error_to_string(err));
+	event_base_loopexit(base, NULL);
+}
+
+
+bool ListenServer::addRenderConnection(SOCKET sock){
+	if(!_csSet)
+		return false;
+	CommandServerSet * c = (CommandServerSet *)_csSet;
+	c->addServer(sock);
+	return true;
+}
+
+bool ListenServer::declineRenderConnection(SOCKET sock){
+	if(!_csSet)
+		return false;
+	CommandServerSet * c = (CommandServerSet *)_csSet;
+	c->declineServer(sock);
+	return true;
+}
+bool ListenServer::startListen(int port){
+	// the base is set, build the connlistener
+	if(!base){
+		// error
+		return false;
+	}
+	struct sockaddr_in sin;
+	memset(&sin, 0, sizeof(sin));
+	sin.sin_family = AF_INET;
+	sin.sin_addr.S_un.S_addr = htonl(INADDR_ANY);  // listen any connection
+	sin.sin_port = htons(port);
+	listener = evconnlistener_new_bind(base, ListenServerAcceptConnCB, this, LEV_OPT_CLOSE_ON_FREE |LEV_OPT_REUSEABLE, -1, (struct sockaddr *)&sin, sizeof(sin));
+	if(!listener){
+		infoRecorder->logError("[ListenServer]: couldn't create listener.\n");
+		return false;
+	}
+	evconnlistener_set_error_cb(listener, ListenerServerAcceptErrorCB);
+
+	return true;
+}
+ListenServer::ListenServer():sock(NULL), ctx(NULL), listener(NULL), _csSet(NULL), base(NULL){ }
+ListenServer::~ListenServer(){ }
+void ListenServer::dispatch(){
+	event_base_dispatch(base);
+}
+bool ListenServer::dealEvent(cg::BaseContext * ctx){
+	bool ret = true;
+	char feedback[1024] = {0};
+	ctx->readCmd();
+	int le = 0;
+	char * cmd = ctx->getCmd();
+	char * data = ctx->getData();
+
+	return true;
+}

@@ -104,10 +104,6 @@ DWORD WINAPI RenderChannel::ChannelThreadProc(LPVOID param){
 	if (NULL == rch){
 		cg::core::infoRecorder->logTrace("[RenderChannel]: NULL render channel given in thread proc.\n");
 	}
-	// on start
-	cg::core::infoRecorder->logTrace("[RenderChannel]: render channel thread started.\n");
-	//cc->send_raw_buffer(gameName);
-
 	// send to logic the ADD_RENDER+task ID + Render ID
 	//send(rch->cc->get_connect_socket(),)
 
@@ -129,8 +125,6 @@ DWORD WINAPI RenderChannel::ChannelThreadProc(LPVOID param){
 	else{
 		cg::core::infoRecorder->logError("[RenderChannel]: recv feedback failed.\n");
 	}
-	//rch->cc->recv_raw_buffer(tm, 100);
-	//cg::core::infoRecorder->logTrace("[RenderChannel]: get sync message:%s.\n", tm);
 #else
 	send(rch->cc->get_connect_socket(), RENDER_STARTED, strlen(RENDER_STARTED), 0);
 	//cc->send_raw_buffer((char *)RENDER_STARTED, strlen(RENDER_STARTED));
@@ -162,7 +156,6 @@ DWORD WINAPI RenderChannel::ChannelThreadProc(LPVOID param){
 		rch->presentEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 		if (!rch->presentEvent){
 			cg::core::infoRecorder->logError("[RenderChannel]: create present event failed.\n");
-
 		}
 	}
 

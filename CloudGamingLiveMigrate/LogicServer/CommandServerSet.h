@@ -164,6 +164,13 @@ public:
 	}
 };
 
+// the empty context is for standalone use or test the context build time
+class EmptyContext : ContextAndCache{
+
+public:
+
+};
+
 class IndexedContextPool{
 	int ctxCount;
 	ContextAndCache * array[MAX_RENDER_COUNT * 2];
@@ -320,14 +327,14 @@ public:
 			cr_= NULL;
 		}
 	}
-	bool declineCtx(SOCKET s){
-		bool ret = false;
+	ContextAndCache * declineCtx(SOCKET s){
+		ContextAndCache * ret = NULL;
 		ContextAndCache * ctx = NULL;
 		for(int i = 0; i < ctx_init.getCtxCount(); i++){
 			ctx = ctx_init.getCtx(i);
 			if(ctx->connect_socket == s){
-				ret = true;
 				ctx_init.remove(ctx);
+				ret  = ctx;
 				return ret;
 			}
 		}
@@ -335,10 +342,12 @@ public:
 			ctx = ctx_pool.getCtx(i);
 			if(ctx->connect_socket == s){
 				ctx_pool.remove(ctx);
-				return true;
+				ret = ctx;
+				return ret;
 			}
 		}
-		return false;
+		// here always means reaturn NULL
+		return ret;
 	}
 
 	// switch the current work context, select another context with CTX_READY in ctx_pool
@@ -367,6 +376,9 @@ public:
 	// 
 	bool isSocketMapped(SOCKET s){
 		return socketMap.getValue(s);
+	}
+	bool unmapSocket(SOCKET s){
+		return socketMap.unMap(s);
 	}
 	inline SOCKET getCtxSocket(){ return _ctx_cache ? _ctx_cache->get_connect_socket() : NULL; }
 	
