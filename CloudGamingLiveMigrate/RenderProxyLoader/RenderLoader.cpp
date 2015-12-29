@@ -6,7 +6,9 @@
 
 using namespace std;
 
-#pragma comment(lib, "detours/detours.lib")
+//#pragma comment(lib, "detours/detours.lib")
+#pragma comment(lib, "detours.lib")
+#pragma comment(lib, "nvapi.lib")
 
 HANDLE StartProcessWithDll(char * exeName, char * dllName, char * exePath, char * arg){
 	PROCESS_INFORMATION pi = {0};

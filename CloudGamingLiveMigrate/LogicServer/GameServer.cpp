@@ -16,6 +16,8 @@ using namespace std;
 using namespace cg;
 using namespace cg::core;
 //#define ENABLE_CLIENT_CONTROL
+#pragma comment(lib, "nvapi.lib")
+#pragma comment(lib, "d3d9.lib")
 
 #ifndef MULTI_CLIENTS
 CommandServer cs(Max_Buf_Size);

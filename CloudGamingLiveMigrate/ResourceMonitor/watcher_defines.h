@@ -19,8 +19,7 @@
 
 //#include <strsafe.h>
 
-#pragma comment(lib, "nvapi.lib")
-#pragma comment(lib, "d3d9.lib")
+
 
 #define MAXSIZE 255
 #define Freq_Interval 10

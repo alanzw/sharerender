@@ -11,21 +11,17 @@
 #include <KtmW32.h>
 #include <tchar.h>
 //#include "../LibCore/InfoRecorder.h"
-
-#pragma comment(lib, "detours/detours.lib")
+#pragma comment(lib, "detours.lib")
+//#pragma comment(lib, "detours/detours.lib")
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "event.lib")
 #pragma comment(lib, "event_core.lib")
 #pragma comment(lib, "event_extra.lib")
 #pragma comment(lib,"d3d9.lib")
 #pragma comment(lib,"d3dx9.lib")
-
-
 #pragma comment(lib, "KtmW32.lib")
 
-
 //libs for video
-
 #ifndef _DEBUG
 #pragma comment(lib, "cuda.lib")
 #pragma comment(lib, "cudart.lib")
@@ -43,7 +39,6 @@
 #pragma comment(lib, "avcodec.lib")
 #pragma comment(lib, "avutil.lib")
 #else
-
 #pragma comment(lib, "cuda.lib")
 #pragma comment(lib, "cudart.lib")
 #pragma comment(lib, "libliveMedia.d.lib")
@@ -60,9 +55,7 @@
 #pragma comment(lib, "avcodec.lib")
 #pragma comment(lib, "avutil.lib")
 #pragma comment(lib, "nvcuvenc.lib")
-
 #endif
-
 
 
 #if 0
@@ -239,7 +232,6 @@ GameLoader::GameLoader(){
 	else{
 		gameInfo->showAllInfo();
 	}
-	
 }
 GameLoader::GameLoader(char * mapFile){
 	gameInfo = GameInfo::GetGameInfo(mapFile);

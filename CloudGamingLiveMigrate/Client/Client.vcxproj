@@ -94,9 +94,6 @@
     <ClCompile Include="rtspclientmultisource.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CudaFilter\CudaFilter.vcxproj">
-      <Project>{bcc06788-4d1d-4472-9af0-9ce3f80d455b}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\LibCore\LibCore.vcxproj">
       <Project>{16461a0e-f94a-43ce-ab83-66bf54ea57e8}</Project>
     </ProjectReference>
@@ -105,9 +102,6 @@
     </ProjectReference>
     <ProjectReference Include="..\LibInput\LibInput.vcxproj">
       <Project>{b199bc49-39f1-4ef5-b781-b5172bd00150}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\NVENCEncoder\NVENCEncoder.vcxproj">
-      <Project>{beea0d5e-217d-44cf-a7f4-91ca6274f2c8}</Project>
     </ProjectReference>
     <ProjectReference Include="..\VideoGen\VideoGen.vcxproj">
       <Project>{b3ab51a0-8096-47ff-9354-2eff69456b91}</Project>

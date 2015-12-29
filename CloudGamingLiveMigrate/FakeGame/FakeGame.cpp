@@ -1,4 +1,6 @@
 #include "FakeGame.h"
+#pragma comment(lib, "nvapi.lib")
+#pragma comment(lib, "d3d9.lib")
 
 //------------------------------------------------------------------------
 // main entry of this project

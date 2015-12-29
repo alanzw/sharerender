@@ -143,9 +143,7 @@
     <ClCompile Include="YMesh.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\CudaFilter\CudaFilter.vcxproj">
-      <Project>{bcc06788-4d1d-4472-9af0-9ce3f80d455b}</Project>
-    </ProjectReference>
+    
     <ProjectReference Include="..\LibCore\LibCore.vcxproj">
       <Project>{16461a0e-f94a-43ce-ab83-66bf54ea57e8}</Project>
     </ProjectReference>
@@ -161,9 +159,7 @@
     <ProjectReference Include="..\NvEncoders\NvEncoderInteropD3D\NvEncoderInteropD3D.vcxproj">
       <Project>{331ea0bf-5c9b-4779-82f5-7f91d97a7a54}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\NvEncoders\NvEncoder\NvEncoder.vcxproj">
-      <Project>{15893213-5d11-4973-a5c1-a842c5aac9be}</Project>
-    </ProjectReference>
+
     <ProjectReference Include="..\VideoGen\VideoGen.vcxproj">
       <Project>{b3ab51a0-8096-47ff-9354-2eff69456b91}</Project>
     </ProjectReference>
