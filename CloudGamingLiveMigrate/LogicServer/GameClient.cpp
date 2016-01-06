@@ -518,24 +518,31 @@ DWORD GameClient::RTSPThreadProc(LPVOID param){
 
 static void ListenServerEventCB(struct bufferevent * bev, short events, void * ctx){
 	if(events & BEV_EVENT_ERROR){
-		infoRecorder->logError("[ListenServerEventCB]: error from bufferevent.\n");
+		int err = GetLastError();
+		infoRecorder->logError("[ListenServerEventCB]: error from bufferevent, last err:%d.\n", err);
+		if(err == 10054){
+			// closed by others
+			infoRecorder->logError("[ListenServerEventCB]: connection reset by others.\n");
+			ListenServer  * server=  (ListenServer *)ctx;
+			server->declineRenderConnection(bufferevent_getfd(bev));
+		}
 	}
 	if(events & BEV_EVENT_EOF){
 		// connection closed
-
+		infoRecorder->logError("[ListenServerEventCB]: connection closed.\n");
 		ListenServer * server = (ListenServer *)ctx;
 		// remove the closed context
 		server->declineRenderConnection(bufferevent_getfd(bev));
-
 	}
 	if(events & (BEV_EVENT_EOF | BEV_EVENT_ERROR)){
 		bufferevent_free(bev);
 	}
-
+	infoRecorder->logError("[ListenServerEventCB]: event deal done.\n");
 }
 
 static void ListenServerAcceptConnCB(struct evconnlistener * listener, evutil_socket_t fd, struct sockaddr *address, int socklen, void * ctx){
 	// got a new connection for rendering
+	infoRecorder->logError("[ListenerServerAcceptConnCB]: get a new connection: %p.\n", fd);
 	ListenServer * server = (ListenServer *)ctx;
 	struct event_base * base = evconnlistener_get_base(listener);
 	struct bufferevent * bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE);

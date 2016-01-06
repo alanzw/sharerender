@@ -189,14 +189,26 @@ public:
 			array[i] = NULL;
 		}
 	}
-	~IndexedContextPool(){}
-	int getCtxCount(){
-		lock();
-		unlock();
-		return ctxCount;
+	~IndexedContextPool(){
+		DeleteCriticalSection(&section);
+		ctxCount = 0;
+		curIndex = -1;
+
 	}
-	void lock(){ EnterCriticalSection(&section); }
-	void unlock(){ LeaveCriticalSection(&section); }
+	int getCtxCount(){
+		int ret = 0;
+		lock();
+		ret = ctxCount;
+		unlock();
+		//infoRecorder->logError("[IndexedContextPool]: get context count:%d.\n", ctxCount);
+		return ret;
+	}
+	inline void lock(){ 
+		//infoRecorder->logError("[IndexContextPool]: lock()\n");
+		EnterCriticalSection(&section); }
+	inline void unlock(){ 
+		//infoRecorder->logError("[IndexContextPool]: unlock()\n");
+		LeaveCriticalSection(&section); }
 	// re-order the list, by the context's id
 	bool sort(){
 		ContextAndCache * t = NULL;
@@ -206,7 +218,6 @@ public:
 				array[0] = array[i];
 				array[i] = t;
 			}
-
 		}
 		return true;
 	}
@@ -275,22 +286,16 @@ public:
 		// get the current work context
 		if(curIndex == -1){
 			curIndex = 0;
-			curCtx = array[curIndex];
-			unlock();
-			return curCtx;
 		}
 		else{
 			curIndex++;
 			int t = curIndex;
 			curIndex = t % ctxCount;
-			if(!curIndex)
-				return NULL; // =  0 or ctxCount, invalid
-
-			// valid value
-			curCtx = array[curIndex];
-			unlock();
-			return curCtx;
 		}
+
+		curCtx = array[curIndex];
+		unlock();
+		return curCtx;
 	}
 	ContextAndCache * getCtx(int index){
 		print();
@@ -298,7 +303,7 @@ public:
 	}
 	// print the pool
 	void print(){
-		infoRecorder->logTrace("[IndexedContextPool]: the pool has '%d' contexts.\n", ctxCount);
+		infoRecorder->logError("[IndexedContextPool]: the pool has '%d' contexts.\n", ctxCount);
 	}
 };
 
@@ -327,28 +332,7 @@ public:
 			cr_= NULL;
 		}
 	}
-	ContextAndCache * declineCtx(SOCKET s){
-		ContextAndCache * ret = NULL;
-		ContextAndCache * ctx = NULL;
-		for(int i = 0; i < ctx_init.getCtxCount(); i++){
-			ctx = ctx_init.getCtx(i);
-			if(ctx->connect_socket == s){
-				ctx_init.remove(ctx);
-				ret  = ctx;
-				return ret;
-			}
-		}
-		for(int i = 0; i < ctx_pool.getCtxCount(); i++){
-			ctx = ctx_pool.getCtx(i);
-			if(ctx->connect_socket == s){
-				ctx_pool.remove(ctx);
-				ret = ctx;
-				return ret;
-			}
-		}
-		// here always means reaturn NULL
-		return ret;
-	}
+	bool declineCtx(SOCKET s);
 
 	// switch the current work context, select another context with CTX_READY in ctx_pool
 	bool switchCtx();
@@ -376,6 +360,10 @@ public:
 	// 
 	bool isSocketMapped(SOCKET s){
 		return socketMap.getValue(s);
+	}
+	bool mapSocket(SOCKET s){
+		return socketMap.addMap(s, true);
+
 	}
 	bool unmapSocket(SOCKET s){
 		return socketMap.unMap(s);

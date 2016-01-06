@@ -92,7 +92,7 @@ bool RenderChannel::initRenderChannel(IDENTIFIER tid, string name, SOCKET s){
 }
 
 char tempbuffer[7500000] = { '0' };
-// for a sepreated thread proc
+// for a seperated thread proc
 DWORD RenderChannel::startChannelThread(){
 	channelThreadHandle = chBEGINTHREADEX(NULL, 0, ChannelThreadProc, this, FALSE, &channelThreadId);
 	return channelThreadId;
@@ -103,9 +103,9 @@ DWORD WINAPI RenderChannel::ChannelThreadProc(LPVOID param){
 	RenderChannel * rch = (RenderChannel *)param;
 	if (NULL == rch){
 		cg::core::infoRecorder->logTrace("[RenderChannel]: NULL render channel given in thread proc.\n");
+		return -1;
 	}
 	// send to logic the ADD_RENDER+task ID + Render ID
-	//send(rch->cc->get_connect_socket(),)
 
 	char tm[100] = { 0 };
 #if 1
@@ -123,6 +123,7 @@ DWORD WINAPI RenderChannel::ChannelThreadProc(LPVOID param){
 		printf("[RenderChannel]: get %s from logic server.\n", tm);
 	}
 	else{
+		printf("[RenderChannel]: recv feedback failed.\n");
 		cg::core::infoRecorder->logError("[RenderChannel]: recv feedback failed.\n");
 	}
 #else
@@ -150,7 +151,6 @@ DWORD WINAPI RenderChannel::ChannelThreadProc(LPVOID param){
 	cg::core::infoRecorder->logTrace("[RenderChannel]: recved %d chars from server, msg: %s. why cannot go to next line? error code:%d\n", r, temp, WSAGetLastError());
 #endif
 
-	cg::core::infoRecorder->logTrace("[RenderChannel]: check the present event.\n");
 	// create the present event
 	if (rch->presentEvent == NULL){
 		rch->presentEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
@@ -170,15 +170,12 @@ DWORD WINAPI RenderChannel::ChannelThreadProc(LPVOID param){
 			DispatchMessage(&xmsg);
 		}
 		else{
-
-			//cg::core::infoRecorder->logTrace("[RenderChannel]: run.. get cmd.\n");
 			rch->cc->take_command(rch->op_code, rch->obj_id);
 
 			if (rch->op_code >= 0 && rch->op_code < MaxSizeUntilNow_Opcode){
 				if (rch->client_render){
 					//cg::core::infoRecorder->logTrace("[RenderChannel]: opcode:%d, cmd :%s.\n", rch->op_code, (funcs[rch->op_code].name));
 					(*(funcs[rch->op_code].func))(rch);
-
 				}
 			}
 			else{
@@ -209,7 +206,11 @@ DWORD WINAPI RenderChannel::ChannelThreadProc(LPVOID param){
 
 // clean up when exit the render channel
 void RenderChannel::cleanUp(){
-	generator->onQuit();
+	if(generator){
+		generator->onQuit();
+		delete generator;
+		generator = NULL;
+	}
 	if(cc){
 		delete cc;
 		cc = NULL;
@@ -226,7 +227,6 @@ void RenderChannel::cleanUp(){
 		free(rtspObject);
 		rtspObject = NULL;
 	}
-	
 }
 
 void RenderChannel::onPresent(unsigned int tags){
@@ -292,17 +292,7 @@ void RenderChannel::onPresent(unsigned int tags){
 		}
 
 		generator->onThreadStart();
-
 		VideoGen::addMap((IDENTIFIER )taskId, generator);
-#if 0
-		if(ctxToDis){
-			ctxToDis->writeCmd("RTSP_READY");
-			ctxToDis->writeIdentifier(taskId);
-			ctxToDis->writeToNet();
-		}else{
-			cg::core::infoRecorder->logError("[FakePresent]: get NULL ctx to dis.\n");
-		}
-#endif
 	}
 	else{
 		cg::core::infoRecorder->logError("on present: generator inited: %p.\n", generator);

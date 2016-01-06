@@ -17,6 +17,11 @@ DWORD TaskQueue::QueueProc(LPVOID param){
 			infoRecorder->logTrace("[TaskQueue]: loop deal task, context:%p, task count:%d.\n", taskq->ctx, taskq->count);
 #endif
 			t = taskq->getObj();
+			if(!t){
+				infoRecorder->logError("[TaskQueue]: get NULL front, task queue has:%d.\n", taskq->getCount());
+				break;
+
+			}
 			if(t->sync == true){
 				taskq->unlock();
 				infoRecorder->logError("[TaskQueue]: the task is synchronized, %s.\n", typeid(*t).name());

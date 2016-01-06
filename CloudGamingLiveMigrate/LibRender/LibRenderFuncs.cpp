@@ -1345,7 +1345,7 @@ HRESULT FakedSetTexture(RenderChannel * rch) {
 	tex = (ClientTexture9*)(rch->tex_list[tex_id]);
 
 	if(tex == NULL) {
-		cg::core::infoRecorder->logTrace("FakedSetTexture(), Texture is NULL, tex id:%d, ERROR\n",tex_id);
+		cg::core::infoRecorder->logError("FakedSetTexture(), Texture is NULL, tex id:%d, ERROR\n",tex_id);
 	}
 
 #if 0

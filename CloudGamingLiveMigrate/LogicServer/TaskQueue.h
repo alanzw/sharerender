@@ -160,6 +160,13 @@ public:
 #endif
 		return ret;
 	}
+	inline int getCount(){
+		int ret = 0;
+		EnterCriticalSection(&cs);
+		ret = count;
+		LeaveCriticalSection(&cs);
+		return ret;
+	}
 	inline void lock(){
 #ifdef ENABLE_QUEUE_LOG
 		infoRecorder->logTrace("[TaskQueue]: lock the queue.\n");

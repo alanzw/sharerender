@@ -97,7 +97,6 @@ STDMETHODIMP_(ULONG) WrapperDirect3DDevice9::Release(THIS) {
 }
 
 /*** IDirect3DDevice9 methods ***/
-
 STDMETHODIMP WrapperDirect3DDevice9::TestCooperativeLevel(THIS){
 #ifdef ENBALE_DEVICE_LOG
 	infoRecorder->logTrace("WrapperDirect3DDevice9::TestCooperativeLevel() called\n");
@@ -109,7 +108,6 @@ STDMETHODIMP_(UINT) WrapperDirect3DDevice9::GetAvailableTextureMem(THIS) { retur
 
 STDMETHODIMP WrapperDirect3DDevice9::EvictManagedResources(THIS) {
 #ifdef ENBALE_DEVICE_LOG
-
 	infoRecorder->logTrace("WrapperDirect3DDevice9::EvictManagedResources() TODO\n");
 #endif
 	return m_device->EvictManagedResources();

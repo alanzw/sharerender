@@ -86,44 +86,86 @@ void printBytes(char * data, int count){
 	cg::core::infoRecorder->logTrace("\n");
 #endif
 }
-
+string sockopterrorstr(int err){
+	string ret;
+	switch(err){
+	case WSANOTINITIALISED:
+		ret = string("WSANOTINITIALISED");
+		break;
+	case WSAENETDOWN:
+		ret = string("WSAENETDOWN");
+		break;
+	case WSAEFAULT:
+		ret = string("WSAEFAULT");
+		break;
+	case WSAEINPROGRESS:
+		ret = string("WSAEINPROGRESS");
+		break;
+	case WSAEINVAL:
+		ret = string("WSAEINVAL");
+		break;
+	case WSAENETRESET:
+		ret = string("WSAENETRESET");
+		break;
+	case WSAENOPROTOOPT:
+		ret = string("WSAENOPROTOOPT");
+		break;
+	case WSAENOTCONN:
+		ret = string("WSAENOTCONN");
+		break;
+	case WSAENOTSOCK:
+		ret = string("WSAENOTSOCK");
+		break;
+	}
+	return ret;
+}
 
 bool setTcpBuffer(SOCKET s){
 	bool ret = false;
 	int sndWnd = 8388608; // 8MB
-	if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, (const char *)&sndWnd, sizeof(sndWnd)) == 0){
-		cg::core::infoRecorder->logError("VIDEO SERVER INFO: set the tcp sending buffer success\n");
+	int socketret= 0;
+	//SOCKET_ERROR
+	if ((socketret = setsockopt(s, SOL_SOCKET, SO_SNDBUF, (const char *)&sndWnd, sizeof(sndWnd))) == 0){
+		cg::core::infoRecorder->logError("[SOCKET]: set the TCP sending buffer success\n");
 		ret = true;
 	}
 	else{
-		cg::core::infoRecorder->logError("VIDEO SERVER ERROR: set the tcp sending buffer failed.\n");
+		socketret = GetLastError();
+		cg::core::infoRecorder->logError("[SOCKET]: set the TCP sending buffer on socket:%p failed with:%d, str:%s, str error:%s.\n", s, socketret, sockopterrorstr(socketret).c_str(), strerror(socketret));
+
 		ret = false;
 	}
 
 	int nRecvBuf = 8388608;//ÉèÖÃÎª32K 
 	int leng = 4;
-	if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, (const char*)&nRecvBuf, sizeof(int))== 0){
-		cg::core::infoRecorder->logError("[SOCKET]: set recv buffer succeeded.\n");
+	socketret = 0;
+	if ((socketret = setsockopt(s, SOL_SOCKET, SO_RCVBUF, (const char*)&nRecvBuf, sizeof(int)))== 0){
+		cg::core::infoRecorder->logError("[SOCKET]: set TCP recv buffer succeeded.\n");
 		ret = true;
 	}
 	else{
 		ret = false;
-		cg::core::infoRecorder->logError("[SOCKET]: set recv buffer failed.\n");
+		socketret = GetLastError();
+		cg::core::infoRecorder->logError("[SOCKET]: set TCP recv buffer on socket:%p failed with:%d, str:%s.\n", s, socketret, sockopterrorstr(socketret).c_str());
 	}
 	return ret;
-
 }
 
 bool setNBIO(SOCKET s){
+	bool ret = true;
 	u_long ul = 1;
 	cg::core::infoRecorder->logError("[Network]: set nonblocking io.\n");
-	ioctlsocket(s, FIONBIO, (u_long *)&ul);
-	return true;
+	if(ioctlsocket(s, FIONBIO, (u_long *)&ul) == SOCKET_ERROR){
+		// error
+		int err = GetLastError();
+		cg::core::infoRecorder->logError("[Network]: set nonblocking on socket:%p failed with:%d, str:%s.\n", s, err, sockopterrorstr(err));
+		ret = false;
+	}
+	return ret;
 }
 
 namespace cg{
 	namespace core{
-
 		Network::Network() {
 
 		}
@@ -459,11 +501,11 @@ namespace cg{
 		void Network::set_connect_socket(const SOCKET _connect_socket) {
 			//setNBIO(_connect_socket);
 #if 1
-			if (setTcpBuffer(connect_socket)){
+			if (setTcpBuffer(_connect_socket)){
 
 			}
 			else{
-				cg::core::infoRecorder->logTrace("[Network]: sending buffer set failed.\n");
+				cg::core::infoRecorder->logError("[Network]: sending buffer set failed.\n");
 			}
 #endif
 			cg::core::infoRecorder->logError("[Network]: set the connection socket:%p.\n", _connect_socket);

@@ -53,7 +53,7 @@ namespace cg{
 				return NULL;
 			}
 		}
-		cg::core::infoRecorder->logError("[Encoder]: load frame: %p.\n", data);
+		cg::core::infoRecorder->logTrace("[Encoder]: load frame: %p.\n", data);
 		return data;
 	}
 

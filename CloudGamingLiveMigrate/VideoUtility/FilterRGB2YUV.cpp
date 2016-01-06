@@ -514,7 +514,7 @@ filter_quit:
 		srcdata = srcPipe->load_data();
 		if(srcdata == NULL){
 			// wait the data
-			infoRecorder->logError("[Filter]: wait for pipe %s notify event %p.\n", srcPipe->name(), cond);
+			infoRecorder->logTrace("[Filter]: wait for pipe %s notify event %p.\n", srcPipe->name(), cond);
 			srcPipe->wait(cond, condMutex);
 			srcdata = srcPipe->load_data();
 

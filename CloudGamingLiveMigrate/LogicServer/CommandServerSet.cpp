@@ -318,10 +318,12 @@ void ContextManager::checkObj(IdentifierBase * obj){
 #ifndef SINGLE_CONTEXT
 	// set the status to QUEUE_CREATE
 	if(obj->stable){
-		//DebugBreak();
 		ContextAndCache * otherCtx = NULL; //ctx_init.getNextCtx();
-		while(otherCtx = ctx_init.getNextCtx()){
-			otherCtx->pushUpdate(obj);	
+		// ERROR
+		for(int j = 0; j < ctx_init.getCtxCount(); j++){
+			otherCtx = ctx_init.getCtx(j);
+			otherCtx->pushUpdate(obj);
+
 		}
 	}
 #else
@@ -338,14 +340,12 @@ void ContextManager::checkCreation(IdentifierBase * obj){
 	}
 }
 
-
 void ContextManager::pushSync(IdentifierBase * obj){
 #ifdef ENABLE_MGR_LOG
 	infoRecorder->logTrace("[ContextManager]: push sync object.\n");
 #endif
 	if(_ctx_cache)
 		_ctx_cache->pushSync(obj);
-
 }
 
 // TODO
@@ -365,7 +365,7 @@ bool ContextManager::switchCtx(){
 			cur_ctx->taskQueue->setStatus(QUEUE_CREATE);
 		}
 		else if(cur_ctx->status == CtxStatus::CTX_READY){
-			infoRecorder->logTrace("[ContextManager]: context is ready for switching.\n");
+			infoRecorder->logError("[ContextManager]: context is ready for switching.\n");
 			// add to the ctx_pool
 			// remove from init pool
 			ctx_init.remove(cur_ctx);
@@ -375,7 +375,6 @@ bool ContextManager::switchCtx(){
 			cg::core::CmdController * cmdCtrrl = cg::core::CmdController::GetCmdCtroller();
 
 			cmdCtrrl->addRenderConnection();
-
 			cur_ctx->preperationEnd();
 			//addCtxToPool(cur_ctx);   // available to switch
 		}
@@ -388,30 +387,64 @@ bool ContextManager::switchCtx(){
 	}
 
 	// get a context with status CTX_READY
+	if(!ctx_pool.getCtxCount()){
+		infoRecorder->logTrace("[ContextManager]: no context availbale.\n");
+		return false;
+	}
 	ContextAndCache * n = NULL;
 	n = ctx_pool.getNextCtx();
-	//n = getNextInPool(_ctx_cache);
 	if(n){
-		infoRecorder->logTrace("[ContextManager]: switch get another available context to use.\n");
+		infoRecorder->logError("[ContextManager]: switch get another available context to use.\n");
 		ret = true;
 		_ctx_cache = n;
 	}
 	else{
 		// always means that there's only one context
-		infoRecorder->logTrace("[ContextManager]: switch get No available context to use.\n");
+		infoRecorder->logError("[ContextManager]: switch get No available context to use. Should never be here\n");
 		// TODO, should never be here
-		//DebugBreak();
 		ret = false;
-		// no change to _ctx_cache
 	}
 	return ret;
+}
+
+bool ContextManager::declineCtx(SOCKET s){
+	ContextAndCache * ret = NULL;
+	ContextAndCache * ctx = NULL;
+	infoRecorder->logError("[ContextManager]: remove context in init.\n");
+	for(int i = 0; i < ctx_init.getCtxCount(); i++){
+		ctx = ctx_init.getCtx(i);
+		if(ctx && ctx->connect_socket == s){
+			ctx_init.remove(ctx);
+			ret  = ctx;
+			goto REMOVAL;
+		}
+	}
+	infoRecorder->logError("[ContextManager]: remove context in pool.\n");
+	for(int i = 0; i < ctx_pool.getCtxCount(); i++){
+		ctx = ctx_pool.getCtx(i);
+		if(ctx && ctx->connect_socket == s){
+			ctx_pool.remove(ctx);
+			ret = ctx;
+			goto REMOVAL;
+		}
+	}
+	return false;
+REMOVAL:
+	if(ret == _ctx_cache){
+		_ctx_cache = NULL;
+	}
+	//release the ctx
+	delete ret;
+	ret = NULL;
+	// here always means return NULL
+	return true;
 }
 
 // add context to init pool, not ready for using
 int ContextManager::addCtx(ContextAndCache * _ctx){
 	int ret = 0;
+	infoRecorder->logError("[ContextManager]: add ctx:%p.\n", _ctx);
 #ifdef ENABLE_MGR_LOG
-
 	infoRecorder->logTrace("[ContextManager]: add ctx:%p.\n", _ctx);
 #endif
 #ifndef ENABLE_HOT_PLUG
@@ -431,14 +464,12 @@ int ContextManager::addCtx(ContextAndCache * _ctx){
 	// assume that every context that added is not ready to render
 	infoRecorder->logTrace("[ContextManager]: after add ctx to init array.\n");
 	ctx_init.add(_ctx);
-	
 #endif
-
 	ctxCount ++;
 	_ctx->preperationStart();
 #ifndef SINGLE_CONTEXT
 	// start the queue thread
-	infoRecorder->logTrace("[ContextManager]: start the task queue proc.\n");
+	infoRecorder->logError("[ContextManager]: start the task queue proc.\n");
 	// add the context to task queue
 	_ctx->taskQueue->setContext(_ctx);
 	_ctx->taskQueue->startThread();
@@ -446,7 +477,6 @@ int ContextManager::addCtx(ContextAndCache * _ctx){
 
 	return ret;
 }
-
 
 //////////////////////////// CommandServerSet////////////////////////////
 CommandServerSet * CommandServerSet::csSet;
@@ -460,12 +490,12 @@ bool CommandServerSet::lock(){
 #endif
 	return true;
 }
+
 void CommandServerSet::unlock(){
 #ifdef ENABLE_SET_LOCK
 	ReleaseMutex(mutex);
 #endif
 }
-
 
 // this file is for the command server set
 // constructor and destructor
@@ -478,7 +508,6 @@ CommandServerSet::CommandServerSet(int _limit_size /* Max_Buf_Size */)
 			return;
 		}
 
-		//this->clients = 0;
 		FD_ZERO(&fdSocket);
 
 		ctx_mgr_ = new ContextManager();
@@ -506,18 +535,22 @@ CommandServerSet::~CommandServerSet(){
 
 // function to add a new render server( actually a new render client), called by distributor
 int CommandServerSet::addServer(SOCKET s){
-	infoRecorder->logTrace("[CommandServerSet]: add server.\n");
+	infoRecorder->logTrace("[CommandServerSet]: add server, current clients:%d.\n", clients);
 	// create cache context with socket s
 
 	// find the socket, if not exist
 	if(!ctx_mgr_->isSocketMapped(s)){
+		ctx_mgr_->mapSocket(s);
 		ContextAndCache * ctx = new ContextAndCache();
 		//set cache filter for new context and cache
+		clients++;
 		ctx->set_cache_filter();
 		infoRecorder->logError("[CommandServerSet]: to set the connection socket.\n");
 		ctx->set_connect_socket(s);
+		//DebugBreak();
 		ctx_mgr_->addCtx(ctx);
 
+		infoRecorder->logError("[CommandServerSet]: to send msg back to render.\n");
 		// send something
 		char msg[100]= {0};
 		sprintf(msg, "Hello, Everybody!");
@@ -527,30 +560,27 @@ int CommandServerSet::addServer(SOCKET s){
 	else{
 		infoRecorder->logTrace("[CommandServerSet]: the socket is already mapped.\n");
 	}
-
+	infoRecorder->logError("[CommandServerSet]: add server succ.\n");
 	return 0;
 }
 
 // delete a server from normal set
 int CommandServerSet::declineServer(SOCKET s){
-	infoRecorder->logTrace("[CommandServerSet]: decline server.\n");
+	infoRecorder->logError("[CommandServerSet]: decline server, sock:%p, clients:%d.\n", s, clients);
+
 	ContextAndCache * ctx = NULL;
 	if(!clients)
 		return -1;
 	if(ctx_mgr_->isSocketMapped(s)){
 		// to decline
-		ctx = ctx_mgr_->declineCtx(s);
-		
-		if(!ctx){
-			// error
+		if(ctx_mgr_->declineCtx(s)){
+			clients--;
+		}
+		else{
 			infoRecorder->logError("[CommandServerSet]: remove ctx failed, but the socket is mapped.\n");
 			return -1;
 		}
-		// release the context
-		infoRecorder->logError("[CommandServerSet]: to release the context with sock:%p, ctx:%p.\n", s, ctx);
-		delete ctx;
-		ctx = NULL;
-
+		
 		//unmap the socket
 		if(!ctx_mgr_->unmapSocket(s)){
 			infoRecorder->logError("[CommandServerSet]: unmap the socket is failed.\n");
@@ -559,14 +589,13 @@ int CommandServerSet::declineServer(SOCKET s){
 	}
 	else{
 		// invalid socket
-		infoRecorder->logTrace("[CommandServerSet]: the socket did not exist in map.\n");
+		infoRecorder->logError("[CommandServerSet]: the socket did not exist in map.\n");
 		return -1;
 	}
 	return 0;
 }
 
 // interface from Buffer
-
 
 //
 

@@ -5,7 +5,7 @@ using namespace cg;
 using namespace cg::core;
 
 evutil_socket_t connectToGraphic(char * url, int port){
-	infoRecorder->logTrace("[Global]: connect to graphic server '%s:%d'\n", url, port);
+	infoRecorder->logError("[Global]: connect to graphic server '%s:%d'\n", url, port);
 	evutil_socket_t sock;
 	sockaddr_in sin;
 
@@ -17,7 +17,7 @@ evutil_socket_t connectToGraphic(char * url, int port){
 	sock = socket(AF_INET, SOCK_STREAM, 0);
 
 	if(connect(sock, (sockaddr *)&sin, sizeof(sin)) == SOCKET_ERROR){
-		infoRecorder->logTrace("[Global]: connect to graphic server failed with %d.\n", WSAGetLastError());
+		infoRecorder->logError("[Global]: connect to graphic server failed with %d.\n", WSAGetLastError());
 		return NULL;
 	}
 	return sock;

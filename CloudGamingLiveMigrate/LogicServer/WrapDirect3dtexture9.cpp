@@ -59,6 +59,9 @@ int WrapperDirect3DTexture9::sendCreation(void *ctx){
 #ifdef ENABLE_TEXTURE_LOG
 	infoRecorder->logTrace("[WrapperDirect3DTexture9]: send creation.\n");
 #endif
+	if(id == 162){
+		//infoRecorder->logError("[WrapperDrirect3DTexture9]: 162 to send creation.\n");
+	}
 
 	ContextAndCache * c = (ContextAndCache *)ctx;
 
@@ -81,7 +84,6 @@ int WrapperDirect3DTexture9::checkCreation(void *ctx){
 #endif
 	ContextAndCache * cc = (ContextAndCache *)ctx;
 	int ret = 0;
-
 	//////////////
 
 	if(!cc->isCreated(creationFlag)){
