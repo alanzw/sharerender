@@ -153,10 +153,16 @@ public:
 	inline bool isDone(){
 		bool ret = false;
 		EnterCriticalSection(&cs);
-		ret = count == 0 ? true: false;
+		ret = taskQueue.empty();
+
+		//ret = count == 0 ? true: false;
 		LeaveCriticalSection(&cs);
 #ifdef ENABLE_QUEUE_LOG
 		infoRecorder->logTrace("[TaskQueue]: is done ? %s\n", ret ? "true" : "false");
+#endif
+#if 0
+		if(ret)
+			infoRecorder->logError("[TaskQueue]: is done ? %s, count:%d\n", ret ? "true" : "false", count);
 #endif
 		return ret;
 	}

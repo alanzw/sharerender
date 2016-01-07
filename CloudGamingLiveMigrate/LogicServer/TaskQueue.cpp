@@ -32,8 +32,8 @@ DWORD TaskQueue::QueueProc(LPVOID param){
 				if(taskq->qStatus == QUEUE_CREATE){
 #ifdef ENABLE_QUEUE_LOG
 					infoRecorder->logTrace("[QueueProc]: create, check creation.\n");
-#endif
 					t->print();
+#endif
 					t->checkCreation(taskq->ctx);
 					if(t->stable){
 						t->checkUpdate(taskq->ctx);
@@ -43,9 +43,9 @@ DWORD TaskQueue::QueueProc(LPVOID param){
 				else if(taskq->qStatus == QUEUE_UPDATE){
 #ifdef ENABLE_QUEUE_LOG
 					infoRecorder->logTrace("[QueueProc]: update, check update.\n"); 
+					t->print();
 #endif
 					t->checkCreation(taskq->ctx);
-					t->print();
 					t->checkUpdate(taskq->ctx);
 				}else{
 					infoRecorder->logError("[QueueProc]: task status is INVALID.\n");
@@ -55,7 +55,7 @@ DWORD TaskQueue::QueueProc(LPVOID param){
 
 			taskq->popObj();
 		}
-		infoRecorder->logError("[QueueProc]: wait the task event.\n");
+		//infoRecorder->logError("[QueueProc]: wait the task event.\n");
 		WaitForSingleObject(taskq->getEvent(), INFINITE);
 		taskq->lock();
 	}

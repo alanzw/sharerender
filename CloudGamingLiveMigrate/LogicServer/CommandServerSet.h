@@ -80,23 +80,23 @@ public:
 
 	// the preperation time measurment
 	DWORD start, end;
-	inline void preperationStart(){ start = GetTickCount(); }
-	inline void preperationEnd(){ 
+	inline void		preperationStart(){ start = GetTickCount(); }
+	inline void		preperationEnd(){ 
 		end = GetTickCount(); 
 		infoRecorder->logError("ctx init(ms): %d.\n", end - start );
 	}
 
-	int getCacheIndex(const char * buffer, size_t size, int & hit_id, int & rep_id);
+	int				getCacheIndex(const char * buffer, size_t size, int & hit_id, int & rep_id);
 
-	inline void setIndex(int i){ index = i;}
-	inline int getIndex(){ return index; }
-	inline void lock(){
+	inline void		setIndex(int i){ index = i;}
+	inline int		getIndex(){ return index; }
+	inline void		lock(){
 #ifdef _CONTEXT_LOCK_
 		WaitForSingleObject(lockMutex, INFINITE); 
 		infoRecorder->logTrace("[ContextAndCache]: lock the context.\n");
 #endif
 	}
-	inline void unlock(){ 
+	inline void		unlock(){ 
 #ifdef _CONTEXT_LOCK_
 		ReleaseMutex(lockMutex); 
 		infoRecorder->logTrace("[ContextAndCache]: unlock the context.\n");
@@ -171,6 +171,19 @@ public:
 
 };
 
+class IndexManager{
+	static IndexManager * _indexMgr;
+	unsigned int _maxIndex;
+	unsigned int _bitmap;
+	IndexManager(int maxIndex);
+public:
+	static IndexManager *GetIndexManager(int maxIndex);
+	int getAvailableIndex();
+	bool resetIndex(int index);
+};
+
+
+
 class IndexedContextPool{
 	int ctxCount;
 	ContextAndCache * array[MAX_RENDER_COUNT * 2];
@@ -189,26 +202,14 @@ public:
 			array[i] = NULL;
 		}
 	}
-	~IndexedContextPool(){
-		DeleteCriticalSection(&section);
-		ctxCount = 0;
-		curIndex = -1;
-
-	}
+	~IndexedContextPool(){}
 	int getCtxCount(){
-		int ret = 0;
 		lock();
-		ret = ctxCount;
 		unlock();
-		//infoRecorder->logError("[IndexedContextPool]: get context count:%d.\n", ctxCount);
-		return ret;
+		return ctxCount;
 	}
-	inline void lock(){ 
-		//infoRecorder->logError("[IndexContextPool]: lock()\n");
-		EnterCriticalSection(&section); }
-	inline void unlock(){ 
-		//infoRecorder->logError("[IndexContextPool]: unlock()\n");
-		LeaveCriticalSection(&section); }
+	void lock(){ EnterCriticalSection(&section); }
+	void unlock(){ LeaveCriticalSection(&section); }
 	// re-order the list, by the context's id
 	bool sort(){
 		ContextAndCache * t = NULL;
@@ -218,6 +219,7 @@ public:
 				array[0] = array[i];
 				array[i] = t;
 			}
+
 		}
 		return true;
 	}
@@ -286,16 +288,22 @@ public:
 		// get the current work context
 		if(curIndex == -1){
 			curIndex = 0;
+			curCtx = array[curIndex];
+			unlock();
+			return curCtx;
 		}
 		else{
 			curIndex++;
 			int t = curIndex;
 			curIndex = t % ctxCount;
-		}
+			if(!curIndex)
+				return NULL; // =  0 or ctxCount, invalid
 
-		curCtx = array[curIndex];
-		unlock();
-		return curCtx;
+			// valid value
+			curCtx = array[curIndex];
+			unlock();
+			return curCtx;
+		}
 	}
 	ContextAndCache * getCtx(int index){
 		print();
@@ -303,7 +311,7 @@ public:
 	}
 	// print the pool
 	void print(){
-		infoRecorder->logError("[IndexedContextPool]: the pool has '%d' contexts.\n", ctxCount);
+		infoRecorder->logTrace("[IndexedContextPool]: the pool has '%d' contexts.\n", ctxCount);
 	}
 };
 
@@ -360,10 +368,6 @@ public:
 	// 
 	bool isSocketMapped(SOCKET s){
 		return socketMap.getValue(s);
-	}
-	bool mapSocket(SOCKET s){
-		return socketMap.addMap(s, true);
-
 	}
 	bool unmapSocket(SOCKET s){
 		return socketMap.unMap(s);
@@ -654,11 +658,11 @@ public:
 	// lock all 
 	bool			lock();
 	void			unlock();
-	void			waitCtxEvent(){
+	inline void		waitCtxEvent(){
 		infoRecorder->logTrace("[CommnadServerSet]: wait event:%p.\n", ctxEvent);
 		WaitForSingleObject(ctxEvent, INFINITE);
 	}
-	void			setCtxEvent(){
+	inline void		setCtxEvent(){
 		// start queue proc to deal with update or create task for objects
 		SetEvent(ctxEvent);
 	}

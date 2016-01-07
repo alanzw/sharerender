@@ -12,6 +12,44 @@
 //#define ENABLE_MGR_LOG      // log for context manager
 
 
+IndexManager::IndexManager(int maxIndex): _maxIndex(maxIndex), _bitmap(0){
+
+}
+
+IndexManager * IndexManager::GetIndexManager(int maxIndex){
+	if(!_indexMgr){
+		_indexMgr = new IndexManager(maxIndex);
+	}
+	return _indexMgr;
+}
+
+// return an available index for a context
+int IndexManager::getAvailableIndex(){
+	unsigned int mask = 1;
+	int ret = 0;
+	bool find = false;
+	for(ret = 0; ret < sizeof(int)*8; ret++){
+		if(!(_bitmap & (mask << ret))){
+			find = true;
+			break;
+		}
+	}
+	if(find)
+		return ret;
+	else
+		return -1;
+}
+
+bool IndexManager::resetIndex(int index){
+	if(index >= sizeof(int) * 8)
+		return false;
+	unsigned int mask = 1 << index;
+	unsigned int remask = ~mask;
+
+	_bitmap &= remask;
+	return true;
+}
+
 ////////////////////// context and cache ///////////////////////////
 ContextAndCache::ContextAndCache(int _index){
 #ifdef ENABLE_CTX_LOG
@@ -394,7 +432,7 @@ bool ContextManager::switchCtx(){
 	ContextAndCache * n = NULL;
 	n = ctx_pool.getNextCtx();
 	if(n){
-		infoRecorder->logError("[ContextManager]: switch get another available context to use.\n");
+		//infoRecorder->logError("[ContextManager]: switch get another available context to use.\n");
 		ret = true;
 		_ctx_cache = n;
 	}
@@ -433,6 +471,10 @@ REMOVAL:
 	if(ret == _ctx_cache){
 		_ctx_cache = NULL;
 	}
+	// clear the flags in each object with Wrappered directx
+
+
+
 	//release the ctx
 	delete ret;
 	ret = NULL;
@@ -541,7 +583,8 @@ int CommandServerSet::addServer(SOCKET s){
 	// find the socket, if not exist
 	if(!ctx_mgr_->isSocketMapped(s)){
 		ctx_mgr_->mapSocket(s);
-		ContextAndCache * ctx = new ContextAndCache();
+		IndexManager * indexMgr = IndexManager::GetIndexManager(sizeof(int) * 8);
+		ContextAndCache * ctx = new ContextAndCache(indexMgr->getAvailableIndex());
 		//set cache filter for new context and cache
 		clients++;
 		ctx->set_cache_filter();

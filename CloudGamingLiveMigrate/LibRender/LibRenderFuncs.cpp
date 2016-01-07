@@ -26,7 +26,7 @@ using namespace cg::core;
 
 
 // this definition will log the specific string for each command
-#define ENABLE_LOG_SPEC_STRING
+//#define ENABLE_LOG_SPEC_STRING
 
 
 #ifdef BACKBUFFER_TEST
@@ -41,7 +41,9 @@ extern SmallHash<HWND, HWND> serverToClient;
 	rch->curDevice = (LPDIRECT3DDEVICE9)(device_list[obj_id]);
 
 HRESULT FakeDCreateWindow(RenderChannel * rch) {
+#ifdef ENABLE_LOG_SPEC_STRING
 	cg::core::infoRecorder->logTrace("FakedCreateWindow() called\n");
+#endif
 	TCHAR szAppName[]= TEXT("HelloWin");
 	TCHAR szClassName[]= TEXT("HelloWinClass");
 
@@ -68,7 +70,9 @@ HRESULT FakeDCreateWindow(RenderChannel * rch) {
 }
 
 HRESULT FakeDDirectCreate(RenderChannel * rch){
+#ifdef ENABLE_LOG_SPEC_STRING
 	cg::core::infoRecorder->logTrace("server Direct3DCreate9 called\n");
+#endif
 
 	rch->gD3d = Direct3DCreate9(D3D_SDK_VERSION);
 	if (rch->gD3d)
@@ -81,7 +85,9 @@ HRESULT FakeDDirectCreate(RenderChannel * rch){
 
 HRESULT FakedCreateDevice(RenderChannel * rch) {
 	//printf("FakedCreateDevice called\n");
+#ifdef ENABLE_LOG_SPEC_STRING
 	cg::core::infoRecorder->logTrace("FakedCreateDevice called\n");
+#endif
 
 	return rch->clientInit();
 }
@@ -98,7 +104,7 @@ HRESULT FakedBeginScene(RenderChannel * rch) {
 
 HRESULT FakedEndScene(RenderChannel * rch) {
 	//printf("FakedEndScene called\n");
-	#ifdef ENABLE_LOG_SPEC_STRING
+#ifdef ENABLE_LOG_SPEC_STRING
 	cg::core::infoRecorder->logTrace("FakedEndScene()\n");
 #endif
 	rch->getDevice(rch->obj_id);
@@ -106,7 +112,7 @@ HRESULT FakedEndScene(RenderChannel * rch) {
 }
 
 HRESULT FakedClear(RenderChannel * rch) {
-	//printf("Faked Clear called\n");
+
 	DWORD count = rch->cc->read_uint();
 	D3DRECT pRects;
 
@@ -120,7 +126,7 @@ HRESULT FakedClear(RenderChannel * rch) {
 	float Z = rch->cc->read_float();
 	DWORD stencil = rch->cc->read_uint();
 
-	#ifdef ENABLE_LOG_SPEC_STRING
+#ifdef ENABLE_LOG_SPEC_STRING
 	cg::core::infoRecorder->logTrace("Faked Clear(%d, %p, %d, %d, %f, %d), Color=0x%08x\n",count, is_null ? NULL : &pRects, Flags, color, Z, stencil, color);
 #endif
 
@@ -136,11 +142,9 @@ HANDLE presentEvent = NULL;
 HANDLE presentMutex = NULL;
 //extern Channel * gChannel;
 HRESULT FakedPresent(RenderChannel * rch) {
-	//cg::core::infoRecorder->logTrace("Faked Present called\n");
 	static float last_present = 0;
 	float now_present = timeGetTime();
 
-	//cg::core::infoRecorder->logError("FakedPresent(), present gap=%.4f\n", now_present - last_present);
 	gap = now_present - last_present;
 	last_present = now_present;
 
@@ -205,8 +209,6 @@ char * TransformEnumerationToSting(D3DTRANSFORMSTATETYPE trans){
 #endif
 
 HRESULT FakedSetTransform(RenderChannel * rch) {
-	//cg::core::infoRecorder->logTrace("FakedSetTransform called\n");
-
 	short st = rch->cc->read_short();
 	D3DTRANSFORMSTATETYPE state = (D3DTRANSFORMSTATETYPE)st;
 	unsigned short mask = rch->cc->read_ushort();
@@ -451,13 +453,11 @@ char * RenderStateToString(D3DRENDERSTATETYPE state){
 #endif
 
 HRESULT FakedSetRenderState(RenderChannel * rch) {
-	//cg::core::infoRecorder->logTrace("FakedSetRenderState called\n");
-
 	D3DRENDERSTATETYPE State = (D3DRENDERSTATETYPE)(rch->cc->read_uint());
 	DWORD Value = rch->cc->read_uint();
 
 	rch->getDevice(rch->obj_id);
-	#ifdef ENABLE_LOG_SPEC_STRING
+#ifdef ENABLE_LOG_SPEC_STRING
 	char * strState = RenderStateToString(State);
 	cg::core::infoRecorder->logTrace("FakedSetRenderState(%s, %d).\n", strState, Value);
 	free(strState);
