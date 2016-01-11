@@ -17,7 +17,6 @@ namespace cg{
 		enum COMMAND_SERVER_STATUS{
 			ALL_READY, // all ready means that all data needed for rendering is ready at client
 			NON_READY, // this is for the new added command server, the data needed by client is not ready
-
 			NO_STATUS   /// error status
 		};
 
@@ -30,7 +29,6 @@ namespace cg{
 			Buffer* dump_buffer();
 
 			void write_vec(int op_code, float* vec, int size=16);
-
 			void init();
 			void start_up();
 			void shut_down();

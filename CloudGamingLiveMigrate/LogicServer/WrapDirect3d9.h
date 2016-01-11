@@ -8,10 +8,10 @@ class WrapperDirect3D9 : public IDirect3D9 {
 private:
 	IDirect3D9* m_d3d;
 	int id;
-	static HashSet m_list;
 public:
 	WrapperDirect3D9(IDirect3D9* m_ptr, int _id);
 	static int ins_count;
+	static HashSet m_list;
 
 	static WrapperDirect3D9* GetWrapperD3D9(IDirect3D9* ptr);
 	int GetID();

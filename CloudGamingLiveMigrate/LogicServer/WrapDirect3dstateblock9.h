@@ -3,7 +3,6 @@
 
 #include "CommandServerSet.h"
 
-
 #ifdef MULTI_CLIENTS
 
 // linear memory to record all the functions
@@ -86,10 +85,12 @@ public:
 	StateBlock * stateBlock;  // when created with begin/end state block, the stateBlock record all commands for the state block
 #endif
 
+	static HashSet m_list;
 	static int ins_count;
 	WrapperDirect3DStateBlock9(IDirect3DStateBlock9* _sb, int _id);
 	int GetID();
 	void SetID(int id);
+	static WrapperDirect3DStateBlock9* GetWrapperStateBlock9(IDirect3DStateBlock9 *ptr);
 	IDirect3DStateBlock9* GetSB9();
 #ifdef MULTI_CLIENTS
 	

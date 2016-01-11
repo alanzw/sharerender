@@ -5,13 +5,11 @@
 #include "../LibCore/Log.h"
 #include "CommandServerSet.h"
 
-//#include "Opcode.h"
 #ifndef MULTI_CLIENTS
 #define MULTI_CLIENTS
 #endif   // MULTI_CLIENTS
 
 #ifdef MULTI_CLIENTS
-
 
 int WrapperDirect3DCubeTexture9::sendCreation(void * ctx){
 	infoRecorder->logTrace("[WrapperDirect3DCubeTextrue9]: send the creation command.\n");
@@ -116,7 +114,6 @@ STDMETHODIMP_(ULONG) WrapperDirect3DCubeTexture9::Release(THIS) {
 	infoRecorder->logError("WrapperDirect3DCubeTexture9::Release(), ref:%d\n", hr);
 #endif
 	return hr;
-	//return D3D_OK;
 }
 
 /*** IDirect3DBaseTexture9 methods ***/
@@ -127,13 +124,13 @@ STDMETHODIMP WrapperDirect3DCubeTexture9::GetDevice(THIS_ IDirect3DDevice9** ppD
 	HRESULT hr = this->m_cube_tex->GetDevice(&base);
 	WrapperDirect3DDevice9 * ret = WrapperDirect3DDevice9::GetWrapperDevice9(base);
 	if(ret == NULL){
-		infoRecorder->logTrace("WrapperDirect3DCubeTexture9::GetDevice() return NULL\n");
+		infoRecorder->logError("WrapperDirect3DCubeTexture9::GetDevice() return NULL\n");
 	}
 	else{
 
 	}
 	//*ppDevice = ret;
-	*ppDevice = base;
+	*ppDevice = dynamic_cast<IDirect3DDevice9 *>(base);
 	return hr;
 }
 STDMETHODIMP WrapperDirect3DCubeTexture9::SetPrivateData(THIS_ REFGUID refguid,CONST void* pData,DWORD SizeOfData,DWORD Flags) {
@@ -239,7 +236,7 @@ STDMETHODIMP WrapperDirect3DCubeTexture9::GetCubeMapSurface(THIS_ D3DCUBEMAP_FAC
 		
 	}
 
-	*ppCubeMapSurface = surface;
+	*ppCubeMapSurface = dynamic_cast<IDirect3DSurface9 *>(surface);
 
 	return hr;
 }

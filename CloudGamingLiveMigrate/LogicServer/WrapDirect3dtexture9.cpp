@@ -664,8 +664,6 @@ STDMETHODIMP WrapperDirect3DTexture9::GetSurfaceLevel(THIS_ UINT Level,IDirect3D
 		cs.end_command();
 #else
 		// TODO : check the texture object is exist or not !
-		//csSet->checkObj(this);
-		//csSet->checkObj(this);
 		csSet->checkCreation(this);
 
 		// create new surface

@@ -117,7 +117,6 @@ extern int g_frame_index;   // the frame index in a group of frames
 #endif
 
 #ifdef MULTI_CLIENTS
-
 // for supporting multiple clients
 class IdentifierBase{
 public:
@@ -129,8 +128,8 @@ public:
 	bool stable; // the object is changed frequently or not
 	bool sync; // indicate that whether the object is a synchronization object
 
-	IdentifierBase():creationFlag(0), updateFlag(0), sync(false), stable(true), curDeviceId(0){}
-	IdentifierBase(bool val):creationFlag(0), updateFlag(0), sync(val),stable(true), curDeviceId(0){}
+	IdentifierBase(): creationFlag(0), updateFlag(0), sync(false), stable(true), curDeviceId(0){}
+	IdentifierBase(bool val): creationFlag(0), updateFlag(0), sync(val), stable(true), curDeviceId(0){}
 
 	virtual int sendCreation(void * ctx) = 0;
 	virtual int sendUpdate(void * ctx) = 0;

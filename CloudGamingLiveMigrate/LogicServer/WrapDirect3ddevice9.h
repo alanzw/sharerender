@@ -19,14 +19,12 @@ class WrapperDirect3DDevice9: public IDirect3DDevice9
 #endif{
 private:
 	int id;
-	static HashSet m_list;
-
 	WrapperDirect3DVertexDeclaration9* cur_decl_;
 	WrapperDirect3DIndexBuffer9* cur_ib_;
 	WrapperDirect3DVertexBuffer9* cur_vbs_[MAX_SOURCE_COUNT];
-
 public:
 
+	static HashSet m_list;
 	int is_even_frame_;
 
 	IDirect3DDevice9* m_device;

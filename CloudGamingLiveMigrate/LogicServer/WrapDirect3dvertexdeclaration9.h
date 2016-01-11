@@ -16,6 +16,7 @@ public:
 	D3DVERTEXELEMENT9 * pDecl;
 	//char * pDecl;
 	short declSize;
+	static HashSet m_list;
 
 #ifdef MULTI_CLIENTS
 	//TODO
@@ -32,6 +33,7 @@ public:
 	static int ins_count;
 	WrapperDirect3DVertexDeclaration9(IDirect3DVertexDeclaration9* ptr, int _id);
 	IDirect3DVertexDeclaration9* GetVD9();
+	WrapperDirect3DVertexDeclaration9 *GetWrapperVertexDeclaration9(IDirect3DVertexDeclaration9 * ptr);
 	void SetID(int id);
 	int GetID();
 

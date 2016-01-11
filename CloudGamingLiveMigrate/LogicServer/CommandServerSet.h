@@ -27,7 +27,6 @@ using namespace cg::core;
 
 #define BUFFER_UNLOCK_UPDATE
 
-
 #ifndef MULTI_CLIENTS
 #define MULTI_CLIENTS
 #endif
@@ -59,27 +58,26 @@ enum ServerStatus{
 
 class ContextAndCache : public cg::core::Network, public cg::core::Buffer{
 public:
-	int index;   // the index of the context
-	Cache * cache_mgr_;
-	CtxStatus status;
+	int				index;   // the index of the context
+	Cache *			cache_mgr_;
+	CtxStatus		status;
 
 	// helper task queue to check the creation when the ctx is INIT, and check the update when READY
-	TaskQueue * taskQueue;
+	TaskQueue *		taskQueue;
+	HANDLE			lockMutex;   // the mutex to lock the context
 
-	HANDLE lockMutex;   // the mutex to lock the context
+	int				op_code;
+	int				obj_id;
+	int				sv_obj_id;
+	char *			sv_ptr;
+	char *			cm_len_ptr;
 
-	int op_code;
-	int obj_id;
-	int sv_obj_id;
-	char * sv_ptr;
-	char * cm_len_ptr;
+	char *			rid_pos;
+	short			func_count_;
+	int				size_limit_;
 
-	char * rid_pos;
-	short func_count_;
-	int size_limit_;
-
-	// the preperation time measurment
-	DWORD start, end;
+	// the preparation time measurment
+	DWORD			start, end;
 	inline void		preperationStart(){ start = GetTickCount(); }
 	inline void		preperationEnd(){ 
 		end = GetTickCount(); 
@@ -107,46 +105,47 @@ public:
 	~ContextAndCache();
 
 	// for bit map
-	inline bool isCreated(unsigned int mask){ return (1 << index) & mask; }
-	inline void resetCreation(unsigned int & mask){ mask &= ((-1) ^ ( 1 << index)); }
-	inline void setCreation(unsigned int & mask){ mask |= (1 << index); }
-	inline bool isChanged(unsigned int mask){ return (1<<index)&mask;	}
+	inline bool		isCreated(unsigned int mask){ return (1 << index) & mask; }
+	inline void		resetCreation(unsigned int & mask){ mask &= ((-1) ^ ( 1 << index)); }
+	inline void		setCreation(unsigned int & mask){ mask |= (1 << index); }
+	inline bool		isChanged(unsigned int mask){ return (1<<index)&mask;	}
 	// set bit to 0
-	inline void resetChanged(unsigned int & mask){	mask &= ((-1) ^ ( 1 << index)); }
-	inline void setChanged(unsigned int &mask){ mask |= (1 << index);}
-	inline void setChangedToAll(unsigned int &mask){ mask = 0x8fffffff; }
+	inline void		resetChanged(unsigned int & mask){	mask &= ((-1) ^ ( 1 << index)); }
+	inline void		setChanged(unsigned int &mask){ mask |= (1 << index);}
+	inline void		setChangedToAll(unsigned int &mask){ mask = 0x8fffffff; }
 
-	inline bool isSend(unsigned int mask){ return (1 << index) & mask; }
-	inline void setSend(unsigned int &mask){ mask |= (1 << index);}
+	inline bool		isSend(unsigned int mask){ return (1 << index) & mask; }
+	inline void		setSend(unsigned int &mask){ mask |= (1 << index);}
 
-	void	write_vec(int op_code, float * vec, int size, CommandRecorder * cr_);
+	void			write_vec(int op_code, float * vec, int size, CommandRecorder * cr_);
 
-	int flush(CommandRecorder * cr);
-	int flush();
+	int				flush(CommandRecorder * cr);
+	int				flush();
 
-	inline void	shutDown(CommandRecorder * cr){
+	inline void		shutDown(CommandRecorder * cr){
 		beginCommand(MaxSizeUntilNow_Opcode, 0);
 		endCommand(cr, 1);
 	}
 	inline int		getCommandLength(){ return get_cur_ptr() - sv_ptr; }
 	inline char *	getCurPtr(int length){ return get_cur_ptr(length);	}
 
-	Buffer * dumpBuffer();
+	Buffer *		dumpBuffer();
 
 	// the begin command and the end command
-	void	beginCommand(int _op_code, int id);
-	void	endCommand(int force_flush = 0);
-	void	endCommand(CommandRecorder * cr, int force_flush = 0);
-	inline void	cancelCommand(){
+	void			beginCommand(int _op_code, int id);
+	void			endCommand(int force_flush = 0);
+	void			endCommand(CommandRecorder * cr, int force_flush = 0);
+	inline void		cancelCommand(){
 		go_back(sv_ptr);
 		func_count_--;
 		unlock();
 	}
+	void			eraseFlag();    // this function achieved in ServerInit.cpp
 
-	void checkObj(IdentifierBase * obj);  // check the obj, created? 
-	void updateObj(IdentifierBase * obj);   // check the object's update
-	void pushUpdate(IdentifierBase * obj);   // push the object to the queue
-	void pushSync(IdentifierBase * obj); //push the sync object to the queue
+	void			checkObj(IdentifierBase * obj);  // check the obj, created? 
+	void			updateObj(IdentifierBase * obj);   // check the object's update
+	void			pushUpdate(IdentifierBase * obj);   // push the object to the queue
+	void			pushSync(IdentifierBase * obj); //push the sync object to the queue
 
 	// override
 	bool operator < (ContextAndCache & t1)const{
@@ -173,16 +172,14 @@ public:
 
 class IndexManager{
 	static IndexManager * _indexMgr;
-	unsigned int _maxIndex;
-	unsigned int _bitmap;
+	unsigned int	_maxIndex;
+	unsigned int	_bitmap;
 	IndexManager(int maxIndex);
 public:
 	static IndexManager *GetIndexManager(int maxIndex);
-	int getAvailableIndex();
-	bool resetIndex(int index);
+	int				getAvailableIndex();
+	bool			resetIndex(int index);
 };
-
-
 
 class IndexedContextPool{
 	int ctxCount;
@@ -219,7 +216,6 @@ public:
 				array[0] = array[i];
 				array[i] = t;
 			}
-
 		}
 		return true;
 	}
@@ -263,6 +259,7 @@ public:
 		unlock();
 		return toRemove;
 	}
+
 	// for test
 	ContextAndCache * remove(int index){
 		lock();
@@ -276,9 +273,11 @@ public:
 		unlock();
 		return toRemove;
 	}
+
 	ContextAndCache * getCurCtx(){
 		return curCtx;
 	}
+
 	ContextAndCache * getNextCtx(){
 		lock();
 		if(ctxCount <= 0){
@@ -288,23 +287,21 @@ public:
 		// get the current work context
 		if(curIndex == -1){
 			curIndex = 0;
-			curCtx = array[curIndex];
-			unlock();
-			return curCtx;
 		}
 		else{
 			curIndex++;
 			int t = curIndex;
 			curIndex = t % ctxCount;
-			if(!curIndex)
-				return NULL; // =  0 or ctxCount, invalid
-
-			// valid value
-			curCtx = array[curIndex];
-			unlock();
-			return curCtx;
 		}
+		curCtx = array[curIndex];
+		unlock();
+		return curCtx;
 	}
+
+	void printError(){
+		infoRecorder->logError("[IndexContextPool]: ctx count:%d, cur index:%d, cur ctx:%p.\n", ctxCount, curIndex, array[curIndex]);
+	}
+
 	ContextAndCache * getCtx(int index){
 		print();
 		return array[index];
@@ -341,51 +338,53 @@ public:
 		}
 	}
 	bool declineCtx(SOCKET s);
-
 	// switch the current work context, select another context with CTX_READY in ctx_pool
 	bool switchCtx();
 	// add a new exist context to init pool
 	int addCtx(ContextAndCache  * _ctx);
 
 	//// work for current ctx and cache
-	bool isCached(int _op_code){
+	inline bool isCached(int _op_code){
 		return _ctx_cache ? isCached(_op_code, _ctx_cache) : false;
 		//return isCached(_op_code, _ctx_cache);
 	}
-	void getCacheIndex(const char * buffer, size_t size, int &hit_id, int &rep_id){
+
+	inline void getCacheIndex(const char * buffer, size_t size, int &hit_id, int &rep_id){
 		return getCacheIndex(buffer, size, hit_id, rep_id, _ctx_cache);
 	}
 
-	int sendPacket(Buffer * buf){
+	inline int sendPacket(Buffer * buf){
 		return _ctx_cache ? sendPacket(buf, _ctx_cache) : 0;
 	}
 	// called when init
-	void setCacheFilter(){
+	inline void setCacheFilter(){
 		if(_ctx_cache)
 			return setCacheFilter(_ctx_cache);
 	}
 
-	// 
-	bool isSocketMapped(SOCKET s){
+	inline bool isSocketMapped(SOCKET s){
 		return socketMap.getValue(s);
 	}
-	bool unmapSocket(SOCKET s){
+	inline bool mapSocket(SOCKET s){
+		return socketMap.addMap(s, true);
+	}
+	inline bool unmapSocket(SOCKET s){
 		return socketMap.unMap(s);
 	}
+
 	inline SOCKET getCtxSocket(){ return _ctx_cache ? _ctx_cache->get_connect_socket() : NULL; }
 	
-	bool isCreated(unsigned int flag){
+	inline bool isCreated(unsigned int flag){
 		return _ctx_cache ? isCreated(flag, _ctx_cache) : true;
 	}
 
-	void setCreation(unsigned int &flag){
+	inline void setCreation(unsigned int &flag){
 		if(_ctx_cache)
 			setCreation(flag, _ctx_cache);
 	}
 
 	void checkObj(IdentifierBase * obj);  // check the obj in each context
 	void pushSync(IdentifierBase * obj); //push the sync object to the queue
-
 	void checkCreation(IdentifierBase * obj);// only check the creation for the object.
 	// for buffers that need to update or send data for once
 	inline bool		isChanged(unsigned int flag){

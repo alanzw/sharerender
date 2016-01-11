@@ -172,6 +172,7 @@ WrapperDirect3DVertexDeclaration9::WrapperDirect3DVertexDeclaration9(IDirect3DVe
 	//updateFlag = 0x8fffffff;
 	updateFlag = 0;
 	stable = true;
+	m_list.AddMember(ptr, this);
 }
 
 void WrapperDirect3DVertexDeclaration9::SetID(int id) {
@@ -184,6 +185,15 @@ int WrapperDirect3DVertexDeclaration9::GetID() {
 
 IDirect3DVertexDeclaration9* WrapperDirect3DVertexDeclaration9::GetVD9() {
 	return m_vd;
+}
+WrapperDirect3DVertexDeclaration9 * WrapperDirect3DVertexDeclaration9::GetWrapperVertexDeclaration9(IDirect3DVertexDeclaration9 * ptr){
+	WrapperDirect3DVertexDeclaration9 * ret = (WrapperDirect3DVertexDeclaration9*)(m_list.GetDataPtr(ptr));
+#ifdef ENABLE_VERTEX_DECLARATION_LOG
+	if(NULL == ret){
+		infoRecorder->logError("WrapperDirect3DVertexDeclaration9::GetWrapperVertexDeclaration() ret is NULL.\n");
+	}
+#endif
+	return ret;
 }
 
 /*** IUnknown methods ***/

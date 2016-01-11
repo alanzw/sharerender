@@ -13,7 +13,6 @@ private:
 	IDirect3DTexture9* m_tex;
 	int id;
 
-	static HashSet m_list;
 
 public:
 
@@ -35,6 +34,7 @@ public:
 	DWORD MipFilter;
 	D3DCOLOR ColorKey;
 
+	static HashSet m_list;
 	static int ins_count;
 	WrapperDirect3DTexture9(IDirect3DTexture9* ptr, int _id);
 	int GetID();

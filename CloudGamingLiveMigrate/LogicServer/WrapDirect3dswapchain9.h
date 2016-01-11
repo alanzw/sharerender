@@ -12,7 +12,6 @@ class WrapperDirect3DSwapChain9 : public IDirect3DSwapChain9
 private:
 	IDirect3DSwapChain9* m_chain;
 	int id;
-	static HashSet m_list;
 
 public:
 
@@ -26,6 +25,7 @@ public:
 	short deivceId;
 #endif
 
+	static HashSet m_list;
 	static int ins_count;
 	void SetID(int id);
 	int GetID();

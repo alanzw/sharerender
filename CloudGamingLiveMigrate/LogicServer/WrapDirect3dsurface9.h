@@ -11,7 +11,6 @@ class WrapperDirect3DSurface9 : public IDirect3DSurface9
 private:
 	IDirect3DSurface9* m_surface;
 	int id;
-	static HashSet m_list;
 	bool isSent;
 	// add 17:00
 	int tex_id;
@@ -32,12 +31,12 @@ public:
 	int iBackBuffer;
 	D3DBACKBUFFER_TYPE type;
 
-	// used by swapchain
+	static HashSet m_list;
+	// used by swap chain
 	int swapChainId;
 
 	// used by render target
 	int renderTargetIndex;
-
 	int creationCommand;
 
 	virtual int checkCreation(void *ctx);

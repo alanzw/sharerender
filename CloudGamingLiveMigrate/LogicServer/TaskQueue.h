@@ -7,6 +7,7 @@
 #include <Windows.h>
 #include <process.h>
 #include "../libCore/Queue.h"
+#include "../libCore/CThread.h"
 #include "GameServer.h"
 #include "../LibCore/InfoRecorder.h"
 
@@ -27,168 +28,231 @@ typedef unsigned(__stdcall * PTHREAD_START)(void *);
 
 #endif
 
-using namespace cg;
-using namespace cg::core;
+#define USE_CLASS_THREAD
 
-enum QueueStatus{
-	QUEUE_INVALID,
-	QUEUE_UPDATE, // the queue only responsible for updating
-	QUEUE_CREATE   // the queue will create only
-};
 
-class TaskQueue{
-	int count;
+namespace cg{
+	namespace core{
 
-	QueueStatus qStatus;
+		enum QueueStatus{
+			QUEUE_INVALID,
+			QUEUE_UPDATE, // the queue only responsible for updating
+			QUEUE_CREATE   // the queue will create only
+		};
 
-	void * ctx; // the work context
+#ifndef USE_CLASS_THREAD
 
-	CRITICAL_SECTION cs;
-	CRITICAL_SECTION mu;
+		class TaskQueue{
+			int count;
 
-	Queue<IdentifierBase *> taskQueue;
+			QueueStatus qStatus;
 
-	static DWORD WINAPI QueueProc(LPVOID param);
-	HANDLE evt;
+			void * ctx; // the work context
 
-	HANDLE mutex;
-	bool isLocked;
+			CRITICAL_SECTION cs;
+			CRITICAL_SECTION mu;
 
-	void awake(){
+			Queue<IdentifierBase *> taskQueue;
+
+			static DWORD WINAPI QueueProc(LPVOID param);
+			HANDLE evt;
+
+			HANDLE mutex;
+			bool isLocked;
+
+			void awake(){
 #ifdef ENABLE_QUEUE_LOG
-		infoRecorder->logTrace("[TaskQueue]: awake.\n");
+				infoRecorder->logTrace("[TaskQueue]: awake.\n");
 #endif
-		SetEvent(evt);
-	}
-	static int index;
-	DWORD threadId;
-	HANDLE threadHandle;
+				SetEvent(evt);
+			}
+			static int index;
+			DWORD threadId;
+			HANDLE threadHandle;
 
-public:
-	inline void setStatus(QueueStatus s){ qStatus = s;}
-	inline QueueStatus getStatusw(){ return qStatus; }
-	inline void setContext(void * c){ ctx = c;}
-	// the reset function will clear the queue, destory the thread
-	bool reset(){
-		if(!CloseHandle(threadHandle)){
-			// close the thread get an error
-			infoRecorder->logError("[TaskQueue]: exit the working thread error with%:d\n", GetLastError());
-		}else{
-			return false;
-		}
+		public:
+			inline void setStatus(QueueStatus s){ qStatus = s;}
+			inline QueueStatus getStatusw(){ return qStatus; }
+			inline void setContext(void * c){ ctx = c;}
+			// the reset function will clear the queue, destory the thread
+			bool reset(){
+				if(!CloseHandle(threadHandle)){
+					// close the thread get an error
+					infoRecorder->logError("[TaskQueue]: exit the working thread error with%:d\n", GetLastError());
+				}else{
+					return false;
+				}
+				return true;
+			}
+			~TaskQueue(){
+				reset();
+				threadHandle = NULL;
+				DeleteCriticalSection(&cs);
+				DeleteCriticalSection(&mu);
+				if(evt){
+					CloseHandle(evt);
+					evt = NULL;
+				}
+				count = 0;
+				threadId = 0;
+				ctx = NULL;
+				isLocked = false;
+			}
+			TaskQueue(): taskQueue(){
+				InitializeCriticalSection((LPCRITICAL_SECTION)&cs);
+				InitializeCriticalSection((LPCRITICAL_SECTION)&mu);
 
-		return true;
-	}
-	~TaskQueue(){
-		reset();
-		threadHandle = NULL;
-		DeleteCriticalSection(&cs);
-		DeleteCriticalSection(&mu);
-		if(evt){
-			CloseHandle(evt);
-			evt = NULL;
-		}
-		count = 0;
-		threadId = 0;
-		ctx = NULL;
-		isLocked = false;
-	}
-	TaskQueue(): taskQueue(){
-		InitializeCriticalSection((LPCRITICAL_SECTION)&cs);
-		InitializeCriticalSection((LPCRITICAL_SECTION)&mu);
-
-		evt = CreateEvent(NULL, FALSE, FALSE, NULL);
-		count = 0;
-		threadId = 0;
-		threadHandle = NULL;
-		qStatus = QueueStatus::QUEUE_CREATE;
-		ctx = NULL;
-		isLocked = false;
-	}
-	inline void init(){
+				evt = CreateEvent(NULL, FALSE, FALSE, NULL);
+				count = 0;
+				threadId = 0;
+				threadHandle = NULL;
+				qStatus = QueueStatus::QUEUE_CREATE;
+				ctx = NULL;
+				isLocked = false;
+			}
+			inline void init(){
 #ifdef ENABLE_QUEUE_LOG
-		infoRecorder->logTrace("[TaskQueue]: init the task queue.\n");
+				infoRecorder->logTrace("[TaskQueue]: init the task queue.\n");
 #endif
-		mutex = CreateMutex(NULL, TRUE, NULL);
-		ReleaseMutex(mutex);
-	}
+				mutex = CreateMutex(NULL, TRUE, NULL);
+				ReleaseMutex(mutex);
+			}
 
-	inline HANDLE getEvent(){return evt;}
+			inline HANDLE getEvent(){return evt;}
 
-	void startThread(){
-		threadHandle = chBEGINTHREADEX(NULL, 0, QueueProc, this, FALSE, &threadId);
-	}
+			void startThread(){
+				threadHandle = chBEGINTHREADEX(NULL, 0, QueueProc, this, FALSE, &threadId);
+			}
 
-	void add(IdentifierBase * obj){
-		if(qStatus == QUEUE_INVALID){
-			return;    // the queue status is INVALID, not need to check
-		}else if(qStatus == QUEUE_UPDATE){
-			//DebugBreak();
-		}
-		EnterCriticalSection(&cs);
-		count++;
-		taskQueue.push(obj);
-		if(count == 1){
-			awake();
-		}
+			void add(IdentifierBase * obj){
+				if(qStatus == QUEUE_INVALID){
+					return;    // the queue status is INVALID, not need to check
+				}else if(qStatus == QUEUE_UPDATE){
+					//DebugBreak();
+				}
+				EnterCriticalSection(&cs);
+				count++;
+				taskQueue.push(obj);
+				if(count == 1){
+					awake();
+				}
 
-		LeaveCriticalSection(&cs);
+				LeaveCriticalSection(&cs);
 #ifdef ENABLE_QUEUE_LOG
-		infoRecorder->logTrace("[TaskQueue]: add object, obj count:%d.\n", count);
+				infoRecorder->logTrace("[TaskQueue]: add object, obj count:%d.\n", count);
 #endif
-	}
-	inline IdentifierBase * getObj(){
-		return taskQueue.front();
-	}
-	inline void popObj(){
+			}
+			inline IdentifierBase * getObj(){
+				return taskQueue.front();
+			}
+			inline void popObj(){
 #ifdef ENABLE_QUEUE_LOG
-		infoRecorder->logTrace("[TaskQueue]: pop object.\n");
+				infoRecorder->logTrace("[TaskQueue]: pop object.\n");
 #endif
 
-		taskQueue.pop();
-		EnterCriticalSection(&cs);
-		count--;
-		LeaveCriticalSection(&cs);
-	}
-	inline bool isDone(){
-		bool ret = false;
-		EnterCriticalSection(&cs);
-		ret = taskQueue.empty();
+				taskQueue.pop();
+				EnterCriticalSection(&cs);
+				count--;
+				LeaveCriticalSection(&cs);
+			}
+			inline bool isDone(){
+				bool ret = false;
+				EnterCriticalSection(&cs);
+				ret = taskQueue.empty();
 
-		//ret = count == 0 ? true: false;
-		LeaveCriticalSection(&cs);
+				//ret = count == 0 ? true: false;
+				LeaveCriticalSection(&cs);
 #ifdef ENABLE_QUEUE_LOG
-		infoRecorder->logTrace("[TaskQueue]: is done ? %s\n", ret ? "true" : "false");
+				infoRecorder->logTrace("[TaskQueue]: is done ? %s\n", ret ? "true" : "false");
 #endif
 #if 0
-		if(ret)
-			infoRecorder->logError("[TaskQueue]: is done ? %s, count:%d\n", ret ? "true" : "false", count);
+				if(ret)
+					infoRecorder->logError("[TaskQueue]: is done ? %s, count:%d\n", ret ? "true" : "false", count);
 #endif
-		return ret;
-	}
-	inline int getCount(){
-		int ret = 0;
-		EnterCriticalSection(&cs);
-		ret = count;
-		LeaveCriticalSection(&cs);
-		return ret;
-	}
-	inline void lock(){
+				return ret;
+			}
+			inline int getCount(){
+				int ret = 0;
+				EnterCriticalSection(&cs);
+				ret = count;
+				LeaveCriticalSection(&cs);
+				return ret;
+			}
+			inline void lock(){
 #ifdef ENABLE_QUEUE_LOG
-		infoRecorder->logTrace("[TaskQueue]: lock the queue.\n");
+				infoRecorder->logTrace("[TaskQueue]: lock the queue.\n");
 #endif
-		WaitForSingleObject(mutex, INFINITE);
-		isLocked = true;
-	}
-	inline void unlock(){
+				WaitForSingleObject(mutex, INFINITE);
+				isLocked = true;
+			}
+			inline void unlock(){
 #ifdef ENABLE_QUEUE_LOG
-		infoRecorder->logTrace("[TaskQueue]: unlock the queue.\n");
+				infoRecorder->logTrace("[TaskQueue]: unlock the queue.\n");
 #endif
-		if(isLocked){
-			ReleaseMutex(mutex);
-			isLocked = false;
-		}
-	}
-};
+				if(isLocked){
+					ReleaseMutex(mutex);
+					isLocked = false;
+				}
+			}
+		};
 
+#else
+		class TaskQueue: public CThread{
+			int count;
+			QueueStatus qStatus;
+			void * ctx; // the work context
+
+			CRITICAL_SECTION cs;
+			CRITICAL_SECTION mu;
+
+			Queue<IdentifierBase *> taskQueue;
+
+			static DWORD WINAPI QueueProc(LPVOID param);
+			HANDLE evt;
+			HANDLE mutex;
+			bool isLocked;
+
+			
+			static int index;
+			DWORD threadId;
+			HANDLE threadHandle;
+
+			// private functions
+			void awake(){
+#ifdef ENABLE_QUEUE_LOG
+				infoRecorder->logTrace("[TaskQueue]: awake.\n");
 #endif
+				SetEvent(evt);
+			}
+			IdentifierBase *getObj();
+			void popObj();
+			int getCount();
+			bool isDone();
+		public:
+			// for the thread
+			//virtual BOOL stop();
+			virtual BOOL run();
+			virtual void onThreadMsg(UINT msg, WPARAM wParam, LPARAM lParam);
+			virtual BOOL onThreadStart();
+			virtual void onQuit();
+
+			TaskQueue();
+			~TaskQueue();
+
+
+			// queue operation
+			void add(IdentifierBase *obj);
+			void setStatus(QueueStatus s);
+			QueueStatus getStatus();
+			void setContext(void *c);
+			bool reset();
+
+			void lock();
+			void unlock();
+		};
+
+
+#endif  // USE_CLASS_THREAD
+	}
+}
+#endif  // TAKSK_QUEUE

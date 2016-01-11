@@ -11,6 +11,7 @@
 #define ENABLE_CTX_LOG      // log for context
 //#define ENABLE_MGR_LOG      // log for context manager
 
+IndexManager * IndexManager::_indexMgr;
 
 IndexManager::IndexManager(int maxIndex): _maxIndex(maxIndex), _bitmap(0){
 
@@ -426,7 +427,8 @@ bool ContextManager::switchCtx(){
 
 	// get a context with status CTX_READY
 	if(!ctx_pool.getCtxCount()){
-		infoRecorder->logTrace("[ContextManager]: no context availbale.\n");
+		infoRecorder->logTrace("[ContextManager]: no context available.\n");
+		_ctx_cache = NULL;
 		return false;
 	}
 	ContextAndCache * n = NULL;
@@ -438,8 +440,9 @@ bool ContextManager::switchCtx(){
 	}
 	else{
 		// always means that there's only one context
-		infoRecorder->logError("[ContextManager]: switch get No available context to use. Should never be here\n");
+		//infoRecorder->logTrace("[ContextManager]: switch get No available context to use. Should never be here\n");
 		// TODO, should never be here
+		ctx_pool.printError();
 		ret = false;
 	}
 	return ret;
@@ -472,8 +475,9 @@ REMOVAL:
 		_ctx_cache = NULL;
 	}
 	// clear the flags in each object with Wrappered directx
-
-
+	ret->eraseFlag();
+	IndexManager * indexMgr = IndexManager::GetIndexManager(sizeof(int)*8);
+	indexMgr->resetIndex(ret->getIndex());
 
 	//release the ctx
 	delete ret;
@@ -639,20 +643,14 @@ int CommandServerSet::declineServer(SOCKET s){
 }
 
 // interface from Buffer
-
-//
-
-
 char * CommandServerSet::getCurPtr(int length){
 #ifdef ENABLE_SET_LOG
-
 	infoRecorder->logTrace("[CommandServerSet]: get cur ptr: len:%d.\n", length);
 #endif
 	return ctx_mgr_->getCurPtr(length);
 }
 
 // the begin command and  the end command,
-
 void CommandServerSet::beginCommand(int _op_code, int id){
 #ifdef ENABLE_SET_LOG
 	infoRecorder->logTrace("[CommnadServerSet]: Begin Command, op_code:%d, obj id:%d.\n", _op_code, id);
@@ -708,7 +706,6 @@ int CommandServerSet::flush(){
 
 void CommandServerSet::cancelCommand(){
 #ifdef ENABLE_SET_LOG
-
 	infoRecorder->logTrace("[CommandServerSet]: cancel command.\n");
 #endif
 	ctx_mgr_->cancelCommand();
@@ -719,12 +716,16 @@ int CommandServerSet::getCommandLength(){
 }
 
 void CommandServerSet::shutDown(){
+#ifdef ENABLE_SET_LOG
 	infoRecorder->logTrace("[CommandServerSet]: shutDown\n");
+#endif
 	ctx_mgr_->shutDown();
 }
 
 Buffer * CommandServerSet::dumpBuffer(){
+#ifdef ENABLE_SET_LOG
 	infoRecorder->logTrace("[CommandServerSet]: dump buffer.\n");
+#endif
 	return ctx_mgr_->dumpBuffer();
 }
 

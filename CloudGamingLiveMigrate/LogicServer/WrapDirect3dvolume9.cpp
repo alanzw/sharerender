@@ -23,14 +23,10 @@ int WrapperDirect3DVolume9::sendCreation(void * ctx){
 
 	ContextAndCache * c = (ContextAndCache *)ctx;
 
-
-
-
 	return ret;
 }
 int WrapperDirect3DVolume9::checkUpdate(void *ctx){
 	infoRecorder->logTrace("[WrapperDirect3DVolume9]: check update, TODO.\n");
-
 
 	int ret = 0;
 	return ret;
@@ -44,8 +40,7 @@ int WrapperDirect3DVolume9::sendUpdate(void * ctx){
 	return ret;
 }
 
-
-#endif
+#endif //MULTI_CLIENTS
 
 
 WrapperDirect3DVolume9::WrapperDirect3DVolume9(IDirect3DVolume9 *ptr, int _id):m_d3dvolume(ptr),id(_id){
