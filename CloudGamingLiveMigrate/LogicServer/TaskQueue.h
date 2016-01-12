@@ -12,7 +12,7 @@
 #include "../LibCore/InfoRecorder.h"
 
 
-#define ENABLE_QUEUE_LOG
+//#define ENABLE_QUEUE_LOG
 
 #ifndef chBEGINTHREADEX
 typedef unsigned(__stdcall * PTHREAD_START)(void *);
@@ -201,33 +201,23 @@ namespace cg{
 			int count;
 			QueueStatus qStatus;
 			void * ctx; // the work context
-
 			CRITICAL_SECTION cs;
-			CRITICAL_SECTION mu;
-
 			Queue<IdentifierBase *> taskQueue;
 
-			static DWORD WINAPI QueueProc(LPVOID param);
 			HANDLE evt;
 			HANDLE mutex;
 			bool isLocked;
-
 			
 			static int index;
-			DWORD threadId;
-			HANDLE threadHandle;
-
+			int awakeTime;
+			unsigned int totalObjects;
+			
 			// private functions
-			void awake(){
-#ifdef ENABLE_QUEUE_LOG
-				infoRecorder->logTrace("[TaskQueue]: awake.\n");
-#endif
-				SetEvent(evt);
-			}
+			void awake();
 			IdentifierBase *getObj();
 			void popObj();
 			int getCount();
-			bool isDone();
+			
 		public:
 			// for the thread
 			//virtual BOOL stop();
@@ -245,10 +235,11 @@ namespace cg{
 			void setStatus(QueueStatus s);
 			QueueStatus getStatus();
 			void setContext(void *c);
-			bool reset();
-
+			bool isDone();
 			void lock();
 			void unlock();
+			// print the awake time inside a frame and the object count that pushed to queue, reset the awake time.
+			void framePrint();   
 		};
 
 

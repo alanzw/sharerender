@@ -25,6 +25,74 @@ namespace cg{
 		int getTimeOfDay(struct ::timeval *tvv, void *tz);
 		int usleep(long long waitTime);
 
+		inline unsigned __int64 GetCycleCount(void){
+			_asm _emit 0x0F
+			_asm _emit 0x31
+		}
+
+		inline void machine_pause (__int32 delay ) {
+			_asm 
+			{
+				mov eax, delay
+TIMEL1: 
+				pause
+					add eax, -1
+					jne TIMEL1  
+			}
+			return;
+		}
+
+		class BTimer{
+		public:
+			virtual void Start(void) = 0;
+			virtual unsigned __int64 Stop(void) = 0;
+			virtual unsigned __int64 getOverhead(void) = 0;
+			virtual unsigned int geFreq(void) = 0;
+		};
+		class PTimer: public BTimer{
+			LARGE_INTEGER m_startcycle;
+			unsigned __int64 m_overhead;
+			LARGE_INTEGER freq;
+		public:
+			PTimer(){
+				m_overhead = 0;
+				QueryPerformanceFrequency(&freq);
+				Start();
+				m_overhead = Stop();
+			}
+			virtual void Start(void){
+				QueryPerformanceCounter(&m_startcycle);
+			}
+			virtual unsigned __int64 Stop(void){
+				LARGE_INTEGER m_endcycle;
+				QueryPerformanceCounter(&m_endcycle);
+				return m_endcycle.QuadPart - m_startcycle.QuadPart - m_overhead;
+			}
+			virtual unsigned __int64 getOverhead(){ return m_overhead; }
+			virtual unsigned int getFreq(){ return freq.QuadPart; }
+		};
+
+		class KTimer:public BTimer{
+			unsigned __int64 m_startcycle;
+			unsigned __int64 m_overhead;
+			LARGE_INTEGER freq;
+		public:
+			KTimer(void){
+				m_overhead = 0;
+				QueryPerformanceFrequency(&freq);
+				Start();
+				m_overhead = Stop();
+			}
+			virtual void Start(void){
+				m_startcycle = GetCycleCount();
+			}
+			virtual unsigned __int64 Stop(void){
+				return GetCycleCount() - m_startcycle - m_overhead;
+			}
+			virtual unsigned __int64 getOverhead(){ return m_overhead; }
+			virtual unsigned int getFreq(){ return freq.QuadPart; }
+		};
+
 	}
 }
 #endif

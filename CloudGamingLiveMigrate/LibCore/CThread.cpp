@@ -6,7 +6,6 @@
 
 namespace cg{
 	namespace core{
-
 		CThread::CThread(){
 			sleepTime = 0;
 			threadId = -1;
@@ -80,6 +79,5 @@ namespace cg{
 			}
 			return 0;
 		}
-
 	}
 }

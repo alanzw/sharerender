@@ -82,6 +82,7 @@ public:
 	inline void		preperationEnd(){ 
 		end = GetTickCount(); 
 		infoRecorder->logError("ctx init(ms): %d.\n", end - start );
+		taskQueue->framePrint();
 	}
 
 	int				getCacheIndex(const char * buffer, size_t size, int & hit_id, int & rep_id);
@@ -105,24 +106,28 @@ public:
 	~ContextAndCache();
 
 	// for bit map
-	inline bool		isCreated(unsigned int mask){ return (1 << index) & mask; }
-	inline void		resetCreation(unsigned int & mask){ mask &= ((-1) ^ ( 1 << index)); }
+	inline bool		isCreated(unsigned int mask){ return (bool)((1 << index) & mask); }
+	inline void		resetCreation(unsigned int & mask){ mask &= ((-1)^(1<<index)); }
 	inline void		setCreation(unsigned int & mask){ mask |= (1 << index); }
 	inline bool		isChanged(unsigned int mask){ return (1<<index)&mask;	}
+	inline bool		isChecked(unsigned int mask){ return (1<<index)&mask;   }
+	inline void		setChecked(unsigned int &mask){ mask |= (1 << index);   }
+
 	// set bit to 0
-	inline void		resetChanged(unsigned int & mask){	mask &= ((-1) ^ ( 1 << index)); }
+	inline void		resetChecked(unsigned int &mask){ mask &= ((-1)^(1<<index)); }
+	inline void		resetChanged(unsigned int &mask){ mask &= ((-1)^(1<<index)); }
 	inline void		setChanged(unsigned int &mask){ mask |= (1 << index);}
 	inline void		setChangedToAll(unsigned int &mask){ mask = 0x8fffffff; }
 
 	inline bool		isSend(unsigned int mask){ return (1 << index) & mask; }
 	inline void		setSend(unsigned int &mask){ mask |= (1 << index);}
 
-	void			write_vec(int op_code, float * vec, int size, CommandRecorder * cr_);
+	void			write_vec(int op_code, float *vec, int size, CommandRecorder *cr_);
 
-	int				flush(CommandRecorder * cr);
+	int				flush(CommandRecorder *cr);
 	int				flush();
 
-	inline void		shutDown(CommandRecorder * cr){
+	inline void		shutDown(CommandRecorder *cr){
 		beginCommand(MaxSizeUntilNow_Opcode, 0);
 		endCommand(cr, 1);
 	}

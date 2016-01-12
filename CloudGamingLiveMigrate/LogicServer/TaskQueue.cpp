@@ -1,6 +1,6 @@
 #include "TaskQueue.h"
 #include "../LibCore/InfoRecorder.h"
-
+#include "CommandServerSet.h"
 
 namespace cg{
 	namespace core{
@@ -66,6 +66,37 @@ DWORD TaskQueue::QueueProc(LPVOID param){
 	}
 }
 #else  // USE_CLASS_THREAD
+		TaskQueue::TaskQueue(){
+			InitializeCriticalSection((LPCRITICAL_SECTION)&cs);
+			evt = CreateMutex(NULL, FALSE, NULL);
+			mutex = CreateMutex(NULL, FALSE, NULL);
+			count = 0;
+			qStatus = QUEUE_CREATE;
+			ctx = NULL;
+			isLocked = false;
+			awakeTime = 0;
+			totalObjects = 0;
+		}
+		TaskQueue::~TaskQueue(){
+			DeleteCriticalSection(&cs);
+			if(mutex){
+				CloseHandle(mutex);
+				mutex = NULL;
+			}
+			if(evt){
+				CloseHandle(evt);
+				evt = NULL;
+			}
+			ctx = NULL;
+			isLocked = false;
+			count = 0;
+			totalObjects = 0;
+		}
+		inline void TaskQueue::awake(){
+			awakeTime++;
+			//infoRecorder->logError("[TaskQueue]: thread %d awake, count:%d.\n", getThreadId(), count);
+			ReleaseMutex(evt);
+		}
 
 		inline IdentifierBase *TaskQueue::getObj(){
 			return taskQueue.front();
@@ -83,19 +114,18 @@ DWORD TaskQueue::QueueProc(LPVOID param){
 			LeaveCriticalSection(&cs);
 			return ret;
 		}
-		inline void TaskQueue::setStatus(QueueStatus s){
+		void TaskQueue::setStatus(QueueStatus s){
 			qStatus = s;
 		}
 		inline QueueStatus TaskQueue::getStatus(){
 			return qStatus;
 		}
-		inline void TaskQueue::setContext(void *c){
+		void TaskQueue::setContext(void *c){
 			ctx = c;
 		}
-		bool TaskQueue::reset(){
 
-		}
-
+		
+		// called by main thread
 		void TaskQueue::add(IdentifierBase *obj){
 			if(QUEUE_INVALID == qStatus){
 				return;
@@ -104,11 +134,18 @@ DWORD TaskQueue::QueueProc(LPVOID param){
 			}
 			EnterCriticalSection(&cs);
 			count++;
+			totalObjects++;
 			taskQueue.push(obj);
-
+			if(count == 1){
+				awake();
+			}
 			LeaveCriticalSection(&cs);
 		}
-
+		void TaskQueue::framePrint(){
+			infoRecorder->logError("[TaskQueue]: proc %d current has %d objects to deal, last period totally awake %d times, delt %d objects.\n", getThreadId(), count, awakeTime, totalObjects);
+			awakeTime = 0;
+			totalObjects = 0;
+		}
 
 		inline bool TaskQueue::isDone(){
 			bool ret = false;
@@ -118,32 +155,66 @@ DWORD TaskQueue::QueueProc(LPVOID param){
 			return ret;
 		}
 		inline void TaskQueue::lock(){
-
+			WaitForSingleObject(mutex, 1000);
+			isLocked = true;
 		}
 		inline void TaskQueue::unlock(){
-
+			if(isLocked){
+				ReleaseMutex(mutex);
+				isLocked = false;
+			}
 		}
-
-
+		void TaskQueue::onThreadMsg(UINT msg, WPARAM wParam, LPARAM lParam){}
+		void TaskQueue::onQuit(){}
 		// on start, do the initialization
 		BOOL TaskQueue::onThreadStart(){
-
+			//infoRecorder->logError("[TaskQueue]: thread %d has been started.\n", getThreadId());
+			ReleaseMutex(mutex);
+			return TRUE;
 		}
 		// the function should be done in a thread slice
 		BOOL TaskQueue::run(){
-			IdentifierBase * t = NULL;
+			IdentifierBase * ib = NULL;
+			//infoRecorder->logError("[TaskQueue]: thread %d run.\n", getThreadId());
+			DWORD ret = WaitForSingleObject(evt, INFINITE);
+			switch(ret){
+			case WAIT_OBJECT_0:
+				// object has entered the queue
+				//infoRecorder->logError("[TaskQueue]: thread %d wait has been triggered, that means at least an object has been pushed.\n", getThreadId());
+				break;
+			case WAIT_FAILED:
+				// error
+				infoRecorder->logError("[TaskQueue]: thread %d wait failed, error:%d.\n", getThreadId(), GetLastError());
+				return FALSE;
+			case WAIT_ABANDONED:
+				// thread exit with out release mutex
+				infoRecorder->logError("[TaskQueue]: thread %d exit without releasing mutex.\n");
+				ReleaseMutex(evt);
+				return FALSE;
+			case WAIT_TIMEOUT:
+				//infoRecorder->logError("[TaskQueue]: thread %d wait timeout.\n");
+				return TRUE;
+			default:
+				infoRecorder->logError("[TaskQueue]: thread %d wait return %d, unknown.\n", getThreadId(), ret);
+				// even timeout, is OK
+				return TRUE;
+			}
 
 			while(!isDone()){
 #ifdef ENABLE_QUEUE_LOG
 				infoRecorder->logTrace("[TaskQueue]: loop deal task, count: %d.\n", count);
 #endif // ENABLE_QUEUE_LOG
-				t = getObj();
-				if(!t){
+				ib = getObj();
+				ContextAndCache * context = (ContextAndCache *)ctx;
+				
+				if(!ib){
 					infoRecorder->logError("[TaskQueue]: get NULL front, task queue has: %d.\n", count);
 					break;
 				}
-				if(true == t->sync){
-					infoRecorder->logError("[TaskQueue]: the task is synchronized, %s.\n", typeid(*t).name());
+				context->resetChecked(ib->frameCheckFlag);
+
+				if(true == ib->sync){
+					infoRecorder->logError("[TaskQueue]: the task is synchronized, %s.\n", typeid(*ib).name());
 				}
 				else{
 					// do the work
@@ -151,26 +222,29 @@ DWORD TaskQueue::QueueProc(LPVOID param){
 						// do the creation
 #ifdef ENABLE_QUEUE_LOG
 						infoRecorder->logTrace("[TaskQueue]: create, check creation.\n");
-						t->print();
+						ib->print();
 #endif  // ENABLE_QUEUE_LOG
-						t->checkCreation(ctx);
-						if(t->stable)
-							t->checkUpdate(ctx);
+						ib->checkCreation(ctx);
+						if(ib->stable)
+							ib->checkUpdate(ctx);
 					}else if(QUEUE_UPDATE == qStatus){
 #ifdef ENABLE_QUEUE_LOG
 						infoRecorder->logTrace("[TaskQueue]: update, check update.\n");
-						t->print();
+						ib->print();
 #endif
-						t->checkCreation(ctx);
-						t->checkUpdate(ctx);
+						ib->checkCreation(ctx);
+						ib->checkUpdate(ctx);
 					}
 					else{
 						infoRecorder->logError("[TaskQueue]: task status is invalid.\n");
 					}
 				}
+				popObj();
 			}
-			popObj();
+			return TRUE;
+			
 		}
+		
 #endif  // USE_CLASS_THREAD
 	}
 }

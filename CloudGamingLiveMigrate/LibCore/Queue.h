@@ -2,13 +2,15 @@
 #define __QUEUE_H__
 // queue
 
+//#define ENABLE_QUEUE_LOCK
+
+
 namespace cg{
 	namespace core{
 
 		template<typename T> struct QueueItem{
 			//friend class Queue<T>;
 			// needs to access to item and next
-
 			// private class: no public section
 			QueueItem(const T &t): item(t), next(0){}
 			T item;
@@ -67,23 +69,35 @@ namespace cg{
 			}
 			bool empty()const{
 				bool ret = false;
+#ifdef ENABLE_QUEUE_LOCK
 				EnterCriticalSection((LPCRITICAL_SECTION)&section);
+#endif
 				ret = head == 0 ? true: false;
+#ifdef ENABLE_QUEUE_LOCK
 				LeaveCriticalSection((LPCRITICAL_SECTION)&section);
+#endif
 				return ret;
 			}
 			// get the head item, not remove
 			T & front(){
+#ifdef ENABLE_QUEUE_LOCK
 				EnterCriticalSection((LPCRITICAL_SECTION)&section);
+#endif
 				T &tm = head->item;
+#ifdef ENABLE_QUEUE_LOCK
 				LeaveCriticalSection((LPCRITICAL_SECTION)&section);
+#endif
 				return tm;
 			}
 
 			const T & front() const{
+#ifdef ENABLE_QUEUE_LOCK
 				EnterCriticalSection((LPCRITICAL_SECTION)&section);
+#endif
 				const T & tm = head->item;
+#ifdef ENABLE_QUEUE_LOCK
 				LeaveCriticalSection((LPCRITICAL_SECTION)&section);
+#endif
 				return tm;
 			}
 			// just remove the head
@@ -102,14 +116,16 @@ namespace cg{
 					head = tail = pt; // only on elem
 				else
 				{
+#ifdef ENABLE_QUEUE_LOCK
 					EnterCriticalSection((LPCRITICAL_SECTION)&section);
+#endif
 					tail->next = pt;
 					tail = pt;
+#ifdef ENABLE_QUEUE_LOCK
 					LeaveCriticalSection((LPCRITICAL_SECTION)&section);
-
+#endif
 				}
 			}
-
 		};
 	}
 }

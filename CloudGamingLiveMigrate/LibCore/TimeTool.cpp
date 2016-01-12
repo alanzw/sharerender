@@ -24,7 +24,6 @@ int
 		return (0);
 }
 
-
 int
 	cg::core::usleep(long long waitTime) {
 #if 0

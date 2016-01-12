@@ -40,10 +40,10 @@ extern bool tex_send[4024];
 extern CommandServer cs;
 extern CommonNet dis;
 
-#else 
+#else // MULTI_CLIENTS 
 
 
-#endif
+#endif // MULTI_CLIENTS
 
 //要截取的三个全局函数
 extern IDirect3D9* (WINAPI* Direct3DCreate9Next)(UINT SDKVersion);
@@ -113,8 +113,6 @@ extern int frame_all_count;
 
 extern int g_frame_index;   // the frame index in a group of frames
 
-#ifndef MULTI_CLIENTS
-#endif
 
 #ifdef MULTI_CLIENTS
 // for supporting multiple clients
@@ -123,8 +121,9 @@ public:
 	unsigned int creationFlag;
 	unsigned int updateFlag;
 
-	int curDeviceId;
+	unsigned int frameCheckFlag;  // each frame, if the object is checked before, set the flag, when frame finished, reset the flag
 
+	int curDeviceId;
 	bool stable; // the object is changed frequently or not
 	bool sync; // indicate that whether the object is a synchronization object
 
@@ -151,7 +150,6 @@ public:
 	virtual int sendUpdate(void * ctx){ return 0; } 
 	virtual int checkUpdate(void * ctx){ return 0; }
 	virtual int checkCreation(void * ctx){ return 0; }
-
 };
 
 
@@ -163,7 +161,7 @@ struct BufferStatus{
 
 extern bool sceneBegin;
 
-#endif
+#endif // MULTI_CLIENTS
 
-#endif
+#endif //__GAME_SERVER__
 

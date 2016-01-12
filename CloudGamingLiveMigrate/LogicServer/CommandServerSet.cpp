@@ -120,6 +120,9 @@ ContextAndCache::~ContextAndCache(){
 		CloseHandle(lockMutex);
 	}
 	if(taskQueue){
+		if(taskQueue->isStart()){
+			taskQueue->stop();
+		}
 		delete taskQueue;
 		taskQueue = NULL;
 	}
@@ -143,11 +146,9 @@ void ContextAndCache::checkObj(IdentifierBase * obj){
 
 void ContextAndCache::updateObj(IdentifierBase * obj){
 #ifdef ENABLE_CTX_LOG
-
 	infoRecorder->logTrace("[ContextAndCache]: ctx '%d' update object.\n",index);
 #endif
 	obj->checkUpdate((void *)this);
-
 }
 
 void ContextAndCache::pushSync(IdentifierBase * obj){
@@ -361,8 +362,10 @@ void ContextManager::checkObj(IdentifierBase * obj){
 		// ERROR
 		for(int j = 0; j < ctx_init.getCtxCount(); j++){
 			otherCtx = ctx_init.getCtx(j);
-			otherCtx->pushUpdate(obj);
-
+			if(otherCtx->isChecked(obj->frameCheckFlag)){
+				otherCtx->setChecked(obj->frameCheckFlag);
+				otherCtx->pushUpdate(obj);
+			}
 		}
 	}
 #else
@@ -422,6 +425,7 @@ bool ContextManager::switchCtx(){
 			cur_ctx->status = CTX_READY;
 			cur_ctx->taskQueue->setStatus(QUEUE_UPDATE);  // now, only update
 			// add ctx to pool
+			
 		}
 	}
 
@@ -518,7 +522,8 @@ int ContextManager::addCtx(ContextAndCache * _ctx){
 	infoRecorder->logError("[ContextManager]: start the task queue proc.\n");
 	// add the context to task queue
 	_ctx->taskQueue->setContext(_ctx);
-	_ctx->taskQueue->startThread();
+	_ctx->taskQueue->start();
+	//_ctx->taskQueue->startThread();
 #endif
 
 	return ret;
