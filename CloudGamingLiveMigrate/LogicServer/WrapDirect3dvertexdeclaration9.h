@@ -10,7 +10,6 @@ class WrapperDirect3DVertexDeclaration9: public IDirect3DVertexDeclaration9
 {
 private:
 	IDirect3DVertexDeclaration9* m_vd;
-	int id;
 public:
 	UINT numElements;
 	D3DVERTEXELEMENT9 * pDecl;
@@ -25,7 +24,6 @@ public:
 	virtual int sendCreation(void *ctx);
 	virtual int checkUpdate(void *ctx);
 	virtual int sendUpdate(void *ctx);
-
 	void print();
 
 #endif
@@ -34,8 +32,6 @@ public:
 	WrapperDirect3DVertexDeclaration9(IDirect3DVertexDeclaration9* ptr, int _id);
 	IDirect3DVertexDeclaration9* GetVD9();
 	WrapperDirect3DVertexDeclaration9 *GetWrapperVertexDeclaration9(IDirect3DVertexDeclaration9 * ptr);
-	void SetID(int id);
-	int GetID();
 
 public:
 	/*** IUnknown methods ***/

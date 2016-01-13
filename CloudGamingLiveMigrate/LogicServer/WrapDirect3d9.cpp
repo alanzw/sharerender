@@ -100,15 +100,8 @@ void __D3DErr(HRESULT hr){
 }
 
 
-WrapperDirect3D9::WrapperDirect3D9(IDirect3D9* ptr, int _id): m_d3d(ptr), id(_id) {}
+WrapperDirect3D9::WrapperDirect3D9(IDirect3D9* ptr, int _id): m_d3d(ptr), IdentifierBase(_id) {}
 
-int WrapperDirect3D9::GetID() {
-	return this->id;
-}
-
-void WrapperDirect3D9::SetID(int id) {
-	this->id = id;
-}
 
 WrapperDirect3D9* WrapperDirect3D9::GetWrapperD3D9(IDirect3D9* ptr) {
 	WrapperDirect3D9* ret = (WrapperDirect3D9*)( m_list.GetDataPtr((PVOID)ptr) );
@@ -257,7 +250,7 @@ STDMETHODIMP WrapperDirect3D9::CreateDevice(THIS_ UINT Adapter,D3DDEVTYPE Device
 		//MessageBox(NULL, "success", NULL, MB_OK);
 		wdd = new WrapperDirect3DDevice9(base_device, WrapperDirect3DDevice9::ins_count++);
 		*ppReturnedDeviceInterface = dynamic_cast<IDirect3DDevice9*>(wdd);
-		deviceId = wdd->GetID();
+		deviceId = wdd->getId();
 #ifdef ENABLE_DIRECT3D_LOG
 		infoRecorder->logError("WrapperDirect3D9::CreateDevice(), base_device=%p, device=%p\n", base_device, *ppReturnedDeviceInterface);
 #endif
@@ -285,11 +278,10 @@ STDMETHODIMP WrapperDirect3D9::CreateDevice(THIS_ UINT Adapter,D3DDEVTYPE Device
 	cs.write_byte_arr((char*)(pPresentationParameters), sizeof(D3DPRESENT_PARAMETERS));
 	cs.end_command();
 #else
-
 	//HWND h = pPresentationParameters->
 
 	csSet->beginCommand(CreateDevice_Opcode, 0);
-	csSet->writeInt(wdd->GetID());
+	csSet->writeInt(wdd->getId());
 	csSet->writeUInt(Adapter);
 	csSet->writeUInt(DeviceType);
 	csSet->writeUInt(BehaviorFlags | D3DCREATE_MULTITHREADED);
@@ -297,10 +289,7 @@ STDMETHODIMP WrapperDirect3D9::CreateDevice(THIS_ UINT Adapter,D3DDEVTYPE Device
 	csSet->endCommand();
 
 	csSet->setCreation(wdd->creationFlag);
-
-
 	Initializer::BeginInitalize();
-
 
 	// save the creation parameters
 	wdd->adapter = Adapter;
@@ -360,8 +349,6 @@ STDMETHODIMP WrapperDirect3D9::CreateDevice(THIS_ UINT Adapter,D3DDEVTYPE Device
 		}
 	}
 #endif
-
-
 
 
 #endif  // NO_VIDEO_GEN

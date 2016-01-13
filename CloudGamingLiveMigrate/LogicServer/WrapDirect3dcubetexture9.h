@@ -9,15 +9,12 @@ class WrapperDirect3DCubeTexture9 : public IDirect3DCubeTexture9
 #endif
 {
 private:
-	int id;
 	IDirect3DCubeTexture9* m_cube_tex;
 
 public:
 	static int ins_count;
 	static HashSet m_list;
 	IDirect3DCubeTexture9* GetCubeTex9();
-	int GetID();
-	void SetID(int id);
 	WrapperDirect3DCubeTexture9(IDirect3DCubeTexture9* ptr, int id);
 	static WrapperDirect3DCubeTexture9* GetWrapperCubeTexture9(IDirect3DCubeTexture9* ptr);
 

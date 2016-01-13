@@ -18,7 +18,6 @@ class WrapperDirect3DDevice9: public IDirect3DDevice9
 	, public IdentifierBase{
 #endif{
 private:
-	int id;
 	WrapperDirect3DVertexDeclaration9* cur_decl_;
 	WrapperDirect3DIndexBuffer9* cur_ib_;
 	WrapperDirect3DVertexBuffer9* cur_vbs_[MAX_SOURCE_COUNT];
@@ -29,8 +28,6 @@ public:
 
 	IDirect3DDevice9* m_device;
 	WrapperDirect3DDevice9(IDirect3DDevice9* ptr, int _id);
-	void SetID(int id);
-	int GetID();
 
 	static WrapperDirect3DDevice9* GetWrapperDevice9(IDirect3DDevice9* ptr);
 	IDirect3DDevice9* GetIDirect3DDevice9(){
@@ -47,7 +44,6 @@ public:
 	virtual int sendCreation(void * ctx);
 	virtual int checkUpdate(void * ctx);
 	virtual int sendUpdate(void * ctx);
-
 #endif
 
 public:

@@ -13,6 +13,7 @@
 #include "WrapDirect3dcubetexture9.h"
 #include "WrapDirect3dswapchain9.h"
 #include "WrapDirect3dsurface9.h"
+#include "Initializer.h"
 
 #include <assert.h>
 
@@ -348,8 +349,99 @@ bool WINAPI ClearCtxFlag(ContextAndCache * ctx){
 	return true;
 }
 #else
+
+int IdentifierBase::getId(){ return id; }
+void IdentifierBase::setId(int _id){ id = _id; }
+
+
+void ContextAndCache::checkFlags(){
+	infoRecorder->logError("[ContextAndCache]: check all flags for ctx:%d.\n", index);
+	Initializer * initializer = Initializer::GetInitializer();
+	if(isCreated(initializer->creationFlag)){
+		infoRecorder->logError("[ContextAndCache]: Initializer created.\n");
+	}
+	HashSet::iterator it;
+	IdentifierBase *obj = NULL;
+	for(it = WrapperDirect3D9::m_list.begin(); it != WrapperDirect3D9::m_list.end(); it++){	
+		obj = (IdentifierBase *)it->pData;
+		if(isCreated(obj->creationFlag)){
+			infoRecorder->logError("[WrapperDirect3D]: %d is created.\n", obj->getId());
+		}
+	}
+	for(it = WrapperDirect3DCubeTexture9::m_list.begin(); it != WrapperDirect3DCubeTexture9::m_list.end(); it++){
+		obj = (IdentifierBase *)it->pData;
+		if(isCreated(obj->creationFlag)){
+			infoRecorder->logError("[WrapperDirect3DCubeTexture9]: %d is created.\n", obj->getId());
+		}
+	}
+	for(it = WrapperDirect3DDevice9::m_list.begin(); it != WrapperDirect3DDevice9::m_list.end(); it++){
+		obj = (IdentifierBase *)it->pData;
+		if(isCreated(obj->creationFlag)){
+			infoRecorder->logError("[WrapperDirect3DDevice9]: %d is created.\n", obj->getId());
+		}
+	}
+	for(it = WrapperDirect3DIndexBuffer9::m_list.begin(); it != WrapperDirect3DIndexBuffer9::m_list.end(); it++){
+		obj = (IdentifierBase *)it->pData;
+		if(isCreated(obj->creationFlag)){
+			infoRecorder->logError("[WrapperDirect3DIndexBuffer9]: %d is created.\n", obj->getId());
+		}
+	}
+	for(it = WrapperDirect3DPixelShader9::m_list.begin(); it != WrapperDirect3DPixelShader9::m_list.end(); it++){
+		obj = (IdentifierBase *)it->pData;
+		if(isCreated(obj->creationFlag)){
+			infoRecorder->logError("[WrapperDirect3DPixelShader9]: %d is created.\n", obj->getId());
+		}
+	}
+	for(it = WrapperDirect3DStateBlock9::m_list.begin(); it != WrapperDirect3DStateBlock9::m_list.end(); it++){
+		obj = (IdentifierBase *)it->pData;
+		if(isCreated(obj->creationFlag)){
+			infoRecorder->logError("[WrapperDirect3DStateBlock9]: %d is created.\n", obj->getId());
+		}
+	}
+	for(it = WrapperDirect3DSurface9::m_list.begin(); it != WrapperDirect3DSurface9::m_list.end(); it++){
+		obj = (IdentifierBase *)it->pData;
+		if(isCreated(obj->creationFlag)){
+			infoRecorder->logError("[WrapperDirect3DSurface9]: %d is created.\n", obj->getId());
+		}
+	}
+	for(it = WrapperDirect3DSwapChain9::m_list.begin(); it != WrapperDirect3DSwapChain9::m_list.end(); it++){
+		obj = (IdentifierBase *)it->pData;
+		if(isCreated(obj->creationFlag)){
+			infoRecorder->logError("[WrapperDirect3DSwapChain9]: %d is created.\n", obj->getId());
+		}
+	}
+	for(it = WrapperDirect3DTexture9::m_list.begin(); it != WrapperDirect3DTexture9::m_list.end(); it ++){
+		obj = (IdentifierBase *)it->pData;
+		if(isCreated(obj->creationFlag)){
+			infoRecorder->logError("[WrapperDirect3DTexture9]: %d is created.\n", obj->getId());
+		}
+	}
+	for(it = WrapperDirect3DVertexBuffer9::m_list.begin(); it != WrapperDirect3DVertexBuffer9::m_list.end(); it++){
+		obj = (IdentifierBase *)it->pData;
+		if(isCreated(obj->creationFlag)){
+			infoRecorder->logError("[WrapperDirect3DVertexBuffer9]: %d is created.\n", obj->getId());
+		}
+	}
+	for(it = WrapperDirect3DVertexDeclaration9::m_list.begin(); it != WrapperDirect3DVertexDeclaration9::m_list.end(); it++){
+		obj = (IdentifierBase *)it->pData;
+		if(isCreated(obj->creationFlag)){
+			infoRecorder->logError("[WrapperDirect3DVertexDeclaration9]: %d is created.\n", obj->getId());
+		}
+	}
+	for(it = WrapperDirect3DVertexShader9::m_list.begin(); it != WrapperDirect3DVertexShader9::m_list.end(); it++){
+		obj = (IdentifierBase *)it->pData;
+		if(isCreated(obj->creationFlag)){
+			infoRecorder->logError("[WrapperDirect3DVertexShader9]: %d is created.\n", obj->getId());
+		}
+	}
+}
+
+
 void ContextAndCache::eraseFlag(){
 	infoRecorder->logError("[ContextAndCache]: Clear context flags.\n");
+	Initializer * initializer = Initializer::GetInitializer();
+	resetCreation(initializer->creationFlag);
+
 
 	HashSet::iterator it;
 	IdentifierBase * obj = NULL;

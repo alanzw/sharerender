@@ -16,7 +16,7 @@ int WrapperDirect3DCubeTexture9::sendCreation(void * ctx){
 	ContextAndCache * c = (ContextAndCache *)ctx;
 
 	c->beginCommand( CreateCubeTexture_Opcode, getDeviceId());
-	c->write_int( this->GetID());
+	c->write_int( this->getId());
 	c->write_uint( this->edgeLength);
 	c->write_uint( this->levels);
 	c->write_uint( this->usage);
@@ -59,7 +59,6 @@ int WrapperDirect3DCubeTexture9::checkUpdate(void * ctx){
 }
 int WrapperDirect3DCubeTexture9::sendUpdate(void *ctx){
 	infoRecorder->logTrace("[WrapeprDirect3DCubeTexture9]: send update, TODO.\n");
-
 	int ret = 0;
 
 	return ret;
@@ -67,7 +66,7 @@ int WrapperDirect3DCubeTexture9::sendUpdate(void *ctx){
 
 #endif
 
-WrapperDirect3DCubeTexture9::WrapperDirect3DCubeTexture9(IDirect3DCubeTexture9* ptr, int _id): m_cube_tex(ptr), id(_id) {
+WrapperDirect3DCubeTexture9::WrapperDirect3DCubeTexture9(IDirect3DCubeTexture9* ptr, int _id): m_cube_tex(ptr), IdentifierBase(_id) {
 	infoRecorder->logTrace("WrapperDirect3DCubeTexture9::WrapperDirect3DCubeTexture9() called\n");
 
 	m_list.AddMember(ptr, this);
@@ -77,14 +76,6 @@ WrapperDirect3DCubeTexture9::WrapperDirect3DCubeTexture9(IDirect3DCubeTexture9* 
 
 IDirect3DCubeTexture9* WrapperDirect3DCubeTexture9::GetCubeTex9() {
 	return this->m_cube_tex;
-}
-
-int WrapperDirect3DCubeTexture9::GetID() {
-	return this->id;
-}
-
-void WrapperDirect3DCubeTexture9::SetID(int id) {
-	this->id = id;
 }
 
 WrapperDirect3DCubeTexture9* WrapperDirect3DCubeTexture9::GetWrapperCubeTexture9(IDirect3DCubeTexture9* ptr) {
@@ -214,7 +205,7 @@ STDMETHODIMP WrapperDirect3DCubeTexture9::GetCubeMapSurface(THIS_ D3DCUBEMAP_FAC
 
 #ifndef MULTI_CLIENTS
 		cs.begin_command(CubeGetCubeMapSurface_Opcode, id);
-		cs.write_int(surface->GetID());
+		cs.write_int(surface->getId());
 		cs.write_uint(FaceType);
 		cs.write_uint(Level);
 		cs.end_command();
@@ -224,7 +215,7 @@ STDMETHODIMP WrapperDirect3DCubeTexture9::GetCubeMapSurface(THIS_ D3DCUBEMAP_FAC
 		//csSet->checkObj(this);
 		// second, use the object
 		csSet->beginCommand(CubeGetCubeMapSurface_Opcode, id);
-		csSet->writeInt(surface->GetID());
+		csSet->writeInt(surface->getId());
 		csSet->writeUInt(FaceType);
 		csSet->writeUInt(Level);
 		csSet->endCommand();

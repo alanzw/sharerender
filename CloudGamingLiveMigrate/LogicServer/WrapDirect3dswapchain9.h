@@ -11,12 +11,8 @@ class WrapperDirect3DSwapChain9 : public IDirect3DSwapChain9
 {
 private:
 	IDirect3DSwapChain9* m_chain;
-	int id;
-
 public:
-
 #ifdef MULTI_CLIENTS
-	
 	virtual int checkCreation(void *ctx);
 	virtual int sendCreation(void *ctx);
 	virtual int checkUpdate(void *ctx);
@@ -27,8 +23,7 @@ public:
 
 	static HashSet m_list;
 	static int ins_count;
-	void SetID(int id);
-	int GetID();
+
 	WrapperDirect3DSwapChain9(IDirect3DSwapChain9* ptr, int _id);
 	static WrapperDirect3DSwapChain9* GetWrapperSwapChain9(IDirect3DSwapChain9* ptr);
 

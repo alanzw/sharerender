@@ -10,12 +10,9 @@ class WrapperDirect3DVolume9 : public IDirect3DVolume9
 private:
 	IDirect3DVolume9 * m_d3dvolume;
 	static HashSet m_list;
-	int id;
 public:
 	static int ins_count;
 	WrapperDirect3DVolume9(IDirect3DVolume9 *ptr, int _id);
-	int GetID();
-	void SetID(int id);
 	static WrapperDirect3DVolume9* GetWrapperDirect3DVolume9(IDirect3DVolume9 *ptr);
 	IDirect3DVolume9 * GetIDirect3DVolume9();
 

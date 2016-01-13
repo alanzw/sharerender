@@ -10,7 +10,7 @@
 //#define ENABLE_TEXTURE_LOG
 
 int D3DXTexture = 0;
-WrapperDirect3DTexture9::WrapperDirect3DTexture9(IDirect3DTexture9* ptr, int _id): m_tex(ptr), id(_id) {
+WrapperDirect3DTexture9::WrapperDirect3DTexture9(IDirect3DTexture9* ptr, int _id): m_tex(ptr), IdentifierBase(_id) {
 #ifdef ENABLE_TEXTURE_LOG
 	infoRecorder->logTrace("WrapperDirect3DTexture9::WrapperDirect3DTexture9(), id=%d, base_tex=%d this=%d\n", id, ptr, this);
 
@@ -29,14 +29,6 @@ void WrapperDirect3DTexture9::SayHi(char* str) {
 #ifdef ENABLE_TEXTURE_LOG
 	infoRecorder->logTrace("%s\n", str);
 #endif
-}
-
-void WrapperDirect3DTexture9::SetID(int id) {
-	this->id = id;
-}
-
-int WrapperDirect3DTexture9::GetID() {
-	return this->id;
 }
 
 IDirect3DTexture9* WrapperDirect3DTexture9::GetTex9() {
@@ -66,7 +58,7 @@ int WrapperDirect3DTexture9::sendCreation(void *ctx){
 	ContextAndCache * c = (ContextAndCache *)ctx;
 
 	c->beginCommand(CreateTexture_Opcode, getDeviceId());
-	c->write_int(GetID());
+	c->write_int(getId());
 	c->write_uint(Width);
 	c->write_uint(Height);
 	c->write_uint(Levels);
@@ -669,7 +661,7 @@ STDMETHODIMP WrapperDirect3DTexture9::GetSurfaceLevel(THIS_ UINT Level,IDirect3D
 		// create new surface
 		csSet->beginCommand(TextureGetSurfaceLevel_Opcode, id);
 		csSet->writeInt(id);
-		csSet->writeInt(surface->GetID());
+		csSet->writeInt(surface->getId());
 		csSet->writeUInt(Level);
 		csSet->endCommand();
 

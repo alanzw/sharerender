@@ -4,18 +4,23 @@
 #include "GameServer.h"
 //extern CommandServer cs;
 
-class WrapperDirect3D9 : public IDirect3D9 {
+class WrapperDirect3D9 : public IDirect3D9
+#ifdef MULTI_CLIENTS
+	, public IdentifierBase
+#endif
+{
 private:
 	IDirect3D9* m_d3d;
-	int id;
 public:
 	WrapperDirect3D9(IDirect3D9* m_ptr, int _id);
 	static int ins_count;
 	static HashSet m_list;
-
 	static WrapperDirect3D9* GetWrapperD3D9(IDirect3D9* ptr);
-	int GetID();
-	void SetID(int id);
+	
+	virtual int sendCreation(void * ctx){ return 0; }
+	virtual int sendUpdate(void * ctx){ return 0; } 
+	virtual int checkUpdate(void * ctx){ return 0; }
+	virtual int checkCreation(void * ctx){ return 0; }
 
 public:
 	COM_METHOD(HRESULT, QueryInterface)(THIS_ REFIID riid, void** ppvObj);

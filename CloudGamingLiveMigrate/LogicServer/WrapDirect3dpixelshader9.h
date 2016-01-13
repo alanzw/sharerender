@@ -10,7 +10,6 @@ class WrapperDirect3DPixelShader9: public IDirect3DPixelShader9
 {
 private:
 	IDirect3DPixelShader9* m_ps;
-	int id;
 public:
 	static HashSet m_list;
 #ifdef MULTI_CLIENTS
@@ -27,10 +26,7 @@ public:
 
 	static int ins_count;
 	WrapperDirect3DPixelShader9(IDirect3DPixelShader9* ptr, int _id);
-	int GetID();
-	void SetID(int id);
 	IDirect3DPixelShader9* GetPS9();
-
 	static WrapperDirect3DPixelShader9* GetWrapperPixelShader(IDirect3DPixelShader9* ptr);
 
 	/*** IUnknown methods ***/

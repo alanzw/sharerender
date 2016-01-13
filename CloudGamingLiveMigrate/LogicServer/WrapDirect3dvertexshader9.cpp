@@ -10,7 +10,7 @@ int WrapperDirect3DVertexShader9::sendCreation(void *ctx){
 #endif
 	ContextAndCache * c = (ContextAndCache *)ctx;
 	c->beginCommand(CreateVertexShader_Opcode, getDeviceId());
-	c->write_int(GetID());
+	c->write_int(getId());
 	c->write_int(funCount);
 	c->write_byte_arr((char *)this->shaderData, shaderLen);
 	c->endCommand();
@@ -47,7 +47,7 @@ int WrapperDirect3DVertexShader9::sendUpdate(void *ctx){
 }
 #endif // MULTI_CLIENTS
 
-WrapperDirect3DVertexShader9::WrapperDirect3DVertexShader9(IDirect3DVertexShader9* ptr, int _id): m_vs(ptr), id(_id) {
+WrapperDirect3DVertexShader9::WrapperDirect3DVertexShader9(IDirect3DVertexShader9* ptr, int _id): m_vs(ptr), IdentifierBase(_id) {
 #ifdef ENABLE_VERTEX_SHADER_LOG
 	infoRecorder->logTrace("WrapperDirect3DVertexShader9 constructor called!\n");
 #endif
@@ -57,18 +57,9 @@ WrapperDirect3DVertexShader9::WrapperDirect3DVertexShader9(IDirect3DVertexShader
 	stable = true;
 }
 
-int WrapperDirect3DVertexShader9::GetID() {
-	return this->id;
-}
-
-void WrapperDirect3DVertexShader9::SetID(int id) {
-	this->id = id;
-}
-
 IDirect3DVertexShader9* WrapperDirect3DVertexShader9::GetVS9() {
 	return m_vs;
 }
-
 
 WrapperDirect3DVertexShader9* WrapperDirect3DVertexShader9::GetWrapperVertexShader(IDirect3DVertexShader9* ptr) {
 	WrapperDirect3DVertexShader9* ret = (WrapperDirect3DVertexShader9*)( m_list.GetDataPtr(ptr) );

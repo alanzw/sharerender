@@ -20,7 +20,7 @@ int WrapperDirect3DSurface9::sendCreation(void *ctx){
 		infoRecorder->logTrace("[WrapperDirect3DSurface9]: back buffer surface.\n");
 #endif
 		c->beginCommand(D3DDeviceGetBackBuffer_Opcode, getDeviceId());
-		c->write_int(GetID());
+		c->write_int(getId());
 		c->write_uint(iSwapChain);
 		c->write_uint(iBackBuffer);
 		c->write_uint(type);
@@ -32,7 +32,7 @@ int WrapperDirect3DSurface9::sendCreation(void *ctx){
 		infoRecorder->logTrace("[WrapperDirect3DSurface9}; swap chain back buffer.\n");
 #endif
 		c->beginCommand(SwapChainGetBackBuffer_Opcode, swapChainId);
-		c->write_int(GetID());
+		c->write_int(getId());
 		c->write_uint(iBackBuffer);
 		c->write_uint(type);
 		c->endCommand();
@@ -43,7 +43,7 @@ int WrapperDirect3DSurface9::sendCreation(void *ctx){
 #endif
 
 		c->beginCommand(TextureGetSurfaceLevel_Opcode, tex_id);
-		c->write_int(GetID());
+		c->write_int(getId());
 		c->write_uint(level);
 		c->endCommand();
 	}else if(creationCommand == CreateDepthStencilSurface_Opcode){
@@ -52,7 +52,7 @@ int WrapperDirect3DSurface9::sendCreation(void *ctx){
 		infoRecorder->logTrace("[WrapperDirect3DSurface9]: depth stencil surface.\n");
 #endif
 		c->beginCommand(CreateDepthStencilSurface_Opcode, getDeviceId());
-		c->write_uint(GetID());
+		c->write_uint(getId());
 		c->write_uint(width);
 		c->write_uint(height);
 		c->write_uint(format);
@@ -68,7 +68,7 @@ int WrapperDirect3DSurface9::sendCreation(void *ctx){
 #endif
 
 		c->beginCommand(D3DDGetRenderTarget_Opcode, getDeviceId());
-		c->write_int(GetID());
+		c->write_int(getId());
 		c->write_uint(renderTargetIndex);
 		c->endCommand();
 	}else if(creationCommand == GetDepthStencilSurface_Opcode){
@@ -78,7 +78,7 @@ int WrapperDirect3DSurface9::sendCreation(void *ctx){
 		infoRecorder->logTrace("[WrapperDirect3DSurface9]: depth stencil surface.\n");
 #endif
 		c->beginCommand(GetDepthStencilSurface_Opcode, getDeviceId());
-		c->write_int(GetID());
+		c->write_int(getId());
 		c->endCommand();
 	}else if(creationCommand == CubeGetCubeMapSurface_Opcode){
 		// 
@@ -86,8 +86,6 @@ int WrapperDirect3DSurface9::sendCreation(void *ctx){
 		infoRecorder->logError("[WrapperDirect3DSurface9]: get cube map surface? ERROR, not implemented.\n");
 #endif
 	}
-
-
 	return 0;
 }
 
@@ -113,7 +111,6 @@ int WrapperDirect3DSurface9::checkUpdate(void *ctx)
 	infoRecorder->logTrace("[WrapperDirect3DSurface9]: check update, TODO.\n");
 #endif
 
-
 	return 0;
 
 }
@@ -122,7 +119,6 @@ int WrapperDirect3DSurface9::sendUpdate(void *ctx){
 #ifdef ENABLE_SURFACE_LOG
 	infoRecorder->logTrace("[WrapperDirect3DSurface9]: send update, TODO.\n");
 #endif
-
 
 	return ret;
 }
@@ -148,34 +144,18 @@ void WrapperDirect3DSurface9::SendSurface(){
 	this->GetDesc(&desc);
 	int byte_per_pixel = rect.Pitch / desc.Width;
 
-	/*WRITE_DATA(DWORD, rect.Pitch);
-	WRITE_DATA(int, desc.Height * desc.Width * byte_per_pixel);
-	infoRecorder->logTrace("WrapperDirect3DTexture9::SendSurface(), id=%d, height=%d, width=%d, pitch=%d, size=%d\n", this->id, desc.Height, desc.Width, rect.Pitch,  desc.Height * desc.Width * byte_per_pixel);
-
-	WRITE_BYTE_ARR(desc.Height * desc.Width * byte_per_pixel, rect.pBits);*/
 	LPD3DXBUFFER tbuf = NULL;
 	D3DXSaveSurfaceToFileInMemory(&tbuf,D3DXIFF_PNG,this,NULL,NULL);
 	int size = tbuf->GetBufferSize();
-	/*
-	GET_BUFFER(TransmitSurfaceData_Opcode, id);
-	WRITE_DATA(int, size);
-	WRITE_BYTE_ARR(size, tbuf->GetBufferPointer());
-
-	END_BUFFER();
-	//client.SendPacket(msg, buf_size);
-	*/
+	
 #if 0
 	char  fname[50];
 	sprintf(fname,"surface\\face_%d.png",this->id);
 	D3DXSaveSurfaceToFile(fname, D3DXIFF_PNG,this, NULL, NULL);
 #endif
 	isSent = true;
-	//}
-	//else{
-	// the data has been sent to client
-	//}
 }
-WrapperDirect3DSurface9::WrapperDirect3DSurface9(IDirect3DSurface9* ptr, int _id): m_surface(ptr), id(_id) {
+WrapperDirect3DSurface9::WrapperDirect3DSurface9(IDirect3DSurface9* ptr, int _id): m_surface(ptr), IdentifierBase(_id) {
 
 	this->tex_id = -1;
 	this->level = -1;
@@ -189,14 +169,6 @@ WrapperDirect3DSurface9::WrapperDirect3DSurface9(IDirect3DSurface9* ptr, int _id
 	creationFlag = 0;
 
 	stable = false;
-}
-
-int WrapperDirect3DSurface9::GetID() {
-	return this->id;
-}
-
-void WrapperDirect3DSurface9::SetID(int id) {
-	this->id = id;
 }
 
 WrapperDirect3DSurface9* WrapperDirect3DSurface9::GetWrapperSurface9(IDirect3DSurface9* ptr) {

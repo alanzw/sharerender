@@ -29,7 +29,7 @@ bool YMesh::IsVBChanged(WrapperDirect3DVertexBuffer9 * curVbs[]){
 		}
 	}
 	if(changed){
-		infoRecorder->logTrace("[YMesh]: Vertex buffer changed, ib id:%d.\n", ib_->GetID());
+		infoRecorder->logTrace("[YMesh]: Vertex buffer changed, ib id:%d.\n", ib_->getId());
 	}
 	return changed;
 }
@@ -77,9 +77,9 @@ void YMesh::UpdateVertexBuffer(int streamNumber){
 	}
 	
 	// finally, send the SetStreamSource cmd to client
-	csSet->beginCommand(SetStreamSource_Opcode, device_->GetID());
+	csSet->beginCommand(SetStreamSource_Opcode, device_->getId());
 	csSet->writeUInt(vb->streamNumber);
-	csSet->writeInt(vb->GetId());
+	csSet->writeInt(vb->getId());
 	csSet->writeUInt(vb->offsetInBytes);
 	csSet->writeUInt(vb->stride);
 	csSet->endCommand();

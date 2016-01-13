@@ -16,7 +16,6 @@ class WrapperDirect3DIndexBuffer9: public IDirect3DIndexBuffer9
 #endif
 {
 private:
-	int id;
 	bool isLock;
 
 public:
@@ -54,8 +53,7 @@ public:
 	WrapperDirect3DIndexBuffer9(IDirect3DIndexBuffer9* ptr, int _id, int _length);
 	WrapperDirect3DIndexBuffer9(IDirect3DIndexBuffer9* ptr, int _id);
 	LPDIRECT3DINDEXBUFFER9 GetIB9();
-	void SetID(int id);
-	int GetID();
+
 	int GetLength();
 
 	int PrepareIndexBuffer();

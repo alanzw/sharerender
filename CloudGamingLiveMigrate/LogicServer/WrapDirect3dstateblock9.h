@@ -76,7 +76,6 @@ class WrapperDirect3DStateBlock9 : public IDirect3DStateBlock9
 {
 private:
 	IDirect3DStateBlock9* m_sb;
-	int id;
 public:
 
 #ifdef MULTI_CLIENTS
@@ -88,8 +87,6 @@ public:
 	static HashSet m_list;
 	static int ins_count;
 	WrapperDirect3DStateBlock9(IDirect3DStateBlock9* _sb, int _id);
-	int GetID();
-	void SetID(int id);
 	static WrapperDirect3DStateBlock9* GetWrapperStateBlock9(IDirect3DStateBlock9 *ptr);
 	IDirect3DStateBlock9* GetSB9();
 #ifdef MULTI_CLIENTS

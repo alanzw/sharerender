@@ -10,7 +10,7 @@ int WrapperDirect3DPixelShader9::sendCreation(void * ctx){
 	ContextAndCache * c = (ContextAndCache *)ctx;
 
 	c->beginCommand(CreatePixelShader_Opcode, getDeviceId());
-	c->write_int(GetID());
+	c->write_int(getId());
 	c->write_int(funcCount);
 	c->write_byte_arr((char *)pFunc, sizeof(DWORD) * funcCount);
 	c->endCommand();
@@ -52,20 +52,12 @@ int WrapperDirect3DPixelShader9::sendUpdate(void *ctx){
 
 #endif
 
-WrapperDirect3DPixelShader9::WrapperDirect3DPixelShader9(IDirect3DPixelShader9* ptr, int _id): m_ps(ptr), id(_id) {
+WrapperDirect3DPixelShader9::WrapperDirect3DPixelShader9(IDirect3DPixelShader9* ptr, int _id): m_ps(ptr), IdentifierBase(_id) {
 
 	m_list.AddMember(ptr, this);
 	creationFlag = 0;
 	updateFlag = 0x8fffffff;
 	stable = true;
-}
-
-void WrapperDirect3DPixelShader9::SetID(int id) {
-	this->id = id;
-}
-
-int WrapperDirect3DPixelShader9::GetID() {
-	return this->id;
 }
 
 IDirect3DPixelShader9* WrapperDirect3DPixelShader9::GetPS9() {

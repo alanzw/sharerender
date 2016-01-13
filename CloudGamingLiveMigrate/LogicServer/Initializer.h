@@ -13,10 +13,9 @@ class Initializer : public IdentifierBase{
 	std::list<IdentifierBase *> objList;
 	//unsigned int initialFlags;   // the flag for each context
 
-
 	static bool initialized; 
 	static bool initilizeBegan;
-	static Initializer * initializer;
+	static Initializer *initializer;
 
 	Initializer();
 	// push the object to initializer, record until begin scene called

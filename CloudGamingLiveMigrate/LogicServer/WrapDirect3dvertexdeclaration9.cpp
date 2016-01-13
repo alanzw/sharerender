@@ -125,7 +125,7 @@ int WrapperDirect3DVertexDeclaration9::sendCreation(void *ctx){
 	ContextAndCache * c = (ContextAndCache *)ctx;
 
 	c->beginCommand(CreateVertexDeclaration_Opcode, getDeviceId());
-	c->write_int(GetID());
+	c->write_int(getId());
 	c->write_int(this->numElements + 1);
 	c->write_byte_arr((char *)this->pDecl, (this->numElements + 1) * sizeof(D3DVERTEXELEMENT9));
 	c->endCommand();
@@ -167,20 +167,12 @@ int WrapperDirect3DVertexDeclaration9::sendUpdate(void *ctx){
 
 #endif
 
-WrapperDirect3DVertexDeclaration9::WrapperDirect3DVertexDeclaration9(IDirect3DVertexDeclaration9* ptr, int _id): m_vd(ptr), id(_id) {
+WrapperDirect3DVertexDeclaration9::WrapperDirect3DVertexDeclaration9(IDirect3DVertexDeclaration9* ptr, int _id): m_vd(ptr), IdentifierBase(_id) {
 	creationFlag = 0;
 	//updateFlag = 0x8fffffff;
 	updateFlag = 0;
 	stable = true;
 	m_list.AddMember(ptr, this);
-}
-
-void WrapperDirect3DVertexDeclaration9::SetID(int id) {
-	this->id = id;
-}
-
-int WrapperDirect3DVertexDeclaration9::GetID() {
-	return this->id;
 }
 
 IDirect3DVertexDeclaration9* WrapperDirect3DVertexDeclaration9::GetVD9() {

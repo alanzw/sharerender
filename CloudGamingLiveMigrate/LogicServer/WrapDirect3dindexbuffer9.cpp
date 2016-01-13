@@ -15,7 +15,7 @@ int WrapperDirect3DIndexBuffer9::sendCreation(void *ctx){
 	ContextAndCache * c = (ContextAndCache *)ctx;
 	
 	c->beginCommand(CreateIndexBuffer_Opcode, getDeviceId());
-	c->write_uint(GetID());
+	c->write_uint(getId());
 	c->write_uint(length);
 	c->write_uint(Usage);
 	c->write_uint(Format);
@@ -77,7 +77,7 @@ int WrapperDirect3DIndexBuffer9::checkUpdate(void * ctx){
 #endif
 
 
-WrapperDirect3DIndexBuffer9::WrapperDirect3DIndexBuffer9(IDirect3DIndexBuffer9* ptr, int _id, int _length): m_ib(ptr), id(_id), length(_length) {
+WrapperDirect3DIndexBuffer9::WrapperDirect3DIndexBuffer9(IDirect3DIndexBuffer9* ptr, int _id, int _length): m_ib(ptr), IdentifierBase(_id), length(_length) {
 	#ifdef ENABLE_INDEX_LOG
 	infoRecorder->logTrace("WrapperDirect3DIndexBuffer9 constructor, size:%d\n", length);
 #endif
@@ -98,7 +98,7 @@ WrapperDirect3DIndexBuffer9::WrapperDirect3DIndexBuffer9(IDirect3DIndexBuffer9* 
 	stable = false;
 }
 
-WrapperDirect3DIndexBuffer9::WrapperDirect3DIndexBuffer9(IDirect3DIndexBuffer9* ptr, int _id): m_ib(ptr), id(_id), length(0) {
+WrapperDirect3DIndexBuffer9::WrapperDirect3DIndexBuffer9(IDirect3DIndexBuffer9* ptr, int _id): m_ib(ptr), IdentifierBase(_id), length(0) {
 	#ifdef ENABLE_INDEX_LOG
 	infoRecorder->logTrace("WrapperDirect3DIndexBuffer9 constructor, size:0\n");
 #endif
@@ -113,14 +113,6 @@ WrapperDirect3DIndexBuffer9::WrapperDirect3DIndexBuffer9(IDirect3DIndexBuffer9* 
 
 IDirect3DIndexBuffer9* WrapperDirect3DIndexBuffer9::GetIB9() {
 	return m_ib;
-}
-
-void WrapperDirect3DIndexBuffer9::SetID(int id) {
-	this->id = id;
-}
-
-int WrapperDirect3DIndexBuffer9::GetID() {
-	return id;
 }
 
 int WrapperDirect3DIndexBuffer9::GetLength() {
@@ -286,7 +278,7 @@ STDMETHODIMP WrapperDirect3DIndexBuffer9::Unlock(THIS) {
 
 		c_len = m_LockData.SizeToLock;
 		csSet->cancelCommand();
-		csSet->beginCommand(IndexBufferUnlock_Opcode, GetID());
+		csSet->beginCommand(IndexBufferUnlock_Opcode, getId());
 		csSet->writeUInt(m_LockData.OffsetToLock);
 		csSet->writeUInt(m_LockData.SizeToLock);
 		csSet->writeUInt(m_LockData.Flags);
@@ -459,7 +451,7 @@ int WrapperDirect3DIndexBuffer9::PrepareIndexBuffer() {
 	int base = m_LockData.OffsetToLock;
 	tick_e = GetTickCount();
 
-	csSet->beginCommand(IndexBufferUnlock_Opcode, GetID());
+	csSet->beginCommand(IndexBufferUnlock_Opcode, getId());
 	csSet->writeUInt(m_LockData.OffsetToLock);
 	csSet->writeUInt(m_LockData.SizeToLock);
 	csSet->writeUInt(m_LockData.Flags);
@@ -481,7 +473,6 @@ int WrapperDirect3DIndexBuffer9::PrepareIndexBuffer() {
 	}
 	int neg = (1<<28)-1;
 	csSet->writeInt(neg);
-
 	tick_a = GetTickCount();
 	//获取当前这条指令的长度
 	c_len = csSet->getCommandLength();
@@ -489,7 +480,6 @@ int WrapperDirect3DIndexBuffer9::PrepareIndexBuffer() {
 	#ifdef ENABLE_INDEX_LOG
 	infoRecorder->logTrace("\tLock index buffer:%f, cache time:%f\n", tick_e - tick_s, tick_a- tick_s);
 #endif
-
 
 	if(c_len > m_LockData.SizeToLock) {
 		#ifdef ENABLE_INDEX_LOG
@@ -502,7 +492,7 @@ int WrapperDirect3DIndexBuffer9::PrepareIndexBuffer() {
 #endif
 
 		csSet->cancelCommand();
-		csSet->beginCommand(IndexBufferUnlock_Opcode, GetID());
+		csSet->beginCommand(IndexBufferUnlock_Opcode, getId());
 		csSet->writeUInt(m_LockData.OffsetToLock);
 		csSet->writeUInt(m_LockData.SizeToLock);
 		csSet->writeUInt(m_LockData.Flags);
@@ -563,14 +553,14 @@ int WrapperDirect3DIndexBuffer9::PrepareIndexBuffer(ContextAndCache * ctx) {
 	tick_e = GetTickCount();
 #endif
 #if 0
-	csSet->beginCommand(IndexBufferUnlock_Opcode, GetID());
+	csSet->beginCommand(IndexBufferUnlock_Opcode, getId());
 	csSet->writeUInt(m_LockData.OffsetToLock);
 	csSet->writeUInt(m_LockData.SizeToLock);
 	csSet->writeUInt(m_LockData.Flags);
 	csSet->writeInt(CACHE_MODE_DIFF);
 #endif
 
-	ctx->beginCommand(IndexBufferUnlock_Opcode, GetID());
+	ctx->beginCommand(IndexBufferUnlock_Opcode, getId());
 	ctx->write_uint(m_LockData.OffsetToLock);
 	ctx->write_uint(m_LockData.SizeToLock);
 	ctx->write_uint(m_LockData.Flags);
@@ -628,7 +618,7 @@ int WrapperDirect3DIndexBuffer9::PrepareIndexBuffer(ContextAndCache * ctx) {
 #endif
 #if 0
 		csSet->cancelCommand();
-		csSet->beginCommand(IndexBufferUnlock_Opcode, GetID());
+		csSet->beginCommand(IndexBufferUnlock_Opcode, getId());
 		csSet->writeUInt(m_LockData.OffsetToLock);
 		csSet->writeUInt(m_LockData.SizeToLock);
 		csSet->writeUInt(m_LockData.Flags);
@@ -639,7 +629,7 @@ int WrapperDirect3DIndexBuffer9::PrepareIndexBuffer(ContextAndCache * ctx) {
 		csSet->endCommand();
 #else
 		ctx->cancelCommand();
-		ctx->beginCommand(IndexBufferUnlock_Opcode, GetID());
+		ctx->beginCommand(IndexBufferUnlock_Opcode, getId());
 		ctx->write_uint(m_LockData.OffsetToLock);
 		ctx->write_uint(m_LockData.SizeToLock);
 		ctx->write_uint(m_LockData.Flags);
@@ -680,9 +670,7 @@ int WrapperDirect3DIndexBuffer9::PrepareIndexBuffer(ContextAndCache * ctx) {
 #else
 			ctx->cancelCommand();
 #endif
-				
 		}
 	}
-
 	return (cnt > 0);
 }

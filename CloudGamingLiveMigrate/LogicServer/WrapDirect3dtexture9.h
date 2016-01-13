@@ -11,9 +11,6 @@ class WrapperDirect3DTexture9: public IDirect3DTexture9
 {
 private:
 	IDirect3DTexture9* m_tex;
-	int id;
-
-
 public:
 
 #ifdef MULTI_CLIENTS
@@ -37,8 +34,7 @@ public:
 	static HashSet m_list;
 	static int ins_count;
 	WrapperDirect3DTexture9(IDirect3DTexture9* ptr, int _id);
-	int GetID();
-	void SetID(int id);
+
 	IDirect3DTexture9* GetTex9();
 	void SayHi(char* str);
 	HRESULT SendTextureData();

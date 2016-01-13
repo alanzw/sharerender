@@ -516,6 +516,7 @@ int ContextManager::addCtx(ContextAndCache * _ctx){
 	ctx_init.add(_ctx);
 #endif
 	ctxCount ++;
+	_ctx->checkFlags();
 	_ctx->preperationStart();
 #ifndef SINGLE_CONTEXT
 	// start the queue thread
@@ -597,7 +598,7 @@ int CommandServerSet::addServer(SOCKET s){
 		//set cache filter for new context and cache
 		clients++;
 		ctx->set_cache_filter();
-		infoRecorder->logError("[CommandServerSet]: to set the connection socket.\n");
+		infoRecorder->logError("[CommandServerSet]: add ctx with index:%d.\n", ctx->getIndex());
 		ctx->set_connect_socket(s);
 		//DebugBreak();
 		ctx_mgr_->addCtx(ctx);
@@ -610,7 +611,7 @@ int CommandServerSet::addServer(SOCKET s){
 		setCtxEvent();
 	}
 	else{
-		infoRecorder->logTrace("[CommandServerSet]: the socket is already mapped.\n");
+		infoRecorder->logError("[CommandServerSet]: the socket is already mapped.\n");
 	}
 	infoRecorder->logError("[CommandServerSet]: add server succ.\n");
 	return 0;

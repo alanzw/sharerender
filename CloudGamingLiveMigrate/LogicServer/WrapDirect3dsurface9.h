@@ -10,7 +10,6 @@ class WrapperDirect3DSurface9 : public IDirect3DSurface9
 {
 private:
 	IDirect3DSurface9* m_surface;
-	int id;
 	bool isSent;
 	// add 17:00
 	int tex_id;
@@ -57,8 +56,6 @@ public:
 	static int ins_count;
 	WrapperDirect3DSurface9(IDirect3DSurface9* ptr, int id);
 	static WrapperDirect3DSurface9* GetWrapperSurface9(IDirect3DSurface9* ptr);
-	int GetID();
-	void SetID(int id);
 	IDirect3DSurface9* GetSurface9();
 
 	void SendSurface();

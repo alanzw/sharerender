@@ -61,7 +61,6 @@ namespace cg{
 					case WM_QUIT:
 						pThread->onQuit();
 						return 0;
-						break;
 					default:
 						pThread->onThreadMsg(msg.message, msg.wParam, msg.lParam);
 						continue;

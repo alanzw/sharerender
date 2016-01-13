@@ -146,7 +146,7 @@ public:
 		unlock();
 	}
 	void			eraseFlag();    // this function achieved in ServerInit.cpp
-
+	void			checkFlags();   // check all related objects
 	void			checkObj(IdentifierBase * obj);  // check the obj, created? 
 	void			updateObj(IdentifierBase * obj);   // check the object's update
 	void			pushUpdate(IdentifierBase * obj);   // push the object to the queue

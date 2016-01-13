@@ -13,7 +13,7 @@ int WrapperDirect3DSwapChain9::sendCreation(void *ctx){
 	ContextAndCache * c =(ContextAndCache *)ctx;
 
 	c->beginCommand(GetSwapChain_Opcode, deviceId);
-	c->write_int(GetID());
+	c->write_int(getId());
 	c->write_uint(iSwapChain);
 	c->endCommand();
 
@@ -52,7 +52,7 @@ int WrapperDirect3DSwapChain9::sendUpdate(void *ctx){
 #endif
 
 
-WrapperDirect3DSwapChain9::WrapperDirect3DSwapChain9(IDirect3DSwapChain9* ptr, int _id): m_chain(ptr), id(_id) {
+WrapperDirect3DSwapChain9::WrapperDirect3DSwapChain9(IDirect3DSwapChain9* ptr, int _id): m_chain(ptr), IdentifierBase(_id) {
 #ifdef ENABLE_SWAP_CHAIN_LOG
 	infoRecorder->logTrace("WrapperDirect3DSwapChain9::WrapperDirect3DSwapChain9() called\n");
 #endif
@@ -61,14 +61,6 @@ WrapperDirect3DSwapChain9::WrapperDirect3DSwapChain9(IDirect3DSwapChain9* ptr, i
 	creationFlag = 0;
 	updateFlag = 0x8fffffff;
 	stable = true;
-}
-
-int WrapperDirect3DSwapChain9::GetID() {
-	return this->id;
-}
-
-void WrapperDirect3DSwapChain9::SetID(int id) {
-	this->id = id;
 }
 
 WrapperDirect3DSwapChain9* WrapperDirect3DSwapChain9::GetWrapperSwapChain9(IDirect3DSwapChain9* ptr) {
@@ -184,7 +176,7 @@ STDMETHODIMP WrapperDirect3DSwapChain9::GetBackBuffer(THIS_ UINT iBackBuffer,D3D
 		
 		// create a new surface ?
 		csSet->beginCommand(SwapChainGetBackBuffer_Opcode, id);
-		csSet->writeInt(surface->GetID());
+		csSet->writeInt(surface->getId());
 		csSet->writeUInt(iBackBuffer);
 		csSet->writeUInt(Type);
 		csSet->endCommand();

@@ -110,13 +110,13 @@ extern bool synSign;  // test the latency
 
 extern double time_total;
 extern int frame_all_count;
-
 extern int g_frame_index;   // the frame index in a group of frames
-
 
 #ifdef MULTI_CLIENTS
 // for supporting multiple clients
 class IdentifierBase{
+protected:
+	int id;
 public:
 	unsigned int creationFlag;
 	unsigned int updateFlag;
@@ -129,6 +129,8 @@ public:
 
 	IdentifierBase(): creationFlag(0), updateFlag(0), sync(false), stable(true), curDeviceId(0){}
 	IdentifierBase(bool val): creationFlag(0), updateFlag(0), sync(val), stable(true), curDeviceId(0){}
+	IdentifierBase(int _id):creationFlag(0), updateFlag(0), sync(false), stable(true), curDeviceId(0), id(_id){} 
+	IdentifierBase(int _id, bool val):creationFlag(0), updateFlag(0), sync(val), stable(true), curDeviceId(0), id(_id){} 
 
 	virtual int sendCreation(void * ctx) = 0;
 	virtual int sendUpdate(void * ctx) = 0;
@@ -139,6 +141,8 @@ public:
 	inline int getDeviceId(){ return curDeviceId; }
 	inline void setDeviceID(int id){ curDeviceId = id;}
 	void print();
+	int getId();//{ return id; }
+	void setId(int _id);//{ id = _id; }
 };
 
 class SynEntity: public IdentifierBase{

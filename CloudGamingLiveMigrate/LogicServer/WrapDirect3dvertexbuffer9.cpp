@@ -19,7 +19,7 @@ int WrapperDirect3DVertexBuffer9::sendCreation(void * ctx){
 	ContextAndCache * c = (ContextAndCache *)ctx;
 
 	c->beginCommand(CreateVertexBuffer_Opcode, getDeviceId());
-	c->write_uint(GetId());
+	c->write_uint(getId());
 	c->write_uint(Length);
 	c->write_uint(Usage);
 	c->write_uint(FVF);
@@ -71,7 +71,7 @@ int WrapperDirect3DVertexBuffer9::sendUpdate(void * ctx){
 
 #endif
 
-WrapperDirect3DVertexBuffer9::WrapperDirect3DVertexBuffer9(IDirect3DVertexBuffer9* ptr, int _id, int _length): m_vb(ptr), isLock(false), id(_id), Length(_length) {
+WrapperDirect3DVertexBuffer9::WrapperDirect3DVertexBuffer9(IDirect3DVertexBuffer9* ptr, int _id, int _length): m_vb(ptr), isLock(false), IdentifierBase(_id), Length(_length) {
 #ifdef ENABLE_VERTEX_BUFFER_LOG
 	infoRecorder->logTrace("WrapperDirect3DVertexBuffer9 constructor called, id=%d, length=%d\n", _id, _length);
 #endif
@@ -99,7 +99,7 @@ WrapperDirect3DVertexBuffer9::WrapperDirect3DVertexBuffer9(IDirect3DVertexBuffer
 	stable = false;
 }
 
-WrapperDirect3DVertexBuffer9::WrapperDirect3DVertexBuffer9(IDirect3DVertexBuffer9* ptr, int _id): m_vb(ptr), isLock(false), id(_id), Length(0) {
+WrapperDirect3DVertexBuffer9::WrapperDirect3DVertexBuffer9(IDirect3DVertexBuffer9* ptr, int _id): m_vb(ptr), isLock(false), IdentifierBase(_id), Length(0) {
 	//cache_buffer = new char[_length];
 	isFirst = true;
 	this->maxFlag = false;
@@ -119,14 +119,6 @@ WrapperDirect3DVertexBuffer9::WrapperDirect3DVertexBuffer9(IDirect3DVertexBuffer
 
 LPDIRECT3DVERTEXBUFFER9 WrapperDirect3DVertexBuffer9::GetVB9() {
 	return m_vb;
-}
-
-void WrapperDirect3DVertexBuffer9::SetId(int id) {
-	this->id = id;
-}
-
-int WrapperDirect3DVertexBuffer9::GetId() {
-	return this->id;
 }
 
 int WrapperDirect3DVertexBuffer9::GetLength() {
@@ -394,7 +386,7 @@ bool WrapperDirect3DVertexBuffer9::PrepareVertexBuffer(){
 	tick_e = GetTickCount();
 #endif
 
-	csSet->beginCommand(VertexBufferUnlock_Opcode, GetId());
+	csSet->beginCommand(VertexBufferUnlock_Opcode, getId());
 	csSet->writeUInt(m_LockData.OffsetToLock);
 	csSet->writeUInt(m_LockData.SizeToLock);
 	csSet->writeUInt(m_LockData.Flags);
@@ -428,7 +420,7 @@ bool WrapperDirect3DVertexBuffer9::PrepareVertexBuffer(){
 		c_len = m_LockData.SizeToLock;
 		
 		csSet->cancelCommand();
-		csSet->beginCommand(VertexBufferUnlock_Opcode, GetId());
+		csSet->beginCommand(VertexBufferUnlock_Opcode, getId());
 		csSet->writeUInt(m_LockData.OffsetToLock);
 		csSet->writeUInt(m_LockData.SizeToLock);
 		csSet->writeUInt(m_LockData.Flags);
@@ -489,7 +481,7 @@ bool WrapperDirect3DVertexBuffer9::PrepareVertexBuffer(ContextAndCache * ctx){
 	tick_e = GetTickCount();
 #endif
 
-	ctx->beginCommand(VertexBufferUnlock_Opcode, GetId());
+	ctx->beginCommand(VertexBufferUnlock_Opcode, getId());
 	ctx->write_uint(m_LockData.OffsetToLock);
 	ctx->write_uint(m_LockData.SizeToLock);
 	ctx->write_uint(m_LockData.Flags);
@@ -525,7 +517,7 @@ bool WrapperDirect3DVertexBuffer9::PrepareVertexBuffer(ContextAndCache * ctx){
 		c_len = m_LockData.SizeToLock;
 
 		ctx->cancelCommand();
-		ctx->beginCommand(VertexBufferUnlock_Opcode, GetId());
+		ctx->beginCommand(VertexBufferUnlock_Opcode, getId());
 		ctx->write_uint(m_LockData.OffsetToLock);
 		ctx->write_uint(m_LockData.SizeToLock);
 		ctx->write_uint(m_LockData.Flags);

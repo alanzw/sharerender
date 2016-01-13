@@ -183,20 +183,13 @@ int WrapperDirect3DStateBlock9::sendUpdate(void *ctx){
 }
 #endif
 
-WrapperDirect3DStateBlock9::WrapperDirect3DStateBlock9(IDirect3DStateBlock9* _sb, int _id): m_sb(_sb), id(_id){
+WrapperDirect3DStateBlock9::WrapperDirect3DStateBlock9(IDirect3DStateBlock9* _sb, int _id): m_sb(_sb), IdentifierBase(_id){
 	creationFlag = 0;
 	updateFlag = 0x8fffffff;
 	stable = true;
 	m_list.AddMember(_sb, this);
 }
 
-int WrapperDirect3DStateBlock9::GetID() {
-	return this->id;
-}
-
-void WrapperDirect3DStateBlock9::SetID(int id) {
-	this->id = id;
-}
 
 IDirect3DStateBlock9* WrapperDirect3DStateBlock9::GetSB9() {
 	return this->m_sb;

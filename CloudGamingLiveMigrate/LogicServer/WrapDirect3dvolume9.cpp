@@ -43,17 +43,11 @@ int WrapperDirect3DVolume9::sendUpdate(void * ctx){
 #endif //MULTI_CLIENTS
 
 
-WrapperDirect3DVolume9::WrapperDirect3DVolume9(IDirect3DVolume9 *ptr, int _id):m_d3dvolume(ptr),id(_id){
+WrapperDirect3DVolume9::WrapperDirect3DVolume9(IDirect3DVolume9 *ptr, int _id):m_d3dvolume(ptr),IdentifierBase(_id){
 	infoRecorder->logTrace("WrapperDirect3DVolume9 constructor called!\n");
 	m_list.AddMember(ptr,this);
 }
 
-int WrapperDirect3DVolume9::GetID(){
-	return this->id;
-}
-void WrapperDirect3DVolume9::SetID(int id){
-	this->id =id;
-}
 
 WrapperDirect3DVolume9 * WrapperDirect3DVolume9::GetWrapperDirect3DVolume9(IDirect3DVolume9 *ptr){
 	infoRecorder->logTrace("WrapperDirect3DVolume9:: GetWrapperDirect3DVolume9 called!\n");

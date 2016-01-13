@@ -16,13 +16,10 @@ private:
 	IDirect3DVertexBuffer9* m_vb;
 	
 	bool isLock;// no use
-	int id;
 public:
 	bool maxFlag;
 	float maxX, maxY, maxZ;
-
 	bool changed;// this flag indicate that the buffer has been locked
-
 	bool readed_;
 	
 	char* cache_buffer; //析构的时候记得要删掉
@@ -68,8 +65,6 @@ public:
 	char * get_cache_buffer(){
 		return cache_buffer;
 	}
-	void SetId(int id);
-	int GetId();
 	int GetLength();
 
 	static WrapperDirect3DVertexBuffer9* GetWrapperVertexBuffer9(IDirect3DVertexBuffer9* ptr);

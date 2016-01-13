@@ -34,7 +34,7 @@ int WrapperDirect3DDevice9::sendCreation(void * ctx){
 #endif
 	ContextAndCache * c = (ContextAndCache *)ctx;
 	c->beginCommand(CreateDevice_Opcode, 0);
-	c->write_int(GetID());
+	c->write_int(getId());
 	c->write_uint(adapter);
 	c->write_uint(deviceType);
 	c->write_uint(behaviorFlags);
@@ -371,7 +371,7 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateVertexDeclaration(THIS_ CONST D3DVERT
 
 	// send the command to all connected clients
 	csSet->beginCommand(CreateVertexDeclaration_Opcode, id);
-	csSet->writeInt(vd->GetID());
+	csSet->writeInt(vd->getId());
 	csSet->writeInt(ve_cnt + 1);
 	csSet->writeByteArr((char *)pVertexElements, sizeof(D3DVERTEXELEMENT9) * (ve_cnt + 1));
 	csSet->endCommand();
@@ -427,23 +427,23 @@ STDMETHODIMP WrapperDirect3DDevice9::SetVertexDeclaration(THIS_ IDirect3DVertexD
 
 #ifndef MULTI_CLIENTS
 	cs.begin_command(SetVertexDeclaration_Opcode, id);
-	cs.write_short(((WrapperDirect3DVertexDeclaration9*)pDecl)->GetID());
+	cs.write_short(((WrapperDirect3DVertexDeclaration9*)pDecl)->getId());
 	cs.end_command();
 #else
 	// call the VertexDeclaration's check creation
 	csSet->checkObj(decl);
 	// send the set command to all clients
 	csSet->beginCommand(SetVertexDeclaration_Opcode, id);
-	csSet->writeShort(((WrapperDirect3DVertexDeclaration9 *)pDecl)->GetID());
+	csSet->writeShort(((WrapperDirect3DVertexDeclaration9 *)pDecl)->getId());
 	csSet->endCommand();
 	if(stateRecorder){
 		stateRecorder->pushDependency(decl);
 		stateRecorder->BeginCommand(SetVertexDeclaration_Opcode, id);
-		stateRecorder->WriteShort(decl->GetID());
+		stateRecorder->WriteShort(decl->getId());
 		stateRecorder->EndCommand();
 	}
 	#ifdef ENABLE_DEVICE_LOG
-	infoRecorder->logTrace("with id:%d.\n", decl->GetID());
+	infoRecorder->logTrace("with id:%d.\n", decl->getId());
 #endif
 #endif
 	return hh;
@@ -493,7 +493,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetStreamSource(THIS_ UINT StreamNumber,IDi
 	// send the command
 	csSet->beginCommand(SetStreamSource_Opcode, id);
 	csSet->writeUInt(StreamNumber);
-	csSet->writeInt(wvb->GetId());
+	csSet->writeInt(wvb->getId());
 	csSet->writeUInt(OffsetInBytes);
 	csSet->writeUInt(Stride);
 	csSet->endCommand();
@@ -501,7 +501,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetStreamSource(THIS_ UINT StreamNumber,IDi
 		stateRecorder->pushDependency(wvb);
 		stateRecorder->BeginCommand(SetStreamSource_Opcode, id);
 		stateRecorder->WriteUInt(StreamNumber);
-		stateRecorder->WriteInt(wvb->GetId());
+		stateRecorder->WriteInt(wvb->getId());
 		stateRecorder->WriteUInt(OffsetInBytes);
 		stateRecorder->WriteUInt(Stride);
 		stateRecorder->EndCommand();
@@ -553,7 +553,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetIndices(THIS_ IDirect3DIndexBuffer9* pIn
 
 	WrapperDirect3DIndexBuffer9* wib = (WrapperDirect3DIndexBuffer9*)pIndexData;
 	#ifdef ENABLE_DEVICE_LOG
-	infoRecorder->logTrace("index buffer id:%d\n", wib->GetID());
+	infoRecorder->logTrace("index buffer id:%d\n", wib->getId());
 #endif
 #ifdef MULTI_CLIENTS
 	// send the index
@@ -561,13 +561,13 @@ STDMETHODIMP WrapperDirect3DDevice9::SetIndices(THIS_ IDirect3DIndexBuffer9* pIn
 
 	csSet->checkObj(wib);
 	csSet->beginCommand(SetIndices_Opcode, id);
-	csSet->writeShort(wib->GetID());
+	csSet->writeShort(wib->getId());
 	csSet->endCommand();
 
 	if(stateRecorder){
 		stateRecorder->pushDependency(wib);
 		stateRecorder->BeginCommand(SetIndices_Opcode, id);
-		stateRecorder->WriteShort(wib->GetID());
+		stateRecorder->WriteShort(wib->getId());
 		stateRecorder->EndCommand();
 	}
 #else   // USE_MESH

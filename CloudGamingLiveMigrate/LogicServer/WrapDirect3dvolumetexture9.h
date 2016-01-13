@@ -9,14 +9,10 @@ class WrapperDirect3DVolumeTexture9: public IDirect3DVolumeTexture9
 {
 private:
 	IDirect3DVolumeTexture9* m_tex;
-	int id;
-
 	static HashSet m_list;
-
 public:
 
 #ifdef MULTI_CLIENTS
-	
 	virtual int checkCreation(void *ctx);
 	virtual int sendCreation(void *ctx);
 	virtual int checkUpdate(void *ctx);
@@ -32,8 +28,6 @@ public:
 
 	static int ins_count;
 	WrapperDirect3DVolumeTexture9(IDirect3DVolumeTexture9* ptr, int _id);
-	int GetID();
-	void SetID(int id);
 	IDirect3DVolumeTexture9* GetVolumeTex9();
 	void SayHi(char* str);
 	HRESULT SendTextureData();

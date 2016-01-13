@@ -10,8 +10,6 @@ class WrapperDirect3DVertexShader9: public IDirect3DVertexShader9
 {
 private:
 	IDirect3DVertexShader9* m_vs;
-	int id;
-	
 public:
 	static HashSet m_list;
 #ifdef MULTI_CLIENTS
@@ -28,12 +26,9 @@ public:
 
 	static int ins_count;
 	WrapperDirect3DVertexShader9(IDirect3DVertexShader9* ptr, int _id);
-	int GetID();
-	void SetID(int id);
 	IDirect3DVertexShader9* GetVS9();
 
 	static WrapperDirect3DVertexShader9* GetWrapperVertexShader(IDirect3DVertexShader9* ptr);
-
 public:
 
 	/*** IUnknown methods ***/

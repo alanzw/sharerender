@@ -46,18 +46,12 @@ int WrapperDirect3DVolumeTexture9::sendUpdate(void *ctx){
 
 #endif
 
-WrapperDirect3DVolumeTexture9::WrapperDirect3DVolumeTexture9(IDirect3DVolumeTexture9 * ptr, int _id): m_tex(ptr), id(_id){
+WrapperDirect3DVolumeTexture9::WrapperDirect3DVolumeTexture9(IDirect3DVolumeTexture9 * ptr, int _id): m_tex(ptr), IdentifierBase(_id){
 	infoRecorder->logTrace("WrapperDirect3DVolumeTexture9 constructor called!\n");
 	m_list.AddMember(ptr,this);
 	creationFlag = 0;
 	updateFlag = 0x8fffffff;
 	stable = true;
-}
-int WrapperDirect3DVolumeTexture9::GetID(){
-	return this->id;
-}
-void WrapperDirect3DVolumeTexture9::SetID(int id){
-	this->id = id;
 }
 
 WrapperDirect3DVolumeTexture9 * WrapperDirect3DVolumeTexture9::GetWrapperTexture9(IDirect3DVolumeTexture9 * ptr){
