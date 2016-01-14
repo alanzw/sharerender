@@ -76,6 +76,7 @@ STDMETHODIMP WrapperDirect3DVolumeTexture9::QueryInterface(THIS_ REFIID riid, vo
 }
 STDMETHODIMP_(ULONG) WrapperDirect3DVolumeTexture9::AddRef(THIS){
 	infoRecorder->logTrace("WrapperDirect3DVolumeTexture9::AddRef called!\n");
+	refCount++;
 	return this->m_tex->AddRef();
 }
 
@@ -85,6 +86,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DVolumeTexture9::Release(THIS){
 #ifdef LOG_REF_COUNT
 	infoRecorder->logError("WrapperDirect3DVolumeTexture9::Release(), ref:%d.\n", hr);
 #endif
+	refCount--;
 	return hr;
 }
 

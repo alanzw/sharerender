@@ -128,12 +128,14 @@ STDMETHODIMP_(ULONG) WrapperDirect3D9::AddRef(THIS) {
 #ifdef ENABLE_DIRECT3D_LOG
 	infoRecorder->logTrace("WrapperDirect3D9::AddRef() called\n");
 #endif
+	refCount++;
 	return m_d3d->AddRef();
 }
 STDMETHODIMP_(ULONG) WrapperDirect3D9::Release(THIS) {
 #ifdef ENABLE_DIRECT3D_LOG
 	infoRecorder->logTrace("WrapperDirect3D9::Release() called\n");
 #endif
+	refCount--;
 	return m_d3d->Release();
 }
 

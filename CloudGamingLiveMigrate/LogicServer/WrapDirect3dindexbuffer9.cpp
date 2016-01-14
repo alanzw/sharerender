@@ -140,7 +140,7 @@ STDMETHODIMP WrapperDirect3DIndexBuffer9::QueryInterface(THIS_ REFIID riid, void
 #endif
 	return hr;
 }
-STDMETHODIMP_(ULONG) WrapperDirect3DIndexBuffer9::AddRef(THIS) { return m_ib->AddRef(); }
+STDMETHODIMP_(ULONG) WrapperDirect3DIndexBuffer9::AddRef(THIS) { refCount++; return m_ib->AddRef(); }
 STDMETHODIMP_(ULONG) WrapperDirect3DIndexBuffer9::Release(THIS) { 
 	ULONG hr = m_ib->Release();
 #ifdef LOG_REF_COUNT
@@ -148,6 +148,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DIndexBuffer9::Release(THIS) {
 	infoRecorder->logTrace("WrapperDirect3DIndexBuffer9::Release(), ref:%d.\n", hr);
 #endif
 #endif
+	refCount--;
 	return hr; 
 }
 

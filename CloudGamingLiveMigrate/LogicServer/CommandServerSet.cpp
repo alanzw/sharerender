@@ -120,9 +120,11 @@ ContextAndCache::~ContextAndCache(){
 		CloseHandle(lockMutex);
 	}
 	if(taskQueue){
+#if 0
 		if(taskQueue->isStart()){
 			taskQueue->stop();
 		}
+#endif
 		delete taskQueue;
 		taskQueue = NULL;
 	}
@@ -362,11 +364,15 @@ void ContextManager::checkObj(IdentifierBase * obj){
 		// ERROR
 		for(int j = 0; j < ctx_init.getCtxCount(); j++){
 			otherCtx = ctx_init.getCtx(j);
-			if(otherCtx->isChecked(obj->frameCheckFlag)){
+
+			infoRecorder->logError("[ContextManager]: obj frame check flag: 0x%x.\n", obj->frameCheckFlag);
+			if(!otherCtx->isChecked(obj->frameCheckFlag)){
 				otherCtx->setChecked(obj->frameCheckFlag);
 				otherCtx->pushUpdate(obj);
 			}
 		}
+	}else{
+		infoRecorder->logError("[ContextManager]: obj %d is not stable.\n", obj->getId());
 	}
 #else
 	if(_ctx_cache){
@@ -482,11 +488,17 @@ REMOVAL:
 	ret->eraseFlag();
 	IndexManager * indexMgr = IndexManager::GetIndexManager(sizeof(int)*8);
 	indexMgr->resetIndex(ret->getIndex());
+	// wait the thread to exit
+	if(ret->taskQueue->isStart()){
+		ret->taskQueue->stop();
+		WaitForSingleObject(ret->taskQueue->getThread(), 1000);
+	}
 
 	//release the ctx
 	delete ret;
 	ret = NULL;
 	// here always means return NULL
+	infoRecorder->logError("[ContextManager]: current ctx:%p\n", _ctx_cache);
 	return true;
 }
 
@@ -512,7 +524,7 @@ int ContextManager::addCtx(ContextAndCache * _ctx){
 	}
 #else
 	// assume that every context that added is not ready to render
-	infoRecorder->logTrace("[ContextManager]: after add ctx to init array.\n");
+	infoRecorder->logTrace("[ContextManager]: after add ctx to init array, current ctx: %p.\n", this->_ctx_cache);
 	ctx_init.add(_ctx);
 #endif
 	ctxCount ++;

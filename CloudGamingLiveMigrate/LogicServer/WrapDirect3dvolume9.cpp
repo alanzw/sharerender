@@ -71,6 +71,7 @@ STDMETHODIMP WrapperDirect3DVolume9::QueryInterface(THIS_ REFIID riid, void **pp
 }
 STDMETHODIMP_(ULONG) WrapperDirect3DVolume9::AddRef(THIS){
 	infoRecorder->logTrace("WrapperDirect3DVolume9::AddRef called!\n");
+	refCount++;
 	return this->m_d3dvolume->AddRef();
 }
 
@@ -80,6 +81,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DVolume9::Release(THIS){
 #ifdef LOG_REF_COUNT
 	infoRecorder->logError("WrapperDirect3DVolume9::Release(), ref:%d.\n", hr);
 #endif
+	refCount--;
 	return hr;
 }
 

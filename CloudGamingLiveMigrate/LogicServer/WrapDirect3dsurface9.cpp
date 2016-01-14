@@ -202,6 +202,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DSurface9::AddRef(THIS) {
 #ifdef ENABLE_SURFACE_LOG
 	infoRecorder->logTrace("WrapperDirect3DSurface9::AddRef() called\n");
 #endif
+	refCount++;
 	return m_surface->AddRef();
 }
 STDMETHODIMP_(ULONG) WrapperDirect3DSurface9::Release(THIS) {
@@ -211,6 +212,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DSurface9::Release(THIS) {
 	infoRecorder->logTrace("WrapperDirect3DSurface9::Release(), ref:%d.\n", hr);
 #endif
 #endif
+	refCount++;
 	return hr;
 }
 

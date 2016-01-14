@@ -76,6 +76,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DDevice9::AddRef(THIS) {
 #ifdef ENBALE_DEVICE_LOG
 	infoRecorder->logTrace("WrapperDirect3DDevice9::AddRef() called\n");
 #endif
+	refCount++;
 	return m_device->AddRef();
 }
 STDMETHODIMP_(ULONG) WrapperDirect3DDevice9::Release(THIS) {
@@ -85,6 +86,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DDevice9::Release(THIS) {
 	infoRecorder->logTrace("WrapperDirect3DDevice9::Release, ref:%d.\n", hr);
 #endif  // LOG_REF_COUNT1
 #endif
+	refCount--;
 	return hr;
 }
 
@@ -193,7 +195,7 @@ STDMETHODIMP WrapperDirect3DDevice9::GetSwapChain(THIS_ UINT iSwapChain,IDirect3
 		// set all the current clients' creation flag
 	}else{
 		// the swap chain exist, check all clients' creation flag
-		csSet->checkObj(chain);
+		csSet->checkObj(dynamic_cast<IdentifierBase *>(chain));
 		//chain->checkCreation(this->GetID());
 		//set creation flags
 	}
@@ -367,7 +369,7 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 	csSet->endCommand();    // here may change the context
 
 	// context switch is done, set device's creation
-	csSet->checkObj(this);
+	csSet->checkObj(dynamic_cast<IdentifierBase *>(this));
 	// deal with the initializer
 
 	Initializer * initializer = Initializer::GetInitializer();
@@ -375,7 +377,7 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 #ifdef ENBALE_DEVICE_LOG
 		infoRecorder->logError("[Present]: push initializer, should only show ONCE.\n");
 #endif // ENABLE_DEVICE_LOG
-		csSet->checkObj(initializer);
+		csSet->checkObj(dynamic_cast<IdentifierBase *>(initializer));
 	}
 
 #endif
@@ -1123,7 +1125,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetRenderTarget(THIS_ DWORD RenderTargetInd
 
 	WrapperDirect3DSurface9 * ws = (WrapperDirect3DSurface9 *)pRenderTarget;
 	//ws->checkCreation(this->GetID());
-	csSet->checkObj(ws);
+	csSet->checkObj(dynamic_cast<IdentifierBase *>(ws));
 
 	csSet->beginCommand(SetRenderTarget_Opcode, id);
 	csSet->writeUInt(RenderTargetIndex);
@@ -1270,7 +1272,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetDepthStencilSurface(THIS_ IDirect3DSurfa
 
 	WrapperDirect3DSurface9 * ws = (WrapperDirect3DSurface9 *)pNewZStencil;
 	//ws->checkCreation(this->GetID());
-	csSet->checkObj(ws);
+	csSet->checkObj(dynamic_cast<IdentifierBase *>(ws));
 	// send command
 	csSet->beginCommand(SetDepthStencilSurface_Opcode, id);
 	csSet->writeInt(ws->getId());
@@ -1848,7 +1850,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetTexture(THIS_ DWORD Stage,IDirect3DBaseT
 #else
 		// check the texture data is sent or not
 
-		csSet->checkObj(wt);
+		csSet->checkObj(dynamic_cast<IdentifierBase *>(wt));
 		// send the command
 		csSet->beginCommand(SetTexture_Opcode, this->id);
 		csSet->writeUInt(Stage);
@@ -1880,7 +1882,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetTexture(THIS_ DWORD Stage,IDirect3DBaseT
 		// check texture's creation and update
 		WrapperDirect3DCubeTexture9 * ctex = (WrapperDirect3DCubeTexture9 *)pTexture;
 
-		csSet->checkObj(ctex);
+		csSet->checkObj(dynamic_cast<IdentifierBase *>(ctex));
 		// send command
 		csSet->beginCommand(SetCubeTexture_Opcode, id);
 		csSet->writeUInt(Stage);
@@ -2234,14 +2236,14 @@ STDMETHODIMP WrapperDirect3DDevice9::SetVertexShader(THIS_ IDirect3DVertexShader
 #else
 	// check vertex shader's creation
 	WrapperDirect3DVertexShader9 * wvs = (WrapperDirect3DVertexShader9 *)pShader;
-	csSet->checkObj(wvs);
+	csSet->checkObj(dynamic_cast<IdentifierBase *>(wvs));
 	// send
 	csSet->beginCommand(SetVertexShader_Opcode, id);
 	csSet->writeInt(((WrapperDirect3DVertexShader9 *)pShader)->getId());
 	csSet->endCommand();
 
 	if(stateRecorder){
-		stateRecorder->pushDependency(wvs);
+		stateRecorder->pushDependency(dynamic_cast<IdentifierBase *>(wvs));
 		stateRecorder->BeginCommand(SetVertexShader_Opcode, id);
 		stateRecorder->WriteInt(wvs->getId());
 		stateRecorder->EndCommand();
@@ -2534,7 +2536,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetPixelShader(THIS_ IDirect3DPixelShader9*
 
 	WrapperDirect3DPixelShader9 * wps = (WrapperDirect3DPixelShader9 *)pShader;
 	//wps->checkCreation(id);
-	csSet->checkObj(wps);
+	csSet->checkObj(dynamic_cast<IdentifierBase *>(wps));
 	// send command
 	csSet->beginCommand(SetPixelShader_Opcode, id);
 	csSet->writeInt(((WrapperDirect3DPixelShader9*)pShader)->getId());

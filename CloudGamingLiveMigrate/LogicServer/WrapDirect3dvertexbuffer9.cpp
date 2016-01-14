@@ -148,6 +148,7 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::QueryInterface(THIS_ REFIID riid, voi
 	return hr;
 };
 STDMETHODIMP_(ULONG) WrapperDirect3DVertexBuffer9::AddRef(THIS) {
+	refCount++;
 	return m_vb->AddRef();
 }
 STDMETHODIMP_(ULONG) WrapperDirect3DVertexBuffer9::Release(THIS) {
@@ -157,6 +158,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DVertexBuffer9::Release(THIS) {
 	infoRecorder->logTrace("WrapperDirect3DVertexBuffer9::Release(), ref:%d.\n", hr);
 #endif
 #endif
+	refCount--;
 	return hr;
 }
 

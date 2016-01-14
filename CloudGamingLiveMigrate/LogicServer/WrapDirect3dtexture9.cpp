@@ -500,6 +500,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DTexture9::AddRef(THIS) {
 #ifdef ENABLE_TEXTURE_LOG
 	infoRecorder->logTrace("WrapperDirect3DTexture9::AddRef() called\n");
 #endif
+	refCount++;
 	return m_tex->AddRef();
 }
 STDMETHODIMP_(ULONG) WrapperDirect3DTexture9::Release(THIS) {
@@ -509,6 +510,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DTexture9::Release(THIS) {
 	infoRecorder->logTrace("WrapperDirect3DTexture9::Release() succeeded, ref:%d\n", hr);
 #endif
 #endif
+	refCount--;
 	return hr;
 	//return D3D_OK;
 }

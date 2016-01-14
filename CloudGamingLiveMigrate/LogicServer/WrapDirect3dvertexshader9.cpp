@@ -78,6 +78,7 @@ STDMETHODIMP WrapperDirect3DVertexShader9::QueryInterface(THIS_ REFIID riid, voi
 	return hr;
 }
 STDMETHODIMP_(ULONG) WrapperDirect3DVertexShader9::AddRef(THIS) {
+	refCount++;
 	return m_vs->AddRef();
 }
 STDMETHODIMP_(ULONG) WrapperDirect3DVertexShader9::Release(THIS) {
@@ -90,6 +91,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DVertexShader9::Release(THIS) {
 	infoRecorder->logError("WrapperDirect3DVertexShader9::Release(), ref:%d.\n", hr);
 #endif
 #endif
+	refCount--;
 	return hr;
 }
 

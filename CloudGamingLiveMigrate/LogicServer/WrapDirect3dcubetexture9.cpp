@@ -97,6 +97,7 @@ STDMETHODIMP WrapperDirect3DCubeTexture9::QueryInterface(THIS_ REFIID riid, void
 }
 STDMETHODIMP_(ULONG) WrapperDirect3DCubeTexture9::AddRef(THIS) {
 	infoRecorder->logTrace("WrapperDirect3DCubeTexture9::AddRef() called\n");
+	refCount++;
 	return m_cube_tex->AddRef();
 }
 STDMETHODIMP_(ULONG) WrapperDirect3DCubeTexture9::Release(THIS) {
@@ -104,6 +105,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DCubeTexture9::Release(THIS) {
 #ifdef LOG_REF_COUNT
 	infoRecorder->logError("WrapperDirect3DCubeTexture9::Release(), ref:%d\n", hr);
 #endif
+	refCount--;
 	return hr;
 }
 

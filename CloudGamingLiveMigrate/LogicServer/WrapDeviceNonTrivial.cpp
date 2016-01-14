@@ -329,7 +329,7 @@ STDMETHODIMP WrapperDirect3DDevice9::DrawIndexedPrimitiveUP(THIS_ D3DPRIMITIVETY
 STDMETHODIMP WrapperDirect3DDevice9::CreateVertexDeclaration(THIS_ CONST D3DVERTEXELEMENT9* pVertexElements,IDirect3DVertexDeclaration9** ppDecl) {
 #ifdef ENABLE_DEVICE_LOG
 	infoRecorder->logTrace("WrapperDirect3DDevice9::CreateVertexDeclaration(), ");
-#endif
+#endif // ENABLE_DEVICE_LOG
 
 	int ve_cnt = 0;
 	D3DVERTEXELEMENT9 end = D3DDECL_END();
@@ -431,13 +431,13 @@ STDMETHODIMP WrapperDirect3DDevice9::SetVertexDeclaration(THIS_ IDirect3DVertexD
 	cs.end_command();
 #else
 	// call the VertexDeclaration's check creation
-	csSet->checkObj(decl);
+	csSet->checkObj(dynamic_cast<IdentifierBase *>(decl));
 	// send the set command to all clients
 	csSet->beginCommand(SetVertexDeclaration_Opcode, id);
 	csSet->writeShort(((WrapperDirect3DVertexDeclaration9 *)pDecl)->getId());
 	csSet->endCommand();
 	if(stateRecorder){
-		stateRecorder->pushDependency(decl);
+		stateRecorder->pushDependency(dynamic_cast<IdentifierBase *>(decl));
 		stateRecorder->BeginCommand(SetVertexDeclaration_Opcode, id);
 		stateRecorder->WriteShort(decl->getId());
 		stateRecorder->EndCommand();
@@ -489,7 +489,9 @@ STDMETHODIMP WrapperDirect3DDevice9::SetStreamSource(THIS_ UINT StreamNumber,IDi
 #ifdef MULTI_CLIENTS
 
 #ifndef USE_MESH
-	csSet->checkObj(wvb);
+
+	// TODO, not check creation directly????
+	csSet->checkObj(dynamic_cast<IdentifierBase *>(wvb));
 	// send the command
 	csSet->beginCommand(SetStreamSource_Opcode, id);
 	csSet->writeUInt(StreamNumber);
@@ -559,7 +561,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetIndices(THIS_ IDirect3DIndexBuffer9* pIn
 	// send the index
 #ifndef USE_MESH
 
-	csSet->checkObj(wib);
+	csSet->checkObj(dynamic_cast<IdentifierBase *>(wib));
 	csSet->beginCommand(SetIndices_Opcode, id);
 	csSet->writeShort(wib->getId());
 	csSet->endCommand();

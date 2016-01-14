@@ -91,6 +91,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DSwapChain9::AddRef(THIS) {
 	#ifdef ENABLE_SWAP_CHAIN_LOG
 	infoRecorder->logTrace("WrapperDirect3DSwapChain9::AddRef() called\n");
 #endif
+	refCount++;
 	return m_chain->AddRef();
 }
 STDMETHODIMP_(ULONG) WrapperDirect3DSwapChain9::Release(THIS) {
@@ -103,6 +104,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DSwapChain9::Release(THIS) {
 	infoRecorder->logError("WrapperDirect3DSwapChain9::Release(), ref:%d.\n", hr);
 #endif
 #endif
+	refCount++;
 	return hr;
 }
 

@@ -1,6 +1,5 @@
 #include "CommandServerSet.h"
 #include "../LibCore/SmallHash.h"
-
 #include "WrapDirect3d9.h"
 #include "WrapDirect3dvertexbuffer9.h"
 #include "WrapDirect3dindexbuffer9.h"
@@ -14,7 +13,6 @@
 #include "WrapDirect3dswapchain9.h"
 #include "WrapDirect3dsurface9.h"
 #include "Initializer.h"
-
 #include <assert.h>
 
 struct WindowParam{
@@ -56,8 +54,7 @@ HashSet WrapperDirect3DStateBlock9::m_list;
 SmallHash<HWND, WindowParam *> windowMap;
 
 // add the hook to show window
-BOOL
-	WINAPI
+BOOL WINAPI
 	ShowWindowCallback(
 	__in HWND hWnd,
 	__in int nCmdShow){
@@ -66,7 +63,20 @@ BOOL
 		return ShowWindowNext(hWnd, nCmdShow);
 }
 
-HWND WINAPI CreateWindowCallback(DWORD dwExStyle,LPCSTR lpClassName,LPCSTR lpWindowName, DWORD dwStyle,int x,int y,int nWidth,int nHeight,HWND hWndParent, HMENU hMenu,HINSTANCE hInstance,LPVOID lpParam) {
+HWND WINAPI CreateWindowCallback(
+	DWORD dwExStyle,
+	LPCSTR lpClassName,
+	LPCSTR lpWindowName, 
+	DWORD dwStyle,
+	int x,
+	int y,
+	int nWidth,
+	int nHeight,
+	HWND hWndParent,
+	HMENU hMenu,
+	HINSTANCE hInstance,
+	LPVOID lpParam) {
+
 	infoRecorder->logTrace("[global]: CreateWindowCallback() called, width:%d, height:%d\n", nWidth, nHeight);
 	/*if( nWidth < 800)nWidth = 800;
 	if(nHeight < 600) nHeight = 600;*/
@@ -101,17 +111,26 @@ HWND WINAPI CreateWindowCallback(DWORD dwExStyle,LPCSTR lpClassName,LPCSTR lpWin
 #endif
 
 #endif
-	
 	HWND ret = CreateWindowNext(dwExStyle,lpClassName,lpWindowName,dwStyle,x,y,nWidth,nHeight,hWndParent,hMenu,hInstance,lpParam);
-
 	windowMap.addMap(ret, win);
 	return ret;
 }
 
-HWND WINAPI CreateWindowExWCallback( DWORD dwExStyle, LPCWSTR lpClassName, LPCWSTR lpWindowName, DWORD dwStyle,
- int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam) {
+HWND WINAPI CreateWindowExWCallback(
+	DWORD dwExStyle, 
+	LPCWSTR lpClassName, 
+	LPCWSTR lpWindowName, 
+	DWORD dwStyle,
+	int X, 
+	int Y, 
+	int nWidth, 
+	int nHeight, 
+	HWND hWndParent, 
+	HMENU hMenu, 
+	HINSTANCE hInstance, 
+	LPVOID lpParam) {
+
 	infoRecorder->logTrace("[global]: CreateWindowExWCallback() called, Widht:%d, Height:%d\n", nWidth, nHeight);
-	
 	/*if( nWidth < 800)nWidth = 800;
 	if(nHeight < 600) nHeight = 600;*/
 
@@ -137,7 +156,6 @@ HWND WINAPI CreateWindowExWCallback( DWORD dwExStyle, LPCWSTR lpClassName, LPCWS
 #endif
 
 #endif
-	
 	HWND ret = CreateWindowExWNext(dwExStyle,lpClassName,lpWindowName,dwStyle,X,Y,nWidth,nHeight,hWndParent,hMenu,hInstance,lpParam);
 
 	WindowParam * win = new WindowParam();
@@ -147,7 +165,6 @@ HWND WINAPI CreateWindowExWCallback( DWORD dwExStyle, LPCWSTR lpClassName, LPCWS
 	win->y = Y;
 	win->width = nWidth;
 	win->height = nHeight;
-
 	windowMap.addMap(ret, win);
 
 	return ret;
@@ -353,7 +370,6 @@ bool WINAPI ClearCtxFlag(ContextAndCache * ctx){
 int IdentifierBase::getId(){ return id; }
 void IdentifierBase::setId(int _id){ id = _id; }
 
-
 void ContextAndCache::checkFlags(){
 	infoRecorder->logError("[ContextAndCache]: check all flags for ctx:%d.\n", index);
 	Initializer * initializer = Initializer::GetInitializer();
@@ -361,118 +377,132 @@ void ContextAndCache::checkFlags(){
 		infoRecorder->logError("[ContextAndCache]: Initializer created.\n");
 	}
 	HashSet::iterator it;
-	IdentifierBase *obj = NULL;
+	//IdentifierBase *obj = NULL;
 	int counter = 0;
+	int totalObjects = 0;
 	for(it = WrapperDirect3D9::m_list.begin(); it != WrapperDirect3D9::m_list.end(); it++){	
-		obj = (IdentifierBase *)it->pData;
+		WrapperDirect3D9 *obj = (WrapperDirect3D9 *)it->pData;
 		counter++;
+		totalObjects++;
 		//if(isCreated(obj->creationFlag)){
-			infoRecorder->logError("[WrapperDirect3D]: %d created: %s, flag:0x%x.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag);
+			infoRecorder->logError("[WrapperDirect3D]: %d created: %s,\tflag:0x%x,\trefCount:%d.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag, obj->refCount);
 		//}
 	}
-	infoRecorder->logError("[WrapperDirect3D]: total has %d, checked %d.\n", WrapperDirect3D9::ins_count -1, counter);
+	infoRecorder->logError("[WrapperDirect3D]: total has %d, checked %d.\n", WrapperDirect3D9::ins_count, counter);
 
 	counter = 0;
 	for(it = WrapperDirect3DCubeTexture9::m_list.begin(); it != WrapperDirect3DCubeTexture9::m_list.end(); it++){
 		counter++;
-		obj = (IdentifierBase *)it->pData;
+		totalObjects++;
+		WrapperDirect3DCubeTexture9 *obj = (WrapperDirect3DCubeTexture9 *)it->pData;
 		//if(isCreated(obj->creationFlag)){
-			infoRecorder->logError("[WrapperDirect3DCubeTexture9]: %d created: %s, flag:0x%x.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag);
+			infoRecorder->logError("[WrapperDirect3DCubeTexture9]: %d created: %s,\tflag:0x%x,\trefCount:%d.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag, obj->refCount);
 		//}
 	}
-	infoRecorder->logError("[WrapperDirect3DCubeTexture9]: total has %d, checked %d.\n", WrapperDirect3DCubeTexture9::ins_count -1, counter);
+	infoRecorder->logError("[WrapperDirect3DCubeTexture9]: total has %d, checked %d.\n", WrapperDirect3DCubeTexture9::ins_count, counter);
 	counter = 0;
 
 	for(it = WrapperDirect3DDevice9::m_list.begin(); it != WrapperDirect3DDevice9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
+		WrapperDirect3DDevice9 *obj = (WrapperDirect3DDevice9 *)it->pData;
 		counter ++;
+		totalObjects++;
 		//if(isCreated(obj->creationFlag)){
-			infoRecorder->logError("[WrapperDirect3DDevice9]: %d created: %s, flag:0x%x.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag);
+			infoRecorder->logError("[WrapperDirect3DDevice9]: %d created: %s,\tflag:0x%x,\trefCount:%d.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag,obj->refCount);
 		//}
 	}
-	infoRecorder->logError("[WrapperDirect3DDevice9]: total has %d, checked %d.\n", WrapperDirect3DDevice9::ins_count -1, counter);
+	infoRecorder->logError("[WrapperDirect3DDevice9]: total has %d, checked %d.\n", WrapperDirect3DDevice9::ins_count, counter);
 
 	counter =0;
 	for(it = WrapperDirect3DIndexBuffer9::m_list.begin(); it != WrapperDirect3DIndexBuffer9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
+		WrapperDirect3DIndexBuffer9 *obj = (WrapperDirect3DIndexBuffer9 *)it->pData;
 		counter++;
+		totalObjects++;
 		//if(isCreated(obj->creationFlag)){
-			infoRecorder->logError("[WrapperDirect3DIndexBuffer9]: %d created: %s, flag:0x%x.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag);
+			infoRecorder->logError("[WrapperDirect3DIndexBuffer9]: %d created: %s,\tflag:0x%x,\trefCount:%d.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag, obj->refCount);
 		//}
 	}
-	infoRecorder->logError("[WrapperDirect3DIndexBuffer]: total has %d, checked %d.\n", WrapperDirect3DIndexBuffer9::ins_count -1, counter);
+	infoRecorder->logError("[WrapperDirect3DIndexBuffer]: total has %d, checked %d.\n", WrapperDirect3DIndexBuffer9::ins_count, counter);
 	counter = 0;
 	for(it = WrapperDirect3DPixelShader9::m_list.begin(); it != WrapperDirect3DPixelShader9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
+		WrapperDirect3DPixelShader9 *obj = (WrapperDirect3DPixelShader9 *)it->pData;
 		counter++;
+		totalObjects++;
 		//if(isCreated(obj->creationFlag)){
-			infoRecorder->logError("[WrapperDirect3DPixelShader9]: %d created: %s, flag:0x%x.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag);
+			infoRecorder->logError("[WrapperDirect3DPixelShader9]: %d created: %s,\tflag:0x%x,\trefCount:%d.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag,obj->refCount);
 		//}
 	}
-	infoRecorder->logError("[WrapperDirect3DPixelShader9]: total has %d, checked %d.\n", WrapperDirect3DPixelShader9::ins_count - 1, counter);
+	infoRecorder->logError("[WrapperDirect3DPixelShader9]: total has %d, checked %d.\n", WrapperDirect3DPixelShader9::ins_count, counter);
 	counter =0;
 	for(it = WrapperDirect3DStateBlock9::m_list.begin(); it != WrapperDirect3DStateBlock9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
+		WrapperDirect3DStateBlock9 *obj = (WrapperDirect3DStateBlock9 *)it->pData;
 		counter++;
+		totalObjects++;
 		//if(isCreated(obj->creationFlag)){
-			infoRecorder->logError("[WrapperDirect3DStateBlock9]: %d created: %s, flag:0x%x.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag);
+			infoRecorder->logError("[WrapperDirect3DStateBlock9]: %d created: %s,\tflag:0x%x,\trefCount:%d.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag, obj->refCount);
 		//}
 	}
-	infoRecorder->logError("[WrapperDirect3DStateBlock9]: total has %d, checked %d.\n", WrapperDirect3DStateBlock9::ins_count -1, counter);
+	infoRecorder->logError("[WrapperDirect3DStateBlock9]: total has %d, checked %d.\n", WrapperDirect3DStateBlock9::ins_count, counter);
 	counter= 0;
 	for(it = WrapperDirect3DSurface9::m_list.begin(); it != WrapperDirect3DSurface9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
+		WrapperDirect3DSurface9 *obj = (WrapperDirect3DSurface9 *)it->pData;
 		counter++;
+		totalObjects++;
 		//if(isCreated(obj->creationFlag)){
-			infoRecorder->logError("[WrapperDirect3DSurface9]: %d created: %s, flag:0x%x.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag);
+			infoRecorder->logError("[WrapperDirect3DSurface9]: %d created: %s,\tflag:0x%x,\trefCount:%d.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag, obj->refCount);
 		//}
 	}
-	infoRecorder->logError("[WrapperDirect3DSurface9]: total has %d, checked %d.\n", WrapperDirect3DSurface9::ins_count-1, counter);
+	infoRecorder->logError("[WrapperDirect3DSurface9]: total has %d, checked %d.\n", WrapperDirect3DSurface9::ins_count, counter);
 	counter =0;
 	for(it = WrapperDirect3DSwapChain9::m_list.begin(); it != WrapperDirect3DSwapChain9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
+		WrapperDirect3DSwapChain9 *obj = (WrapperDirect3DSwapChain9 *)it->pData;
 		counter++;
+		totalObjects++;
 		//if(isCreated(obj->creationFlag)){
-			infoRecorder->logError("[WrapperDirect3DSwapChain9]: %d created: %s, flag:0x%x.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag);
+			infoRecorder->logError("[WrapperDirect3DSwapChain9]: %d created: %s,\tflag:0x%x,\trefCount:%d.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag, obj->refCount);
 		//}
 	}
-	infoRecorder->logError("[WrapperDirecct3DSwapChain9]: total has %d, checked %d.\n", WrapperDirect3DSwapChain9::ins_count-1, counter);
+	infoRecorder->logError("[WrapperDirecct3DSwapChain9]: total has %d, checked %d.\n", WrapperDirect3DSwapChain9::ins_count, counter);
 	counter=0;
 	for(it = WrapperDirect3DTexture9::m_list.begin(); it != WrapperDirect3DTexture9::m_list.end(); it ++){
-		obj = (IdentifierBase *)it->pData;
+		WrapperDirect3DTexture9 *obj = (WrapperDirect3DTexture9 *)it->pData;
 		counter++;
+		totalObjects++;
 		//if(isCreated(obj->creationFlag)){
-			infoRecorder->logError("[WrapperDirect3DTexture9]: %d created: %s, flag:0x%x.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag);
+			infoRecorder->logError("[WrapperDirect3DTexture9]: %d created: %s,\tflag:0x%x,\trefCount:%d.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag, obj->refCount);
 		//}
 	}
-	infoRecorder->logError("[WrapperDirect3DTexture9]: total has %d, checked %d.\n", WrapperDirect3DTexture9::ins_count - 1, counter);
+	infoRecorder->logError("[WrapperDirect3DTexture9]: total has %d, checked %d.\n", WrapperDirect3DTexture9::ins_count, counter);
 	counter =0;
 	for(it = WrapperDirect3DVertexBuffer9::m_list.begin(); it != WrapperDirect3DVertexBuffer9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
+		WrapperDirect3DVertexBuffer9 *obj = (WrapperDirect3DVertexBuffer9 *)it->pData;
 		counter++;
+		totalObjects++;
 		//if(isCreated(obj->creationFlag)){
-			infoRecorder->logError("[WrapperDirect3DVertexBuffer9]: %d created: %s, flag:0x%x.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag);
+			infoRecorder->logError("[WrapperDirect3DVertexBuffer9]: %d created: %s,\tflag:0x%x,\trefCount:%d.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag, obj->refCount);
 		//}
 	}
-	infoRecorder->logError("[WrapperDirect3DVertexBuffer9]: total has %d, checked %d.\n", WrapperDirect3DVertexBuffer9::ins_count -1, counter);
+	infoRecorder->logError("[WrapperDirect3DVertexBuffer9]: total has %d, checked %d.\n", WrapperDirect3DVertexBuffer9::ins_count, counter);
 	counter=0;
 	for(it = WrapperDirect3DVertexDeclaration9::m_list.begin(); it != WrapperDirect3DVertexDeclaration9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
+		WrapperDirect3DVertexDeclaration9 *obj = (WrapperDirect3DVertexDeclaration9 *)it->pData;
 		counter++;
+		totalObjects++;
 		//if(isCreated(obj->creationFlag)){
-			infoRecorder->logError("[WrapperDirect3DVertexDeclaration9]: %d created: %s, flag:0x%x.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag);
+			infoRecorder->logError("[WrapperDirect3DVertexDeclaration9]: %d created: %s,\tflag:0x%x,\trefCount:%d.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag, obj->refCount);
 		//}
 	}
-	infoRecorder->logError("[WrapperDirect3DVertexDeclaration9]: total has %d, checked %d.\n", WrapperDirect3DVertexDeclaration9::ins_count - 1, counter);
+	infoRecorder->logError("[WrapperDirect3DVertexDeclaration9]: total has %d, checked %d.\n", WrapperDirect3DVertexDeclaration9::ins_count, counter);
 	counter=0;
 	for(it = WrapperDirect3DVertexShader9::m_list.begin(); it != WrapperDirect3DVertexShader9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
+		WrapperDirect3DVertexShader9 *obj = (WrapperDirect3DVertexShader9 *)it->pData;
 		counter++;
+		totalObjects++;
 		//if(isCreated(obj->creationFlag)){
-			infoRecorder->logError("[WrapperDirect3DVertexShader9]: %d created: %s, flag:0x%x.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag);
+			infoRecorder->logError("[WrapperDirect3DVertexShader9]: %d created: %s,\tflag:0x%x,\trefCount:%d.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag, obj->refCount);
 		//}
 	}
-	infoRecorder->logError("[WrapperDirect3DVertexShader9]: total has %d, checked %d.\n", WrapperDirect3DVertexShader9::ins_count-1, counter);
+	infoRecorder->logError("[WrapperDirect3DVertexShader9]: total has %d, checked %d.\n", WrapperDirect3DVertexShader9::ins_count, counter);
+	infoRecorder->logError("[ContextAndCache]: totally checked objects %d.\n", totalObjects);
 	counter = 0;
 }
 
@@ -594,7 +624,6 @@ void WINAPI ExitProcessCallback(UINT uExitCode) {
 	
 #endif
 	Log::close();
-
 	ExitProcessNext(uExitCode);
 }
 

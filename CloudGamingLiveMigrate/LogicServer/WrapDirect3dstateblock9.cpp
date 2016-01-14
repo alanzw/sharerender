@@ -218,6 +218,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DStateBlock9::AddRef(THIS) {
 #ifdef ENABLE_STATE_BLOCK_LOG
 	infoRecorder->logTrace("WrapperDirect3DStateBlock9::AddRef() called\n");
 #endif
+	refCount++;
 	return m_sb->AddRef();
 }
 
@@ -231,6 +232,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DStateBlock9::Release(THIS) {
 	infoRecorder->logError("WrapperDirect3DStateBlock9::Release(),id:%d, ref:%d.\n", id, hr);
 #endif // ENABLE_STATE_BLOCK_LOG
 #endif // LOG_REF_COUNT
+	refCount--;
 	return hr;
 }
 
