@@ -28,6 +28,7 @@ int WrapperDirect3DPixelShader9::checkCreation(void * ctx){
 		//
 		ret = sendCreation(ctx);
 		csSet->setCreation(creationFlag);
+		ret = 1;
 	}
 
 	return ret;

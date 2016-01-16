@@ -164,6 +164,7 @@ int WrapperDirect3DStateBlock9::checkCreation(void *ctx){
 		ret = sendCreation(ctx);
 		if(!ret)
 			c->setCreation(creationFlag);
+		ret = 1;
 	}
 	return ret;
 }

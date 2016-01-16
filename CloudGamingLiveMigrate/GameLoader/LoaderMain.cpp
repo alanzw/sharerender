@@ -25,12 +25,14 @@ int main(int argc, char ** argv){
 	char externDllName[50] = {0};
 	char gameName[50] = {0};
 	memset(args, 0, 1024);
+
+	infoRecorder = new InfoRecorder("Loader");
 	// choose the work mode according to argv
 	if(argc == 1){
 		// only listen the render proxy
 		WSADATA WSAData;
 		WSAStartup(0x101, &WSAData);
-		infoRecorder = new InfoRecorder("Loader");
+		
 		// debug the logic factory
 		LogicFactory * factory = LogicFactory::GetFactory();
 		factory->init();

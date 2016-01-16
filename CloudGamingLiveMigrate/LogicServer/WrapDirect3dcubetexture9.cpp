@@ -36,6 +36,7 @@ int WrapperDirect3DCubeTexture9::checkCreation(void * ctx){
 		// did not created
 		ret = sendCreation(ctx);
 		cc->setCreation(creationFlag);
+		ret = 1;
 	}
 	return ret;
 	
@@ -49,6 +50,7 @@ int WrapperDirect3DCubeTexture9::checkUpdate(void * ctx){
 		// send
 		ret = sendUpdate(c);
 		c->resetChanged(updateFlag);
+		ret = 1;
 	}
 	else{
 		infoRecorder->logTrace("[WrapperDirect3DCudaTexture9]: not changed.\n");

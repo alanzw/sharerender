@@ -174,7 +174,7 @@ DWORD WINAPI RenderChannel::ChannelThreadProc(LPVOID param){
 
 			if (rch->op_code >= 0 && rch->op_code < MaxSizeUntilNow_Opcode){
 				if (rch->client_render){
-					//cg::core::infoRecorder->logTrace("[RenderChannel]: opcode:%d, cmd :%s.\n", rch->op_code, (funcs[rch->op_code].name));
+					cg::core::infoRecorder->logTrace("[RenderChannel]: opcode:%d, cmd :%s.\n", rch->op_code, (funcs[rch->op_code].name));
 					(*(funcs[rch->op_code].func))(rch);
 				}
 			}

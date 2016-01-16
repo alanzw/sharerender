@@ -10,6 +10,7 @@
 #include "../libCore/CThread.h"
 #include "GameServer.h"
 #include "../LibCore/InfoRecorder.h"
+#include "../LibCore/TimeTool.h"
 
 
 //#define ENABLE_QUEUE_LOG
@@ -211,13 +212,19 @@ namespace cg{
 			static int index;
 			int awakeTime;
 			unsigned int totalObjects;
+
+			int createTimes;
+			int updateTimes;
+
+			int timeCounter;
 			
 			// private functions
 			void awake();
 			IdentifierBase *getObj();
 			void popObj();
 			int getCount();
-			
+			PTimer *pPTimer;
+			PTimer *pThreadTimer;
 		public:
 			// for the thread
 			//virtual BOOL stop();

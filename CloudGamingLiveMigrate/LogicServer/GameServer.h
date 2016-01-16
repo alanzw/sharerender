@@ -145,12 +145,12 @@ void SetKeyboardHook(
 
 extern bool			enableRender;
 extern bool			F9Pressed;
-extern bool			f10pressed; // capture screen
-extern bool			synSign;  // test the latency
+extern bool			f10pressed;			// capture screen
+extern bool			synSign;			// test the latency
 
 extern double		time_total;
 extern int			frame_all_count;
-extern int			g_frame_index;   // the frame index in a group of frames
+extern int			g_frame_index;		// the frame index in a group of frames
 
 #ifdef MULTI_CLIENTS
 // for supporting multiple clients
@@ -160,25 +160,23 @@ protected:
 public:
 	unsigned int	creationFlag;
 	unsigned int	updateFlag;
-	unsigned int	frameCheckFlag;  // each frame, if the object is checked before, set the flag, when frame finished, reset the flag
+	unsigned int	frameCheckFlag;		// each frame, if the object is checked before, set the flag, when frame finished, reset the flag
 
 	int				curDeviceId;
-	bool			stable;	// the object is changed frequently or not
-	bool			sync;		// indicate that whether the object is a synchronization object
+	bool			stable;				// the object is changed frequently or not
+	bool			sync;				// indicate that whether the object is a synchronization object
+	int				refCount;			// stand how many times the object is referenced
 
-
-	int				refCount;   // stand how many times the object is referenced
-
-	IdentifierBase(): creationFlag(0), updateFlag(0), sync(false), stable(true), curDeviceId(0), refCount(1){}
-	IdentifierBase(bool val): creationFlag(0), updateFlag(0), sync(val), stable(true), curDeviceId(0), refCount(1){}
-	IdentifierBase(int _id):creationFlag(0), updateFlag(0), sync(false), stable(true), curDeviceId(0), id(_id), refCount(1){} 
-	IdentifierBase(int _id, bool val):creationFlag(0), updateFlag(0), sync(val), stable(true), curDeviceId(0), id(_id), refCount(1){} 
+	IdentifierBase(): creationFlag(0), updateFlag(0), sync(false), stable(true), curDeviceId(0), refCount(1), frameCheckFlag(0), id(-1){}
+	IdentifierBase(bool val): creationFlag(0), updateFlag(0), sync(val), stable(true), curDeviceId(0), refCount(1), frameCheckFlag(0), id(-1){}
+	IdentifierBase(int _id):creationFlag(0), updateFlag(0), sync(false), stable(true), curDeviceId(0), id(_id), refCount(1), frameCheckFlag(0){} 
+	IdentifierBase(int _id, bool val):creationFlag(0), updateFlag(0), sync(val), stable(true), curDeviceId(0), id(_id), refCount(1), frameCheckFlag(0){} 
 
 	virtual int		sendCreation(void * ctx) = 0;
 	virtual int		sendUpdate(void * ctx) = 0;
 
-	virtual int		checkCreation(void * ctx) = 0;
-	virtual int		checkUpdate(void * ctx) = 0;
+	virtual int		checkCreation(void * ctx) = 0;			// return 1 if need to create
+	virtual int		checkUpdate(void * ctx) = 0;			// return 1 if need to update
 
 	inline int		getDeviceId(){ return curDeviceId; }
 	inline void		setDeviceID(int id){ curDeviceId = id;}

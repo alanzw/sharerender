@@ -49,12 +49,14 @@ int Initializer::checkCreation(void * ctx){
 	if(!cc->isChanged(creationFlag)){
 		ret = sendCreation(ctx);	
 		cc->setCreation(creationFlag);
+		ret = 1;
 	}
 	return ret;
 }
 int Initializer::checkUpdate(void * ctx){
 	infoRecorder->logTrace("[Initializer]: check update, TODO.\n");
-	return 0;
+	int ret = 0;
+	return ret;
 }
 
 

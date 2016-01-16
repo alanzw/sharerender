@@ -373,6 +373,6 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 }
 
 void IdentifierBase::print(){
-	infoRecorder->logTrace("[IdentifierBase]: %s is table:%s, is sync: %s, created: 0x%x, updated: 0x%x.\n", typeid(*this).name(), stable ? "true" : "false", sync ? "true" : "false", creationFlag, updateFlag);
+	infoRecorder->logError("[IdentifierBase]: %s %d is table:%s, is sync: %s, created: 0x%x, updated: 0x%x, frame check flag:0x%x.\n", typeid(*this).name(), id, stable ? "true" : "false", sync ? "true" : "false", creationFlag, updateFlag, frameCheckFlag);
 
 }

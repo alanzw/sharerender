@@ -39,8 +39,9 @@ int WrapperDirect3DVertexBuffer9::checkCreation(void *ctx){
 		ret = sendCreation(ctx);
 		// change the creation flag
 		c->setCreation(creationFlag);
+		ret = 1;
 	}
-	return 0;
+	return ret;
 }
 int WrapperDirect3DVertexBuffer9::checkUpdate(void * ctx){
 	#ifdef ENABLE_VERTEX_BUFFER_LOG
@@ -52,6 +53,7 @@ int WrapperDirect3DVertexBuffer9::checkUpdate(void * ctx){
 		ret = sendUpdate(ctx);
 
 		c->resetChanged(updateFlag);
+		ret = 1;
 	}else{
 		#ifdef ENABLE_VERTEX_BUFFER_LOG
 		// no changed

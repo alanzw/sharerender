@@ -86,6 +86,7 @@ int WrapperDirect3DTexture9::checkCreation(void *ctx){
 		cc->setCreation(creationFlag);
 		sendUpdate(ctx);
 		cc->resetChanged(updateFlag);
+		ret = 1;
 	}else{
 #ifdef ENABLE_TEXTURE_LOG
 		infoRecorder->logTrace("[WrapperDirect3DTexture9]: already created.\n");
@@ -103,6 +104,7 @@ int WrapperDirect3DTexture9::checkUpdate(void *ctx){
 	if(c->isChanged(updateFlag)){
 		ret = sendUpdate(c);
 		c->resetChanged(updateFlag);
+		ret = 1;
 	}else{
 #ifdef ENABLE_TEXTURE_LOG
 		infoRecorder->logTrace("[WrapperDirect3DTexture9]: not changed!");

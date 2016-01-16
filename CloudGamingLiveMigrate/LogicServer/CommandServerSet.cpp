@@ -364,15 +364,21 @@ void ContextManager::checkObj(IdentifierBase * obj){
 		// ERROR
 		for(int j = 0; j < ctx_init.getCtxCount(); j++){
 			otherCtx = ctx_init.getCtx(j);
-
-			infoRecorder->logError("[ContextManager]: obj frame check flag: 0x%x.\n", obj->frameCheckFlag);
+#if 0
+			//infoRecorder->logError("[ContextManager]: obj type name %s, frame check flag: 0x%x.\n", typeid(*obj).name(), obj->frameCheckFlag);
+			obj->print();
 			if(!otherCtx->isChecked(obj->frameCheckFlag)){
 				otherCtx->setChecked(obj->frameCheckFlag);
 				otherCtx->pushUpdate(obj);
 			}
+#else
+			otherCtx->pushUpdate(obj);
+#endif
 		}
 	}else{
-		infoRecorder->logError("[ContextManager]: obj %d is not stable.\n", obj->getId());
+		//infoRecorder->logError("no stable, ");
+		//obj->print();
+		//infoRecorder->logError("[ContextManager]: obj %p, type name:%s, id %d is not stable.\n", obj, typeid(*obj).name(), obj->getId());
 	}
 #else
 	if(_ctx_cache){

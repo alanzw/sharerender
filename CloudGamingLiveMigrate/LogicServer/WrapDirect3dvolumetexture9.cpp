@@ -25,6 +25,7 @@ int WrapperDirect3DVolumeTexture9::checkCreation(void *ctx){
 	if(!c->isCreated(creationFlag)){
 		ret = sendCreation(ctx);
 		c->setCreation(creationFlag);
+		ret = 1;
 	}
 
 	return ret;

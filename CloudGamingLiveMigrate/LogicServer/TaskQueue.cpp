@@ -76,6 +76,11 @@ DWORD TaskQueue::QueueProc(LPVOID param){
 			isLocked = false;
 			awakeTime = 0;
 			totalObjects = 0;
+			createTimes = 0;
+			updateTimes = 0;
+			pPTimer = new PTimer();
+			pThreadTimer = new PTimer();
+			timeCounter = 0;
 		}
 		TaskQueue::~TaskQueue(){
 			DeleteCriticalSection(&cs);
@@ -91,6 +96,17 @@ DWORD TaskQueue::QueueProc(LPVOID param){
 			isLocked = false;
 			count = 0;
 			totalObjects = 0;
+			createTimes = 0;
+			updateTimes = 0;
+			if(pPTimer){
+				delete pPTimer;
+				pPTimer = NULL;
+			}
+			if(pThreadTimer){
+				delete pThreadTimer;
+				pThreadTimer = NULL;
+			}
+			timeCounter = 0;
 		}
 		inline void TaskQueue::awake(){
 			awakeTime++;
@@ -142,9 +158,12 @@ DWORD TaskQueue::QueueProc(LPVOID param){
 			LeaveCriticalSection(&cs);
 		}
 		void TaskQueue::framePrint(){
-			infoRecorder->logError("[TaskQueue]: proc %d current has %d objects to deal, last period totally awake %d times, delt %d objects.\n", getThreadId(), count, awakeTime, totalObjects);
+			infoRecorder->logError("[TaskQueue]: proc %d current has %d objects to deal, last period totally awake %d times, deal %d objects, actually create:%d, actually update:%d, time counter:%f ms.\n", getThreadId(), count, awakeTime, totalObjects, createTimes, updateTimes, timeCounter * 1000.0 / pThreadTimer->getFreq());
 			awakeTime = 0;
 			totalObjects = 0;
+			createTimes = 0;
+			updateTimes = 0;
+			timeCounter = 0;
 		}
 
 		inline bool TaskQueue::isDone(){
@@ -175,9 +194,15 @@ DWORD TaskQueue::QueueProc(LPVOID param){
 		// the function should be done in a thread slice
 		BOOL TaskQueue::run(){
 			IdentifierBase * ib = NULL;
+			
+			int ret = 0;
+			int tmpTime = 0;
 			//infoRecorder->logError("[TaskQueue]: thread %d run.\n", getThreadId());
-			DWORD ret = WaitForSingleObject(evt, INFINITE);
-			switch(ret){
+			DWORD waitRet = WaitForSingleObject(evt, INFINITE);
+
+			pThreadTimer->Start();
+
+			switch(waitRet){
 			case WAIT_OBJECT_0:
 				// object has entered the queue
 				//infoRecorder->logError("[TaskQueue]: thread %d wait has been triggered, that means at least an object has been pushed.\n", getThreadId());
@@ -224,16 +249,49 @@ DWORD TaskQueue::QueueProc(LPVOID param){
 						infoRecorder->logTrace("[TaskQueue]: create, check creation.\n");
 						ib->print();
 #endif  // ENABLE_QUEUE_LOG
-						ib->checkCreation(ctx);
-						if(ib->stable)
-							ib->checkUpdate(ctx);
+						pPTimer->Start();
+						ret = ib->checkCreation(ctx);
+						tmpTime = pPTimer->Stop();
+						if(ret){
+							createTimes++;
+							ret =0;
+							infoRecorder->logError("create time: %f\t", tmpTime * 1000.0 / pPTimer->getFreq());
+							ib->print();
+						}
+						if(ib->stable){
+							pPTimer->Start();
+							ret = ib->checkUpdate(ctx);
+							tmpTime = pPTimer->Stop();
+							if(ret){
+								updateTimes++;
+								ret = 0;
+								infoRecorder->logError("update stable time: %f\t", tmpTime * 1000.0 / pPTimer->getFreq());
+								ib->print();
+							}
+						}
 					}else if(QUEUE_UPDATE == qStatus){
 #ifdef ENABLE_QUEUE_LOG
 						infoRecorder->logTrace("[TaskQueue]: update, check update.\n");
 						ib->print();
 #endif
-						ib->checkCreation(ctx);
-						ib->checkUpdate(ctx);
+						pPTimer->Start();
+						ret = ib->checkCreation(ctx);
+						tmpTime = pPTimer->Stop();
+						if(ret){
+							createTimes++;
+							ret = 0;
+							infoRecorder->logError("crate time: %f\t", tmpTime * 1000.0 / pPTimer->getFreq());
+							ib->print();
+						}
+						pPTimer->Start();
+						ret = ib->checkUpdate(ctx);
+						tmpTime = pPTimer->Stop();
+						if(ret){
+							updateTimes++;
+							ret  = 0;
+							infoRecorder->logError("update non-stable time: %f\t", tmpTime * 1000.0 / pPTimer->getFreq());
+							ib->print();
+						}
 					}
 					else{
 						infoRecorder->logError("[TaskQueue]: task status is invalid.\n");
@@ -241,6 +299,9 @@ DWORD TaskQueue::QueueProc(LPVOID param){
 				}
 				popObj();
 			}
+			//infoRecorder->logError("[TaskQueue]: actually")
+			timeCounter += pThreadTimer->Stop();
+
 			return TRUE;
 			
 		}

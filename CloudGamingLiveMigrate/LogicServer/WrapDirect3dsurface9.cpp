@@ -99,6 +99,7 @@ int WrapperDirect3DSurface9::checkCreation(void *ctx){
 	if(!c->isCreated(creationFlag)){
 		ret = sendCreation(ctx);
 		c->setCreation(creationFlag);
+		ret = 1;
 	}
 
 	return ret;
@@ -111,7 +112,7 @@ int WrapperDirect3DSurface9::checkUpdate(void *ctx)
 	infoRecorder->logTrace("[WrapperDirect3DSurface9]: check update, TODO.\n");
 #endif
 
-	return 0;
+	return ret;
 
 }
 int WrapperDirect3DSurface9::sendUpdate(void *ctx){

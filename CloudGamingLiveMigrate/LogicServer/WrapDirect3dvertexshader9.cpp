@@ -26,6 +26,7 @@ int WrapperDirect3DVertexShader9::checkCreation(void *ctx){
 	if(!cc->isCreated(creationFlag)){
 		ret = sendCreation(ctx);
 		cc->setCreation(creationFlag);
+		ret = 1;
 	}
 	return ret;
 }

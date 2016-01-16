@@ -38,6 +38,7 @@ int WrapperDirect3DIndexBuffer9::checkCreation(void * ctx){
 	if(!c->isCreated(creationFlag)){
 		ret = sendCreation(ctx);
 		c->setCreation(creationFlag);
+		ret = 1;
 	}
 	return ret;
 }
@@ -64,6 +65,7 @@ int WrapperDirect3DIndexBuffer9::checkUpdate(void * ctx){
 		ret = sendUpdate(ctx);
 		// tag unchanged
 		c->resetChanged(updateFlag);
+		ret = 1;
 	}
 	else{
 		// unchanged

@@ -47,7 +47,7 @@ TIMEL1:
 			virtual void Start(void) = 0;
 			virtual unsigned __int64 Stop(void) = 0;
 			virtual unsigned __int64 getOverhead(void) = 0;
-			virtual unsigned int geFreq(void) = 0;
+			virtual unsigned int getFreq(void) = 0;
 		};
 		class PTimer: public BTimer{
 			LARGE_INTEGER m_startcycle;

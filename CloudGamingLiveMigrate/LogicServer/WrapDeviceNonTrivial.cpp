@@ -54,6 +54,7 @@ int WrapperDirect3DDevice9::checkCreation(void * ctx){
 	if(!cc->isCreated(creationFlag)){
 		ret = sendCreation(ctx);
 		cc->setCreation(creationFlag);
+		ret = 1;
 	}
 	return ret;
 }
@@ -63,8 +64,8 @@ int WrapperDirect3DDevice9::checkUpdate(void * ctx){
 	#ifdef ENABLE_DEVICE_LOG
 	infoRecorder->logTrace("[WrapeprDirect3DDevice9]: check update. TODO.\n");
 #endif
-
-	return 0;
+	int ret = 0;
+	return ret;
 }
 int WrapperDirect3DDevice9::sendUpdate(void * ctx){
 	#ifdef ENABLE_DEVICE_LOG
