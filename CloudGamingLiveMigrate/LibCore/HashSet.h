@@ -30,6 +30,9 @@ namespace cg{
 			HashSet();
 			PVOID GetDataPtr(int id);
 			PVOID GetDataPtr(PVOID pKey);
+			//inline PVOID& operator[](int id){ return GetDataPtr(id);}
+			//inline PVOID& operator[](PVOID pKey){ return GetDataPtr(pKey); }
+
 			bool AddMember(int id, PVOID pData);
 			bool AddMember(PVOID pKey, PVOID pData);
 			bool DeleteMember(PVOID pKey);

@@ -88,6 +88,9 @@ STDMETHODIMP_(ULONG) WrapperDirect3DVolumeTexture9::Release(THIS){
 	infoRecorder->logError("WrapperDirect3DVolumeTexture9::Release(), ref:%d.\n", hr);
 #endif
 	refCount--;
+	if(refCount <= 0){
+		infoRecorder->logError("[WrapperDirect3DVolumeTexture9]: m_volumeTexture ref:%d, ref count:%d.\n", refCount, hr);
+	}
 	return hr;
 }
 

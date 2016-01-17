@@ -108,6 +108,9 @@ STDMETHODIMP_(ULONG) WrapperDirect3DCubeTexture9::Release(THIS) {
 	infoRecorder->logError("WrapperDirect3DCubeTexture9::Release(), ref:%d\n", hr);
 #endif
 	refCount--;
+	if(refCount <= 0){
+		infoRecorder->logError("[WrapperDirect3DCubTexture9]: tex ref:%d, ref count:%d.\n", refCount, hr);
+	}
 	return hr;
 }
 

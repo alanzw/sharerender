@@ -96,6 +96,9 @@ STDMETHODIMP_(ULONG) WrapperDirect3DPixelShader9::Release(THIS) {
 #endif
 #endif
 	refCount--;
+	if(refCount <= 0){
+		infoRecorder->logError("[WrapperDirect3DPixelShader9]: m_ps ref:%d, ref count:%d.\n", refCount, hr);
+	}
 	return hr;
 }
 

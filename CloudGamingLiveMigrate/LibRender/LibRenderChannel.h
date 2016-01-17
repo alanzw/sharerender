@@ -12,6 +12,7 @@
 #define Max_Obj_Cnt 20010
 #endif
 
+#define USE_HASH_SET_LOOKUP   // this definition will enable hashset to replace array to store all the objects
 
 
 // this is for the render channel

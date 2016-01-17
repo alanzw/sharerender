@@ -161,6 +161,9 @@ STDMETHODIMP_(ULONG) WrapperDirect3DVertexBuffer9::Release(THIS) {
 #endif
 #endif
 	refCount--;
+	if(refCount <= 0){
+		infoRecorder->logError("[WrapperDirect3DVertexBuffer9]: m_vb ref:%d, ref count:%d.\n", refCount, hr);
+	}
 	return hr;
 }
 

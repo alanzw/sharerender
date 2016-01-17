@@ -513,6 +513,9 @@ STDMETHODIMP_(ULONG) WrapperDirect3DTexture9::Release(THIS) {
 #endif
 #endif
 	refCount--;
+	if(refCount <= 0){
+		infoRecorder->logError("[WrapperDirect3DTexture9]: m_tex ref:%d, ref count:%d.\n", refCount, hr);
+	}
 	return hr;
 	//return D3D_OK;
 }
@@ -648,7 +651,7 @@ STDMETHODIMP WrapperDirect3DTexture9::GetSurfaceLevel(THIS_ UINT Level,IDirect3D
 	HRESULT hr = m_tex->GetSurfaceLevel(Level, &base_surface);//ppSurfaceLevel);
 
 	WrapperDirect3DSurface9* surface = WrapperDirect3DSurface9::GetWrapperSurface9(base_surface);
-	if(surface == NULL) {
+	if(NULL == surface) {
 		// create new wrapper surface to hold the surface
 		surface = new WrapperDirect3DSurface9(base_surface, WrapperDirect3DSurface9::ins_count++);
 

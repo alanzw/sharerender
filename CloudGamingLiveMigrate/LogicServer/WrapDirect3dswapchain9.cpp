@@ -105,7 +105,10 @@ STDMETHODIMP_(ULONG) WrapperDirect3DSwapChain9::Release(THIS) {
 	infoRecorder->logError("WrapperDirect3DSwapChain9::Release(), ref:%d.\n", hr);
 #endif
 #endif
-	refCount++;
+	refCount--;
+	if(refCount <= 0){
+		infoRecorder->logError("[WrapperDirect3DSwapChain9]: m_chain ref:%d, ref count:%d.\n", refCount, hr);
+	}
 	return hr;
 }
 

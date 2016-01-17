@@ -87,6 +87,9 @@ STDMETHODIMP_(ULONG) WrapperDirect3DDevice9::Release(THIS) {
 #endif  // LOG_REF_COUNT1
 #endif
 	refCount--;
+	if(refCount <= 0){
+		infoRecorder->logError("[WrapperDirect3DDevice9]: m_device ref:%d, ref count:%d.\n", refCount, hr);
+	}
 	return hr;
 }
 

@@ -136,7 +136,11 @@ STDMETHODIMP_(ULONG) WrapperDirect3D9::Release(THIS) {
 	infoRecorder->logTrace("WrapperDirect3D9::Release() called\n");
 #endif
 	refCount--;
-	return m_d3d->Release();
+	ULONG hr = m_d3d->Release();
+	if(refCount <= 0){
+		infoRecorder->logError("[WrapperDirect3D]: m_device ref:%d, ref count:%d.\n", refCount, hr);
+	}
+	return hr;
 }
 
 /*** IDirect3D9 methods ***/

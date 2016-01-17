@@ -93,6 +93,9 @@ STDMETHODIMP_(ULONG) WrapperDirect3DVertexShader9::Release(THIS) {
 #endif
 #endif
 	refCount--;
+	if(refCount <= 0){
+		infoRecorder->logError("[WrapperDirect3DVertexShader9]: m_vs ref:%d, ref count:%d.\n", refCount, hr);
+	}
 	return hr;
 }
 

@@ -43,6 +43,7 @@ int WrapperDirect3DSurface9::sendCreation(void *ctx){
 #endif
 
 		c->beginCommand(TextureGetSurfaceLevel_Opcode, tex_id);
+		c->write_int(tex_id);
 		c->write_int(getId());
 		c->write_uint(level);
 		c->endCommand();
@@ -213,7 +214,10 @@ STDMETHODIMP_(ULONG) WrapperDirect3DSurface9::Release(THIS) {
 	infoRecorder->logTrace("WrapperDirect3DSurface9::Release(), ref:%d.\n", hr);
 #endif
 #endif
-	refCount++;
+	refCount--;
+	if(refCount <= 0){
+		infoRecorder->logError("[WrapperDirect3DSurface9]: m_surface ref:%d, ref count:%d.\n", refCount, hr);
+	}
 	return hr;
 }
 
