@@ -205,7 +205,10 @@ STDMETHODIMP_(ULONG) WrapperDirect3DSurface9::AddRef(THIS) {
 	infoRecorder->logTrace("WrapperDirect3DSurface9::AddRef() called\n");
 #endif
 	refCount++;
-	return m_surface->AddRef();
+	ULONG hr = m_surface->AddRef();
+	infoRecorder->logError("[WrapperDirect3DSurface9]: %d add ref, ref:%d, refcount:%d.\n", id, hr, refCount);
+
+	return hr; 
 }
 STDMETHODIMP_(ULONG) WrapperDirect3DSurface9::Release(THIS) {
 	ULONG hr = m_surface->Release();
@@ -215,8 +218,16 @@ STDMETHODIMP_(ULONG) WrapperDirect3DSurface9::Release(THIS) {
 #endif
 #endif
 	refCount--;
-	if(refCount <= 0){
-		infoRecorder->logError("[WrapperDirect3DSurface9]: m_surface ref:%d, ref count:%d.\n", refCount, hr);
+	//if(refCount <= 0){
+		infoRecorder->logError("[WrapperDirect3DSurface9]: m_surface id:%d ref:%d, ref count:%d, creation cmd:%d, tex:%d.\n",id, refCount, hr, creationCommand, tex_id);
+	//}
+
+
+	if(hr == 0){
+		if(!m_list.DeleteMember(m_surface)){
+			infoRecorder->logError("[WrapperDirect3DSurface9]: delete %d from m_list failed.\n", id);
+
+		}
 	}
 	return hr;
 }

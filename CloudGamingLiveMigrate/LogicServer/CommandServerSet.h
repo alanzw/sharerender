@@ -12,6 +12,7 @@
 #include "../LibCore/Network.h"
 #include "../LibCore/Buffer.h"
 #include "../LibCore/InfoRecorder.h"
+#include "../libCore/TimeTool.h"
 
 using namespace std;
 using namespace cg;
@@ -747,5 +748,6 @@ public:
 };
 
 extern CommandServerSet * csSet;
+extern cg::core::PTimer * pTimer;
 
 #endif  // __COMMAND_SEVER_SET__

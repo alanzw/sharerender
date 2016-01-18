@@ -221,6 +221,8 @@ STDMETHODIMP WrapperDirect3DIndexBuffer9::Lock(THIS_ UINT OffsetToLock,UINT Size
 	// set changed flag to all
 	csSet->setChangedToAll(updateFlag);
 #else   // BUFFER_UNLOCK_UPDATE
+
+#ifndef USE_MEM_INDEX_BUFFER
 	void * tmp = NULL;
 	// lock the whole buffer
 	HRESULT hr = m_ib->Lock(0, 0, &tmp, Flags);
@@ -234,6 +236,29 @@ STDMETHODIMP WrapperDirect3DIndexBuffer9::Lock(THIS_ UINT OffsetToLock,UINT Size
 #ifdef MULTI_CLIENTS
 	csSet->setChangedToAll(updateFlag);
 #endif // MULTI_CLIENTS
+
+#else  // USE_MEM_INDEX_BUFFER
+	if(!ram_buffer){
+		ram_buffer = (char*)malloc(sizeof(char)*GetLength());
+		m_LockData.pRAMBuffer = ram_buffer;
+	}
+	// store the lock information
+	m_LockData.OffsetToLock = OffsetToLock;
+	m_LockData.SizeToLock = SizeToLock;
+	m_LockData.Flags = Flags;
+	if(0 == SizeToLock){
+		m_LockData.SizeToLock = length - OffsetToLock;
+	}
+	 *ppbData = (void*)(((char *)ram_buffer) + OffsetToLock);
+
+	 // lock the video mem as well
+	 HRESULT hr = m_ib->Lock(OffsetToLock, SizeToLock, &(m_LockData.pVideoBuffer), Flags);
+#ifdef MULTI_CLIENTS
+	 csSet->setChangedToAll(updateFlag);
+#endif // MULTI_CLIENTS
+
+#endif // USE_MEM_INDEX_BUFFER
+
 #endif  // BUFFER_UNLOCK_UPDATE
 
 
@@ -248,9 +273,16 @@ STDMETHODIMP WrapperDirect3DIndexBuffer9::Unlock(THIS) {
 #ifdef BUFFER_UNLOCK_UPDATE
 	int last = 0, cnt = 0, c_len = 0, size = 0, base = 0;
 	// copy from video buffer
+#ifndef USE_MEM_INDEX_BUFFER
 	memcpy(ram_buffer, (char *)m_LockData.pVideoBuffer + m_LockData.OffsetToLock, m_LockData.SizeToLock);
+#else  // USE_MEM_INDEX_BUFFER
+	memcpy(m_LockData.pVideoBuffer, (char *)m_LockData.pRAMBuffer + m_LockData.OffsetToLock, m_LockData.SizeToLock);
+#endif  // USE_MEM_INDEX_BUFFER
 
 	base = m_LockData.OffsetToLock;
+
+	csSet->checkCreation(dynamic_cast<IdentifierBase *>(this));
+
 	csSet->beginCommand(IndexBufferUnlock_Opcode, id);
 	csSet->writeUInt(m_LockData.OffsetToLock);
 	csSet->writeUInt(m_LockData.SizeToLock);

@@ -206,7 +206,7 @@ STDMETHODIMP_(D3DRESOURCETYPE) WrapperDirect3DVertexBuffer9::GetType(THIS) {
 }
 
 STDMETHODIMP WrapperDirect3DVertexBuffer9::Lock(THIS_ UINT OffsetToLock,UINT SizeToLock,void** ppbData,DWORD Flags) {
-	#ifdef ENABLE_VERTEX_BUFFER_LOG
+#ifdef ENABLE_VERTEX_BUFFER_LOG
 	infoRecorder->logTrace("WrapperDirect3DVertexBuffer9::Lock(), id=%d, length=%d, offest=%d, size_to_lock=%d, flag=%d\n",this->id, Length, OffsetToLock, SizeToLock, Flags);
 #endif
 #ifndef BUFFER_UNLOCK_UPDATE
@@ -227,6 +227,9 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Lock(THIS_ UINT OffsetToLock,UINT Siz
 #endif
 	readed_ = false;
 #else   // BUFFER_UNLOCK_UPDATE
+
+#ifndef USE_MEM_VERTEX_BUFFER
+	
 	void * tmp = NULL;
 	// lock the whole buffer
 	HRESULT hr = m_vb->Lock(0, 0, &tmp, Flags);
@@ -234,15 +237,39 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Lock(THIS_ UINT OffsetToLock,UINT Siz
 	m_LockData.SizeToLock = SizeToLock;
 	m_LockData.Flags = Flags;
 	if(SizeToLock == 0) m_LockData.SizeToLock = Length - OffsetToLock;
+
 	*ppbData = (void *)(((char *)tmp) + OffsetToLock);
 	m_LockData.pVideoBuffer = tmp;   // to the start of the entire buffer
 #ifdef MULTI_CLIENTS
 	csSet->setChangedToAll(updateFlag);
-#endif
+#endif // MULTI_CLIENTS
 	readed_ = false;
-
-#endif // BUFFER_UNLOCK_UPDATE
 	return hr;
+#else  // USE_MEM_VERTEX_BUFFER
+	if(!ram_buffer){
+		ram_buffer = (char *)malloc(sizeof(char) *Length);
+		m_LockData.pRAMBuffer = ram_buffer;
+	}
+	// store the lock information
+	m_LockData.OffsetToLock = OffsetToLock;
+	m_LockData.SizeToLock = SizeToLock;
+	m_LockData.Flags = Flags;
+
+	if(SizeToLock == 0) 
+		m_LockData.SizeToLock = Length - OffsetToLock;
+
+	*ppbData = (void*)(((char *)ram_buffer)+OffsetToLock);
+
+	// lock the video mem as well
+	HRESULT hr = m_vb->Lock(OffsetToLock, SizeToLock, &(m_LockData.pVideoBuffer), Flags);
+#ifdef MULTI_CLIENTS
+	csSet->setChangedToAll(updateFlag);
+#endif // MULTI_CLIENTS
+	return hr;
+
+#endif  // USE_MEM_VERTEX_BUFFER
+#endif // BUFFER_UNLOCK_UPDATE
+	
 }
 
 STDMETHODIMP WrapperDirect3DVertexBuffer9::Unlock(THIS) {
@@ -252,14 +279,26 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Unlock(THIS) {
 
 	// update the vertex buffer
 #ifdef BUFFER_UNLOCK_UPDATE
+
+	if(pTimer){
+		pTimer->Start();
+	}
 	// the buffer is updated, read data to ram_buffer
 	int last = 0, cnt = 0, c_len = 0, size = 0, base = 0;
+#ifndef USE_MEM_VERTEX_BUFFER
 
-#if 1
 	// copy from video buffer
 	memcpy(ram_buffer, (char *)m_LockData.pVideoBuffer + m_LockData.OffsetToLock, m_LockData.SizeToLock);
+#else   // USE_MEM_VERTEX_BUFFER
+	// copy to video buffer
+	memcpy(m_LockData.pVideoBuffer, (char *)m_LockData.pRAMBuffer + m_LockData.OffsetToLock, m_LockData.SizeToLock);
 
+
+#endif  // USE_MEM_VERTEX_BUFFER
 	base = m_LockData.OffsetToLock;
+
+	csSet->checkCreation(dynamic_cast<IdentifierBase *>(this));
+
 	csSet->beginCommand(VertexBufferUnlock_Opcode, id);
 	csSet->writeUInt(m_LockData.OffsetToLock);
 	csSet->writeUInt(m_LockData.SizeToLock);
@@ -282,7 +321,7 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Unlock(THIS) {
 	c_len = csSet->getCommandLength();
 
 	if(c_len > m_LockData.SizeToLock){
-		#ifdef ENABLE_VERTEX_BUFFER_LOG
+#ifdef ENABLE_VERTEX_BUFFER_LOG
 		infoRecorder->logTrace("[WrapperDirect3DVertexBuffer9]: Unlock(), change too much, cancel command, id=%d.\n", id);
 #endif
 		c_len = m_LockData.SizeToLock;
@@ -300,33 +339,36 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Unlock(THIS) {
 
 		if(c_len > max_vb){
 			max_vb = c_len;
-			#ifdef ENABLE_VERTEX_BUFFER_LOG
+#ifdef ENABLE_VERTEX_BUFFER_LOG
 			infoRecorder->logTrace("[WrapperDirect3DVertexBuffer9]: max vb:%d.\n, id:%d.\n", c_len, id);
 #endif
 		}
 	}
 	else{
 		if(cnt > 0){
-			#ifdef ENABLE_VERTEX_BUFFER_LOG
+#ifdef ENABLE_VERTEX_BUFFER_LOG
 			infoRecorder->logTrace("[WrapperDirect3DVertexBuffer9]: unlock changed vertex count:%d, c_len:%d.\n", cnt, c_len);
 #endif
 			csSet->endCommand();
 		}
 		else{
-			#ifdef ENABLE_VERTEX_BUFFER_LOG
+#ifdef ENABLE_VERTEX_BUFFER_LOG
 			infoRecorder->logTrace("[WrapperDirect3DVertexBuffer9]: unlock not changed, c_len:%d, cnt:%d.\n", c_len, cnt);
 #endif
 			csSet->cancelCommand();
 		}
 	}
-#endif
-	csSet->resetChanged(updateFlag);
 
+	csSet->resetChanged(updateFlag);
+	if(pTimer){
+		unsigned int interval = pTimer->Stop();
+		infoRecorder->logError("[WrapperDirect3DVertexBuffer]: unlock use time: %f.\n", interval * 1000.0 / pTimer->getFreq());
+	}
 #endif   // BUFFER_UNLOCK_UPDATE
 	return m_vb->Unlock();
 }
 void WrapperDirect3DVertexBuffer9::read_data_from_buffer(char** ptr, int offest, int size) {
-	#ifdef ENABLE_VERTEX_BUFFER_LOG
+#ifdef ENABLE_VERTEX_BUFFER_LOG
 	infoRecorder->logTrace("WrapperDirect3DVertexBuffer9::read_data_from_buffer() called\n");
 #endif
 	if(size == 0) size = Length - offest;

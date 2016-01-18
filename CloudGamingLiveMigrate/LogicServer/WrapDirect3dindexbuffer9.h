@@ -6,6 +6,9 @@
 #include <map>
 #include <iostream>
 #include "CommandServerSet.h"
+
+#define USE_MEM_INDEX_BUFFER
+
 using namespace std;
 
 class YMesh;

@@ -77,7 +77,9 @@ STDMETHODIMP_(ULONG) WrapperDirect3DDevice9::AddRef(THIS) {
 	infoRecorder->logTrace("WrapperDirect3DDevice9::AddRef() called\n");
 #endif
 	refCount++;
-	return m_device->AddRef();
+	ULONG hr = m_device->AddRef();
+	infoRecorder->logError("[WrapperDirect3DDevice9]: addref, m_device ref:%d, ref count:%d.\n", hr, refCount);
+	return hr;
 }
 STDMETHODIMP_(ULONG) WrapperDirect3DDevice9::Release(THIS) {
 	ULONG hr = m_device->Release();

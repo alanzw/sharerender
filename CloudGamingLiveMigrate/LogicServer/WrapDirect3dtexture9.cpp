@@ -7,7 +7,7 @@
 //#define LOCAL_IMG
 
 
-//#define ENABLE_TEXTURE_LOG
+#define ENABLE_TEXTURE_LOG
 
 int D3DXTexture = 0;
 WrapperDirect3DTexture9::WrapperDirect3DTexture9(IDirect3DTexture9* ptr, int _id): m_tex(ptr), IdentifierBase(_id) {
@@ -121,7 +121,14 @@ int WrapperDirect3DTexture9::sendUpdate(void *ctx){
 #endif
 	int ret = 0;
 	ContextAndCache * c = (ContextAndCache *)ctx;
+	if(pTimer){
+		pTimer->Start();
+	}
 	SendTextureData(c);
+	if(pTimer){
+		unsigned int interval_ = pTimer->Stop();
+		infoRecorder->logError("[WrapperDriect3DTexture9]: send texture use: %f.\n", interval_ * 1000.0 / pTimer->getFreq());
+	}
 
 	return ret;
 }
@@ -664,7 +671,7 @@ STDMETHODIMP WrapperDirect3DTexture9::GetSurfaceLevel(THIS_ UINT Level,IDirect3D
 #else
 		// TODO : check the texture object is exist or not !
 		csSet->checkCreation(this);
-
+#if 0
 		// create new surface
 		csSet->beginCommand(TextureGetSurfaceLevel_Opcode, id);
 		csSet->writeInt(id);
@@ -673,6 +680,7 @@ STDMETHODIMP WrapperDirect3DTexture9::GetSurfaceLevel(THIS_ UINT Level,IDirect3D
 		csSet->endCommand();
 
 		csSet->setCreation(surface->creationFlag);
+#endif
 
 #endif
 		surface->creationCommand = TextureGetSurfaceLevel_Opcode; 

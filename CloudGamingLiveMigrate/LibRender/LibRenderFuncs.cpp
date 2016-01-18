@@ -626,7 +626,7 @@ HRESULT FakedVertexBufferUnlock(RenderChannel * rch) {
 	ClientVertexBuffer9* svb = NULL;
 	svb = (ClientVertexBuffer9*)(rch->vb_list[id]);
 	if(svb == NULL){
-		cg::core::infoRecorder->logTrace("FakedVertexBufferUnlock() is NULL id:%d\n",id);
+		cg::core::infoRecorder->logError("FakedVertexBufferUnlock() is NULL id:%d\n",id);
 	}else{
 		cg::core::infoRecorder->logTrace("FakedVertexBufferUnlock() id:%d\n",id);
 	}

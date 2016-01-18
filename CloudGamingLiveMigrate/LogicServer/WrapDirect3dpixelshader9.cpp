@@ -27,7 +27,8 @@ int WrapperDirect3DPixelShader9::checkCreation(void * ctx){
 	if(!c->isCreated(creationFlag)){
 		//
 		ret = sendCreation(ctx);
-		csSet->setCreation(creationFlag);
+		c->setCreation(creationFlag);
+		//csSet->setCreation(creationFlag);
 		ret = 1;
 	}
 

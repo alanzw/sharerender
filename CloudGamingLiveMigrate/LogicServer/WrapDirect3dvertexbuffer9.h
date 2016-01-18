@@ -5,6 +5,10 @@
 #include "NewHash.hpp"
 #include "CommandServerSet.h"
 
+#define USE_MEM_VERTEX_BUFFER
+
+
+
 class YMesh;
 
 class WrapperDirect3DVertexBuffer9: public IDirect3DVertexBuffer9 

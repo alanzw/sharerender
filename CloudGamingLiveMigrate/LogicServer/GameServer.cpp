@@ -21,10 +21,11 @@ using namespace cg::core;
 
 #ifndef MULTI_CLIENTS
 CommandServer cs(Max_Buf_Size);
-#else
+#else // MULTI_CLIENTS
 CommandServerSet * csSet = NULL;
+cg::core::PTimer * pTimer = NULL;
 bool sceneBegin = false;
-#endif
+#endif // MULTI_CLIENTS
 
 int need_dump_mesh = 0;
 bool enableRender = true;
@@ -32,7 +33,7 @@ bool F9Pressed = false;
 bool synSign = false;
 bool f10pressed = false;
 
-/// temp varaiables for GameServer
+/// temp variables for GameServer
 static int StartHookCalled = 0;
 int g_frame_index = 0;
 char tempbuffer[7500000] = { '1' };
@@ -195,6 +196,9 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 
 	if(infoRecorder == NULL){
 		infoRecorder = new InfoRecorder("GameServer");
+	}
+	if(NULL == pTimer){
+		pTimer = new cg::core::PTimer();
 	}
 
 	cg::VideoGen::Initialize();
