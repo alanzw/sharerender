@@ -610,6 +610,7 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateTexture(THIS_ UINT Width,UINT Height,
 #ifdef ENBALE_DEVICE_LOG
 	infoRecorder->logTrace("WrapperDirect3DDevice9::CreateTexture(), width=%d, height=%d, Usage=%d, Format:%d, Pool:%d, id:%d, device id:%d, ", Width, Height, Usage, Format, Pool, WrapperDirect3DTexture9::ins_count, id);
 #endif
+	infoRecorder->logError("WrapperDirect3DDevice9::CreateTexture(), width=%d, height=%d, Usage=%d, Format:%d, Pool:%d, id:%d, device id:%d, levels:%d ", Width, Height, Usage, Format, Pool, WrapperDirect3DTexture9::ins_count, id, Levels);
 	if(Height > 1024){
 		infoRecorder->logError("WrapperDirect3DDevice9::CreateTexture(), Levels:%d, width=%d, height=%d, Usage=%d, Format:%d, Pool:%d, id:%d, device id:%d\n ",Levels, Width, Height, Usage, Format, Pool, WrapperDirect3DTexture9::ins_count, id);
 

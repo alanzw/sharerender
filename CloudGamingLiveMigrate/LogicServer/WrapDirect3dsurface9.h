@@ -2,6 +2,7 @@
 #define __WRAP_DIRECT3DSURFACE9__
 
 #include "GameServer.h"
+#include "WrapDirect3dtexture9.h"
 
 class WrapperDirect3DSurface9 : public IDirect3DSurface9 
 #ifdef MULTI_CLIENTS
@@ -14,6 +15,7 @@ private:
 	// add 17:00
 	int tex_id;
 	int level;
+	WrapperDirect3DTexture9 * wrappterTex9;
 public:
 #ifdef MULTI_CLIENTS
 	//map<SOCKET, bool> created; // indicate whether the surface is exist in client, false for initializing
@@ -47,12 +49,13 @@ public:
 	void RepalceSurface(IDirect3DSurface9* pnew);
 	int GetTexId();
 	int GetLevel();
-	void SetTexId(int tex){
+	inline void SetTexId(int tex){
 		tex_id = tex;
 	}
-	void SetLevel(int _level){
+	inline void SetLevel(int _level){
 		level= _level;
 	}
+	inline void setTex9(WrapperDirect3DTexture9 * _tex){ wrappterTex9 = _tex; }
 	static int ins_count;
 	WrapperDirect3DSurface9(IDirect3DSurface9* ptr, int id);
 	static WrapperDirect3DSurface9* GetWrapperSurface9(IDirect3DSurface9* ptr);

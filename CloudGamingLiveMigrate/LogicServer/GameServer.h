@@ -172,6 +172,8 @@ public:
 	IdentifierBase(int _id):creationFlag(0), updateFlag(0), sync(false), stable(true), curDeviceId(0), id(_id), refCount(1), frameCheckFlag(0){} 
 	IdentifierBase(int _id, bool val):creationFlag(0), updateFlag(0), sync(val), stable(true), curDeviceId(0), id(_id), refCount(1), frameCheckFlag(0){} 
 
+	virtual ~IdentifierBase(){}
+
 	virtual int		sendCreation(void * ctx) = 0;
 	virtual int		sendUpdate(void * ctx) = 0;
 
@@ -183,6 +185,8 @@ public:
 	void			print();
 	int				getId();//{ return id; }
 	void			setId(int _id);//{ id = _id; }
+
+
 };
 
 class SynEntity: public IdentifierBase{

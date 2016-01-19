@@ -45,6 +45,9 @@
     <ClInclude Include="LibRenderVertexbuffer9.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="TextureGenerator.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="LibRenderAPI.cpp">

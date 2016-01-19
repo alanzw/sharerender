@@ -2,6 +2,7 @@
 #define __CLIENT_TEXTURE9__
 
 #include <d3d9.h>
+#include "TextureGenerator.h"
 
 class ClientTexture9 {
 private:
@@ -9,6 +10,8 @@ private:
 
 public:
 	IDirect3DTexture9* m_tex;
+
+	char * buffer;
 
 	ClientTexture9(IDirect3DTexture9* ptr);
 	HRESULT FillData(int Level, int Pitch, int size, void* ptr);

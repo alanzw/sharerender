@@ -97,6 +97,7 @@
     <ClInclude Include="Matrix.h" />
     <ClInclude Include="Quadrics.h" />
     <ClInclude Include="TaskQueue.h" />
+    <ClInclude Include="TextureHelper.h" />
     <ClInclude Include="WrapDirect3d9.h" />
     <ClInclude Include="WrapDirect3dcubetexture9.h" />
     <ClInclude Include="WrapDirect3ddevice9.h" />
@@ -125,6 +126,7 @@
     <ClCompile Include="Quadrics.cpp" />
     <ClCompile Include="ServerInit.cpp" />
     <ClCompile Include="TaskQueue.cpp" />
+    <ClCompile Include="TextureHelper.cpp" />
     <ClCompile Include="WrapDeviceNonTrivial.cpp" />
     <ClCompile Include="WrapDeviceTrivial.cpp" />
     <ClCompile Include="WrapDirect3d9.cpp" />
@@ -143,7 +145,6 @@
     <ClCompile Include="YMesh.cpp" />
   </ItemGroup>
   <ItemGroup>
-    
     <ProjectReference Include="..\LibCore\LibCore.vcxproj">
       <Project>{16461a0e-f94a-43ce-ab83-66bf54ea57e8}</Project>
     </ProjectReference>
@@ -159,7 +160,6 @@
     <ProjectReference Include="..\NvEncoders\NvEncoderInteropD3D\NvEncoderInteropD3D.vcxproj">
       <Project>{331ea0bf-5c9b-4779-82f5-7f91d97a7a54}</Project>
     </ProjectReference>
-
     <ProjectReference Include="..\VideoGen\VideoGen.vcxproj">
       <Project>{b3ab51a0-8096-47ff-9354-2eff69456b91}</Project>
     </ProjectReference>

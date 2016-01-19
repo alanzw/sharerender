@@ -111,6 +111,11 @@ WrapperDirect3D9* WrapperDirect3D9::GetWrapperD3D9(IDirect3D9* ptr) {
 #endif
 		ret = new WrapperDirect3D9(ptr, ins_count++);
 		m_list.AddMember(ptr, ret);
+
+		// test the AutoGen capabilities
+		//HRESULT hr = ptr->CheckDeviceFormat()
+
+
 	}
 	return ret;
 }

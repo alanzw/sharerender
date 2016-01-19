@@ -96,6 +96,9 @@
     <ClInclude Include="Initializer.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="TextureHelper.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CommandServerSet.cpp">
@@ -177,6 +180,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Initializer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="TextureHelper.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

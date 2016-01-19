@@ -6,7 +6,7 @@
 extern int id;
 
 #ifdef MULTI_CLIENTS
-//#define ENABLE_SURFACE_LOG
+#define ENABLE_SURFACE_LOG
 
 int WrapperDirect3DSurface9::sendCreation(void *ctx){
 #ifdef ENABLE_SURFACE_LOG
@@ -171,6 +171,7 @@ WrapperDirect3DSurface9::WrapperDirect3DSurface9(IDirect3DSurface9* ptr, int _id
 	creationFlag = 0;
 
 	stable = false;
+	wrappterTex9 = NULL;
 }
 
 WrapperDirect3DSurface9* WrapperDirect3DSurface9::GetWrapperSurface9(IDirect3DSurface9* ptr) {
@@ -206,7 +207,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DSurface9::AddRef(THIS) {
 #endif
 	refCount++;
 	ULONG hr = m_surface->AddRef();
-	infoRecorder->logError("[WrapperDirect3DSurface9]: %d add ref, ref:%d, refcount:%d.\n", id, hr, refCount);
+	infoRecorder->logError("[WrapperDirect3DSurface9]: %d (tex id:%d, level:%d) add ref, ref:%d, refcount:%d.\n", id, tex_id, level, hr, refCount);
 
 	return hr; 
 }
@@ -219,7 +220,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DSurface9::Release(THIS) {
 #endif
 	refCount--;
 	//if(refCount <= 0){
-		infoRecorder->logError("[WrapperDirect3DSurface9]: m_surface id:%d ref:%d, ref count:%d, creation cmd:%d, tex:%d.\n",id, refCount, hr, creationCommand, tex_id);
+		infoRecorder->logError("[WrapperDirect3DSurface9]: m_surface id:%d(tex id:%d, level:%d) ref:%d, ref count:%d, creation cmd:%d, tex:%d.\n",id, tex_id, level, refCount, hr, creationCommand, tex_id);
 	//}
 
 
@@ -308,22 +309,41 @@ STDMETHODIMP WrapperDirect3DSurface9::GetContainer(THIS_ REFIID riid,void** ppCo
 
 STDMETHODIMP WrapperDirect3DSurface9::GetDesc(THIS_ D3DSURFACE_DESC *pDesc) {
 #ifdef ENABLE_SURFACE_LOG
-	infoRecorder->logTrace("WrapperDirect3DSurface9::GetDesc() called\n");
+	infoRecorder->logError("WrapperDirect3DSurface9::GetDesc() called\n");
 #endif
 	return m_surface->GetDesc(pDesc);
 }
 
 STDMETHODIMP WrapperDirect3DSurface9::LockRect(THIS_ D3DLOCKED_RECT* pLockedRect,CONST RECT* pRect,DWORD Flags) {
 #ifdef ENABLE_SURFACE_LOG
-	infoRecorder->logTrace("WrapperDirect3DSurface9::LockRect() called\n");
+	infoRecorder->logError("WrapperDirect3DSurface9::LockRect() called\n");
 #endif
-	return m_surface->LockRect(pLockedRect, pRect, Flags);
+	HRESULT hr = m_surface->LockRect(pLockedRect, pRect, Flags);
+
+	if(wrappterTex9 && 0 == level){
+		// if is a texture's surface
+		if(!wrappterTex9->texHelper){
+			wrappterTex9->texHelper = new TextureHelper(pLockedRect->Pitch, wrappterTex9->Height, wrappterTex9->Levels > 1? true : false);
+			wrappterTex9->texHelper->allocateTextureBuffer();
+		}
+		// 
+		wrappterTex9->texHelper->getRectAddr()->pBits = pLockedRect->pBits;
+		pLockedRect->pBits = wrappterTex9->texHelper->getRectAddr()->pBits;
+	}
+
+	return hr;
 }
 
 STDMETHODIMP WrapperDirect3DSurface9::UnlockRect(THIS) {
 #ifdef ENABLE_SURFACE_LOG
-	infoRecorder->logTrace("WrapperDirect3DSurface9::UnlockRect() called\n");
+	infoRecorder->logError("WrapperDirect3DSurface9::UnlockRect() called\n");
 #endif
+	if(level == 0 && wrappterTex9){
+		// if is a texture's top surface
+		wrappterTex9->texHelper->copyTextureData(wrappterTex9->texHelper->getRectAddr()->pBits);
+		wrappterTex9->texHelper->getRectAddr()->pBits = NULL;
+	}
+
 	return m_surface->UnlockRect();
 }
 

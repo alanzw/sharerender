@@ -95,6 +95,7 @@
     <ClInclude Include="LibRenderSwapchain9.h" />
     <ClInclude Include="LibRenderTexture9.h" />
     <ClInclude Include="LibRenderVertexbuffer9.h" />
+    <ClInclude Include="TextureGenerator.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="LibRenderAPI.cpp" />

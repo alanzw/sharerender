@@ -1372,6 +1372,54 @@ HRESULT FakedSetTextureStageState(RenderChannel * rch) {
 	return rch->curDevice->SetTextureStageState(Stage, Type, Value);
 }
 
+#ifdef USE_TEXTURE_GENERATOR
+HRESULT FakedTransmitTextureData(RenderChannel * rch){
+	int id = rch->obj_id;
+	int level = rch->cc->read_int();
+	int levels = rch->cc->read_int();
+	int totalSize = rch->cc->read_int();
+	//int packets = rch->cc->read_int();
+	//int cur_size = 0;
+
+	ClientTexture9 * tex = NULL;
+	tex = (ClientTexture9*)(rch->tex_list[id]);
+	if(!tex){
+		cg::core::infoRecorder->logError("TransmitTextureData get NULL tex, id:%d, level:%d.\n", id, level);
+	}
+#if 0
+	tex->buffer = (char *)malloc(sizeof(char) * totalSize);
+	char * tmp = tex->buffer;
+
+
+	for(int i = 0; i < packets; i++){
+		cur_size = rch->cc->read_int();
+		memcpy(tmp, rch->cc->get_cur_ptr(size), size);
+		tmp+= size;
+	}
+#else
+	HRESULT hr = D3D_OK;
+	LPDIRECT3DSURFACE9 desc = NULL;
+	D3DLOCKED_RECT rect;
+	if(0 == level){
+		hr = tex->GetTex9()->GetSurfaceLevel(0, &desc);
+		hr = desc->LockRect(&rect, NULL , 0);
+		memcpy(rect.pBits, rch->cc->get_cur_ptr(totalSize), totalSize);
+		desc->UnlockRect();
+		desc->Release();
+		desc = NULL;
+	}
+#endif
+
+	if(levels > 1){
+		// set filter type
+		hr = tex->SetAutoGenFilterType(D3DTEXTUREFILTERTYPE::D3DTEXF_LINEAR);
+		tex->GenerateMipSubLevels();
+	}
+	return hr;
+}
+
+#else  // USE_TEXTURE_GENERATOR
+
 HRESULT FakedTransmitTextureData(RenderChannel * rch) {
 
 #ifdef SEND_FULL_TEXTURE
@@ -1434,24 +1482,12 @@ HRESULT FakedTransmitTextureData(RenderChannel * rch) {
 #endif
 #else
 	
-	int id = obj_id;
-	int level = rch->cc->read_int();
-
-	ClientTexture9* tex = NULL;
-	tex = (ClientTexture9*)(tex_list[id]);
-	
-	cg::core::infoRecorder->logTrace("client TransmitTextureData get texture id:%d tex:%d\n",id,tex);
-
-	char  fname[50];
-	sprintf(fname,"surface\\face_%d_leve_%d.png",id,level);
-	LPDIRECT3DSURFACE9 des = NULL;
-	tex->GetTex9()->GetSurfaceLevel(level,&des);
-	D3DXLoadSurfaceFromFile(des,NULL,NULL,fname,NULL,D3DX_FILTER_LINEAR,0xff000000,NULL);
-	return D3D_OK;//tex->FillData(level, Pitch, size, (void*)cur_ptr);
 #endif
-
 #endif   // SEND_FULL_TEXTURE
 }
+
+#endif // USE_TEXTURE_GENERATOR
+
 
 HRESULT FakedCreateStateBlock(RenderChannel * rch) {
 	

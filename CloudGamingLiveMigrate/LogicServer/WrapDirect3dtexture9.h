@@ -3,6 +3,7 @@
 
 #include "GameServer.h"
 #include "CommandServerSet.h"
+#include "TextureHelper.h"
 
 class WrapperDirect3DTexture9: public IDirect3DTexture9 
 #ifdef MULTI_CLIENTS
@@ -30,6 +31,8 @@ public:
 	DWORD Filter;
 	DWORD MipFilter;
 	D3DCOLOR ColorKey;
+
+	TextureHelper * texHelper;
 
 	static HashSet m_list;
 	static int ins_count;

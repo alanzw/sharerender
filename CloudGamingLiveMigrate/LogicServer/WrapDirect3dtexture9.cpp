@@ -23,6 +23,7 @@ WrapperDirect3DTexture9::WrapperDirect3DTexture9(IDirect3DTexture9* ptr, int _id
 	creationFlag = 0;
 	updateFlag = 0x8fffffff;
 	stable = true;
+	texHelper = NULL;
 }
 
 void WrapperDirect3DTexture9::SayHi(char* str) {
@@ -51,10 +52,6 @@ int WrapperDirect3DTexture9::sendCreation(void *ctx){
 #ifdef ENABLE_TEXTURE_LOG
 	infoRecorder->logTrace("[WrapperDirect3DTexture9]: send creation.\n");
 #endif
-	if(id == 162){
-		//infoRecorder->logError("[WrapperDrirect3DTexture9]: 162 to send creation.\n");
-	}
-
 	ContextAndCache * c = (ContextAndCache *)ctx;
 
 	c->beginCommand(CreateTexture_Opcode, getDeviceId());
@@ -112,7 +109,6 @@ int WrapperDirect3DTexture9::checkUpdate(void *ctx){
 	}
 
 	return ret;
-
 }
 
 int WrapperDirect3DTexture9::sendUpdate(void *ctx){
@@ -292,6 +288,26 @@ HRESULT WrapperDirect3DTexture9::SendTextureData() {
 	return D3D_OK;
 }
 
+
+#ifdef USE_TEXTURE_HELPER
+HRESULT WrapperDirect3DTexture9::SendTextureData(ContextAndCache *ctx){
+	HRESULT hr = D3D_OK;
+	if(NULL == ctx->get_connect_socket())
+		return hr;
+
+	// update the texture
+	csSet->beginCommand(TransmitTextureData_Opcode, id);
+	csSet->writeUInt(0);
+	csSet->writeUInt(Levels);
+	csSet->writeInt(texHelper->getPitchedSize());
+	csSet->writeByteArr((char *)(texHelper->getTextureData()), texHelper->getPitchedSize());
+	csSet->endCommand();
+
+	return hr;
+}
+
+#else // USE_TEXTURE_HELPER
+
 HRESULT WrapperDirect3DTexture9::SendTextureData(ContextAndCache *ctx) {
 	HRESULT hr = D3D_OK;
 	if(ctx->get_connect_socket() == NULL)
@@ -353,7 +369,7 @@ HRESULT WrapperDirect3DTexture9::SendTextureData(ContextAndCache *ctx) {
 		continue;
 	}
 
-	
+
 #ifdef MEM_FILE_TEX
 	D3DLOCKED_RECT rect;
 	hr = top_surface->LockRect(&rect, 0, D3DLOCK_READONLY);
@@ -493,6 +509,7 @@ HRESULT WrapperDirect3DTexture9::SendTextureData(ContextAndCache *ctx) {
 	return D3D_OK;
 }
 
+#endif // USE_TEXTURE_HELPER
 /*** IUnknown methods ***/
 STDMETHODIMP WrapperDirect3DTexture9::QueryInterface(THIS_ REFIID riid, void** ppvObj) {
 #ifdef ENABLE_TEXTURE_LOG
@@ -522,9 +539,11 @@ STDMETHODIMP_(ULONG) WrapperDirect3DTexture9::Release(THIS) {
 	refCount--;
 	if(refCount <= 0){
 		infoRecorder->logError("[WrapperDirect3DTexture9]: m_tex ref:%d, ref count:%d.\n", refCount, hr);
+		delete texHelper;
+		texHelper = NULL;
+		m_list.DeleteMember(m_tex);
 	}
 	return hr;
-	//return D3D_OK;
 }
 
 /*** IDirect3DBaseTexture9 methods ***/
@@ -596,7 +615,7 @@ STDMETHODIMP_(DWORD) WrapperDirect3DTexture9::GetLOD(THIS) {
 
 STDMETHODIMP_(DWORD) WrapperDirect3DTexture9::GetLevelCount(THIS) {
 #ifdef ENABLE_TEXTURE_LOG
-	infoRecorder->logTrace("WrapperDirect3DTexture9::GetLevelCount() called\n");
+	infoRecorder->logError("WrapperDirect3DTexture9::GetLevelCount() called, id:%d\n", id);
 #endif
 	return m_tex->GetLevelCount();
 }
@@ -643,7 +662,7 @@ STDMETHODIMP_(void) WrapperDirect3DTexture9::GenerateMipSubLevels(THIS) {
 
 STDMETHODIMP WrapperDirect3DTexture9::GetLevelDesc(THIS_ UINT Level,D3DSURFACE_DESC *pDesc) {
 #ifdef ENABLE_TEXTURE_LOG
-	infoRecorder->logTrace("WrapperDirect3DTexture9::GetLevelDesc() called\n");
+	infoRecorder->logError("WrapperDirect3DTexture9::GetLevelDesc() called\n");
 #endif
 	return m_tex->GetLevelDesc(Level, pDesc);
 }
@@ -652,7 +671,7 @@ extern int deviceId;
 
 STDMETHODIMP WrapperDirect3DTexture9::GetSurfaceLevel(THIS_ UINT Level,IDirect3DSurface9** ppSurfaceLevel) {
 #ifdef ENABLE_TEXTURE_LOG
-	infoRecorder->logTrace("WrapperDirect3DTexture9::GetSurfaceLevel() called, Level:%d, tex id:%d\n",Level, id);
+	infoRecorder->logError("WrapperDirect3DTexture9::GetSurfaceLevel() called, Level:%d, tex id:%d\n",Level, id);
 #endif
 	IDirect3DSurface9* base_surface = NULL;
 	HRESULT hr = m_tex->GetSurfaceLevel(Level, &base_surface);//ppSurfaceLevel);
@@ -686,8 +705,8 @@ STDMETHODIMP WrapperDirect3DTexture9::GetSurfaceLevel(THIS_ UINT Level,IDirect3D
 		surface->creationCommand = TextureGetSurfaceLevel_Opcode; 
 		surface->SetTexId(id);
 		surface->SetLevel(Level);
+		surface->setTex9(this);
 	}
-	//csSet->setChangedToAll(updateFlag);
 	*ppSurfaceLevel = dynamic_cast<IDirect3DSurface9 *>(surface);
 #ifdef ENABLE_TEXTURE_LOG
 	infoRecorder->logTrace("WrapperDirect3DTexture9::GetSurfaceLevel(), base_surface=%d, ppSurfaceLevel=%d\n", base_surface, *ppSurfaceLevel);
@@ -695,22 +714,49 @@ STDMETHODIMP WrapperDirect3DTexture9::GetSurfaceLevel(THIS_ UINT Level,IDirect3D
 	return hr;
 }
 
-STDMETHODIMP WrapperDirect3DTexture9::LockRect(THIS_ UINT Level,D3DLOCKED_RECT* pLockedRect,CONST RECT* pRect,DWORD Flags) {
+STDMETHODIMP WrapperDirect3DTexture9::LockRect(THIS_ UINT Level, D3DLOCKED_RECT* pLockedRect,CONST RECT* pRect,DWORD Flags) {
 #ifdef ENABLE_TEXTURE_LOG
-	infoRecorder->logTrace("WrapperDirect3DTexture9:LockRect(), id:%d, level:%d, rect:%p.\n", id, Level, pRect);
-#endif
+	infoRecorder->logError("WrapperDirect3DTexture9:LockRect(), id:%d, level:%d, rect:%p.\n", id, Level, pRect);
+#endif // ENABLE_TEXTURE_LOG
 	tex_send[id] = false;
 
 	//if(!(this->Usage & D3DUSAGE_RENDERTARGET))
 	csSet->setChangedToAll(updateFlag);
 
-	return m_tex->LockRect(Level, pLockedRect, pRect, Flags);
+	D3DLOCKED_RECT lockRect;
+
+	HRESULT hr  m_tex->LockRect(Level, &lockRect, pRect, Flags);
+	if(NULL == texHelper){
+		texHelper = new TextureHelper(lockRect.Pitch, Height, Levels > 1 ? true:false);
+		texHelper->allocateTextureBuffer();
+	}
+
+	if(Level == 0){
+		// if lock the top level
+		texHelper->getRectAddr()->pBits = pLockedRect->pBits;
+		pLockedRect->Pitch = lockRect.Pitch;
+		pLockedRect->pBits = texHelper->getTextureData();
+	}else{
+		pLockedRect->pBits = lockRect.pBits;
+		pLockedRect->Pitch = lockRect.Pitch;
+	}
+
+
+	return hr;
 }
 
 STDMETHODIMP WrapperDirect3DTexture9::UnlockRect(THIS_ UINT Level) {
 #ifdef ENABLE_TEXTURE_LOG
-	infoRecorder->logTrace("WrapperDirect3DTexture9::UnlockRect(), id:%d, Level=%d\n", id, Level);
+	infoRecorder->logError("WrapperDirect3DTexture9::UnlockRect(), id:%d, Level=%d\n", id, Level);
 #endif
+
+	if(Level == 0){
+		// copy the top data to video memory
+		texHelper->copyTextureData(texHelper->getRectAddr()->pBits);
+		texHelper->getRectAddr()->pBits = NULL;   // invalid after unlocking
+	}
+
+
 	HRESULT hr = m_tex->UnlockRect(Level);
 	return hr;
 }
