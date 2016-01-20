@@ -10,6 +10,7 @@
 #include "WrapDirect3dvertexbuffer9.h"
 
 #include "../LibCore/Utility.h"
+#include "TextureHelper.h"
 
 using namespace std;
 
@@ -28,6 +29,7 @@ public:
 
 	IDirect3DDevice9* m_device;
 	WrapperDirect3DDevice9(IDirect3DDevice9* ptr, int _id);
+	virtual ~WrapperDirect3DDevice9();
 
 	static WrapperDirect3DDevice9* GetWrapperDevice9(IDirect3DDevice9* ptr);
 	IDirect3DDevice9* GetIDirect3DDevice9(){
@@ -39,6 +41,10 @@ public:
 	D3DDEVTYPE deviceType;
 	DWORD behaviorFlags;
 	D3DPRESENT_PARAMETERS * pPresentParameters;
+
+	//TextureHelper * texHelper;   // texture helper for this device
+	DeviceHelper *deviceHelper;
+
 
 	virtual int checkCreation(void * ctx);
 	virtual int sendCreation(void * ctx);

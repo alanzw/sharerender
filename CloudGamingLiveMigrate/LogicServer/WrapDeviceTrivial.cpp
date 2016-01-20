@@ -49,8 +49,18 @@ WrapperDirect3DDevice9::WrapperDirect3DDevice9(IDirect3DDevice9* device, int _id
 	creationFlag = 0;
 	updateFlag = 0;
 	stable = true;
+	deviceHelper = NULL;
 }
-
+WrapperDirect3DDevice9::~WrapperDirect3DDevice9(){
+	if(this->pPresentParameters){
+		free(pPresentParameters);
+		pPresentParameters = NULL;
+	}
+	if(deviceHelper){
+		delete deviceHelper;
+		deviceHelper = NULL;
+	}
+}
 WrapperDirect3DDevice9* WrapperDirect3DDevice9::GetWrapperDevice9(IDirect3DDevice9* ptr) {
 	WrapperDirect3DDevice9* ret = (WrapperDirect3DDevice9*)( m_list.GetDataPtr(ptr) );
 #ifdef ENBALE_DEVICE_LOG
@@ -610,7 +620,7 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateTexture(THIS_ UINT Width,UINT Height,
 #ifdef ENBALE_DEVICE_LOG
 	infoRecorder->logTrace("WrapperDirect3DDevice9::CreateTexture(), width=%d, height=%d, Usage=%d, Format:%d, Pool:%d, id:%d, device id:%d, ", Width, Height, Usage, Format, Pool, WrapperDirect3DTexture9::ins_count, id);
 #endif
-	infoRecorder->logError("WrapperDirect3DDevice9::CreateTexture(), width=%d, height=%d, Usage=%d, Format:%d, Pool:%d, id:%d, device id:%d, levels:%d ", Width, Height, Usage, Format, Pool, WrapperDirect3DTexture9::ins_count, id, Levels);
+	infoRecorder->logError("WrapperDirect3DDevice9::CreateTexture(), width=%d, height=%d, Usage=%d, Format:%d, Pool:%d, id:%d, device id:%d, levels:%d \n", Width, Height, Usage, Format, Pool, WrapperDirect3DTexture9::ins_count, id, Levels);
 	if(Height > 1024){
 		infoRecorder->logError("WrapperDirect3DDevice9::CreateTexture(), Levels:%d, width=%d, height=%d, Usage=%d, Format:%d, Pool:%d, id:%d, device id:%d\n ",Levels, Width, Height, Usage, Format, Pool, WrapperDirect3DTexture9::ins_count, id);
 
@@ -630,6 +640,8 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateTexture(THIS_ UINT Width,UINT Height,
 		wt->Usage = Usage;
 		wt->Pool = Pool;
 		wt->setDeviceID(id);
+
+		wt->texHelper = new TextureHelper(Levels, deviceHelper->isSupportAutoGenTex() && (Usage & D3DUSAGE_AUTOGENMIPMAP));
 
 		// set device's creation
 		//this->checkCreation();

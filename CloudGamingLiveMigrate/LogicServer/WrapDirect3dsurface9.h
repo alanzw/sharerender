@@ -2,7 +2,15 @@
 #define __WRAP_DIRECT3DSURFACE9__
 
 #include "GameServer.h"
+
+//#define USE_WRAPPER_TEXTURE    // default use SurfaceHelper, not TextureHelper
+
+#ifdef USE_WRAPPER_TEXTURE
 #include "WrapDirect3dtexture9.h"
+#else
+#include "TextureHelper.h"
+
+#endif
 
 class WrapperDirect3DSurface9 : public IDirect3DSurface9 
 #ifdef MULTI_CLIENTS
@@ -15,7 +23,11 @@ private:
 	// add 17:00
 	int tex_id;
 	int level;
+#ifdef USE_WRAPPER_TEXTURE
 	WrapperDirect3DTexture9 * wrappterTex9;
+#else
+	SurfaceHelper *surfaceHelper;
+#endif
 public:
 #ifdef MULTI_CLIENTS
 	//map<SOCKET, bool> created; // indicate whether the surface is exist in client, false for initializing
@@ -49,13 +61,15 @@ public:
 	void RepalceSurface(IDirect3DSurface9* pnew);
 	int GetTexId();
 	int GetLevel();
-	inline void SetTexId(int tex){
-		tex_id = tex;
-	}
-	inline void SetLevel(int _level){
-		level= _level;
-	}
+	inline void SetTexId(int tex){ tex_id = tex; }
+	inline void SetLevel(int _level){ level= _level; }
+#ifdef USE_WRAPPER_TEXTURE
 	inline void setTex9(WrapperDirect3DTexture9 * _tex){ wrappterTex9 = _tex; }
+#else
+
+	inline void setSurfaceHelper(SurfaceHelper * _helper){ surfaceHelper = _helper; }
+#endif
+
 	static int ins_count;
 	WrapperDirect3DSurface9(IDirect3DSurface9* ptr, int id);
 	static WrapperDirect3DSurface9* GetWrapperSurface9(IDirect3DSurface9* ptr);

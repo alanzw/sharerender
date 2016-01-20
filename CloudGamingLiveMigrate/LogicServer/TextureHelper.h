@@ -8,31 +8,72 @@
 #define USE_TEXTURE_HELPER
 #endif
 
+enum TEXTURE_TYPE{
+	NO_TEXTURE_TYPE = 0,
+	TEXTURE,
+	CUBE_TEXTURE,
+	VOLUME_TEXTURE
+};
 
+
+// represent a surface for texture
+class SurfaceHelper{
+private:
+	unsigned char *		surfaceData;
+	unsigned char *		ptr;
+	int					pitch;
+	int					height;
+	short				face;
+	short				level;				// in case the surface belongs to a cube texture
+	bool				aquired;
+	TEXTURE_TYPE		type;
+	void *				realSurfacePtr;		// the real ptr for surface content
+	static int			TotalBufferedTextureSize;
+public:
+	inline unsigned char *getSurfaceData(){ return surfaceData; }
+	inline int			getPitch(){ return pitch; }
+	inline int			getHeight(){ return height; }
+	inline int			getPitchedSize(){ return pitch * height; }
+	inline bool			isAquired(){ return aquired; }
+
+	SurfaceHelper(short level);
+	SurfaceHelper(short level, short face);
+	virtual ~SurfaceHelper();
+
+	static int			GetBufferTextureSize(){ return TotalBufferedTextureSize; }
+	inline void			setRealSurfacePointer(void * ptr){ realSurfacePtr = ptr; }  // must be called before changing the locked rect's pbits
+	unsigned char *		allocateSurfaceBuffer(int pitch, int height);  // allocate the memory and set aquired
+	bool				copyTextureData();   // copy buffered surface data to video memory and set the video pointer to NULL
+};
+// for cube texture
+class CubeTextureHelper{
+
+};
 class TextureHelper{
 private:
-	unsigned char *textureData; // stores the top level surface data in raw format
-	unsigned char *ptr;			// tmp ptr for solving texture in huge size
-	int pitch, height;
-	bool autoGenable;			// whether the texture can use auto gen
+	bool				autoGenable;		// whether the texture can use auto gen
+	bool				aquired;			// indicate the top level mipmap is got or not
+	int					bufferSize;
+	short				levels;				// the levels of the texture
+	SurfaceHelper **	surfaceArray;
+	short				validLevels;		// how many levels is in use
 
-	bool aquired;				// indicate the top level mipmap is got or not
-	D3DLOCKED_RECT rect;
-	static int BufferedTextureSize;
 public:
-	inline unsigned char * getTextureData(){ return textureData; }
-	inline bool isAutoGenable(){ return autoGenable; }
-	inline int getPitch(){ return pitch; }
-	inline int getHeight(){ return height; }
-	inline int getPitchedSize(){ return pitch * height; }
-	inline bool isAquired(){ return aquired; }
-	inline void setAutoGenable(bool val){ autoGenable = val; }
-	inline D3DLOCKED_RECT* getRectAddr(){ return &rect; }
-	static int GetBufferTextureSize(){ return BufferedTextureSize; }
+	inline bool			isAutoGenable(){ return autoGenable; }
+	inline bool			isAquired(int i){ return surfaceArray[i] && surfaceArray[i]->isAquired(); }
 
-	TextureHelper(int _pitch, int _height, bool _autoGen = true);
+	TextureHelper(short _levels, bool _autogenable = false);
 	virtual ~TextureHelper();
+	
+	SurfaceHelper *		getSurfaceHelper(short level);  // return the surface helper for given level, if NULL, create one
+};
 
-	bool allocateTextureBuffer();
-	bool copyTextureData(unsigned char *dst);
+class DeviceHelper{
+	bool				supportAutoGenTex;
+	bool				supportAuoGenCubeTex;
+public:
+
+	bool				isSupportAutoGenTex(){ return supportAutoGenTex; }
+	bool				isSupportAutoGenCubeTex(){ return supportAuoGenCubeTex; }
+	bool				checkSupportForAutoGenMipmap(IDirect3DDevice9 *device);
 };

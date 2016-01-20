@@ -1386,35 +1386,17 @@ HRESULT FakedTransmitTextureData(RenderChannel * rch){
 	if(!tex){
 		cg::core::infoRecorder->logError("TransmitTextureData get NULL tex, id:%d, level:%d.\n", id, level);
 	}
-#if 0
-	tex->buffer = (char *)malloc(sizeof(char) * totalSize);
-	char * tmp = tex->buffer;
 
-
-	for(int i = 0; i < packets; i++){
-		cur_size = rch->cc->read_int();
-		memcpy(tmp, rch->cc->get_cur_ptr(size), size);
-		tmp+= size;
-	}
-#else
 	HRESULT hr = D3D_OK;
 	LPDIRECT3DSURFACE9 desc = NULL;
 	D3DLOCKED_RECT rect;
-	if(0 == level){
-		hr = tex->GetTex9()->GetSurfaceLevel(0, &desc);
-		hr = desc->LockRect(&rect, NULL , 0);
-		memcpy(rect.pBits, rch->cc->get_cur_ptr(totalSize), totalSize);
-		desc->UnlockRect();
-		desc->Release();
-		desc = NULL;
-	}
-#endif
-
-	if(levels > 1){
-		// set filter type
-		hr = tex->SetAutoGenFilterType(D3DTEXTUREFILTERTYPE::D3DTEXF_LINEAR);
-		tex->GenerateMipSubLevels();
-	}
+	hr = tex->GetTex9()->GetSurfaceLevel(level, &desc);
+	hr = desc->LockRect(&rect, NULL , 0);
+	memcpy(rect.pBits, rch->cc->get_cur_ptr(totalSize), totalSize);
+	desc->UnlockRect();
+	desc->Release();
+	desc = NULL;
+	
 	return hr;
 }
 

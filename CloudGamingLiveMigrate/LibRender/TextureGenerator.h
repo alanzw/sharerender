@@ -8,13 +8,3 @@
 #define USE_TEXTURE_GENERATOR
 #endif
 
-class AutoGenTextureGenerator{
-	IDirect3DDevice9 *pDevice;  // the device for the channel
-
-public:
-	AutoGenTextureGenerator(IDirect3DDevice9 *_device);
-
-	ClientTexture9 * generateTexture();
-	ClientCubeTexture9 *generateCubeTexture();
-	
-};

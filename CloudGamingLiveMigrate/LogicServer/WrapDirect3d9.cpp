@@ -262,6 +262,11 @@ STDMETHODIMP WrapperDirect3D9::CreateDevice(THIS_ UINT Adapter,D3DDEVTYPE Device
 		wdd = new WrapperDirect3DDevice9(base_device, WrapperDirect3DDevice9::ins_count++);
 		*ppReturnedDeviceInterface = dynamic_cast<IDirect3DDevice9*>(wdd);
 		deviceId = wdd->getId();
+
+		// create the texture helper
+		wdd->deviceHelper = new DeviceHelper();
+		wdd->deviceHelper->checkSupportForAutoGenMipmap(base_device);
+
 #ifdef ENABLE_DIRECT3D_LOG
 		infoRecorder->logError("WrapperDirect3D9::CreateDevice(), base_device=%p, device=%p\n", base_device, *ppReturnedDeviceInterface);
 #endif
