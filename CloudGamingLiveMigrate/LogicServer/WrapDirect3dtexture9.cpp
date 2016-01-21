@@ -81,8 +81,8 @@ int WrapperDirect3DTexture9::checkCreation(void *ctx){
 #endif
 		ret = sendCreation(ctx);
 		cc->setCreation(creationFlag);
-		sendUpdate(ctx);
-		cc->resetChanged(updateFlag);
+		//sendUpdate(ctx);
+		//cc->resetChanged(updateFlag);
 		ret = 1;
 	}else{
 #ifdef ENABLE_TEXTURE_LOG
@@ -94,7 +94,7 @@ int WrapperDirect3DTexture9::checkCreation(void *ctx){
 
 int WrapperDirect3DTexture9::checkUpdate(void *ctx){
 #ifdef ENABLE_TEXTURE_LOG
-	infoRecorder->logTrace("[WrapperDirect3DTexture9]: check update.\n");
+	infoRecorder->logTrace("[WrapperDirect3DTexture9]: check update for %d.\n", id);
 #endif
 	int ret = 0;
 	ContextAndCache * c = (ContextAndCache *)ctx;
@@ -113,7 +113,7 @@ int WrapperDirect3DTexture9::checkUpdate(void *ctx){
 
 int WrapperDirect3DTexture9::sendUpdate(void *ctx){
 #ifdef ENABLE_TEXTURE_LOG
-	infoRecorder->logTrace("[WrapperDirect3DTexture9]: send update.\n");
+	infoRecorder->logTrace("[WrapperDirect3DTexture9]: send update for %d.\n", id);
 #endif
 	int ret = 0;
 	ContextAndCache * c = (ContextAndCache *)ctx;
@@ -295,19 +295,20 @@ HRESULT WrapperDirect3DTexture9::SendTextureData(ContextAndCache *ctx){
 	if(NULL == ctx->get_connect_socket())
 		return hr;
 
+	infoRecorder->logTrace("[WrapperDirect3DTexture9]: send texture data for %d.\n", id);
 
 	SurfaceHelper * surHelper = NULL;
 	// update the texture
 	if(texHelper->isAutoGenable()){
 		surHelper = texHelper->getSurfaceHelper(0);
-		if(!surHelper->isAquired()){
+		if(!surHelper || !surHelper->isAquired()){
 			// not aquired yet
 			infoRecorder->logError("[WrapperDirect3DTExture9]: surface helper for %d level:%d is not aquired yet.\n", id, 0);
 			return E_FAIL;
 		}
 		csSet->beginCommand(TransmitTextureData_Opcode, id);
 		csSet->writeUInt(0);
-		csSet->writeUInt(Levels);
+		csSet->writeUInt(texHelper->isAutoGenable() ? 1: 0);
 		csSet->writeInt(surHelper->getPitchedSize());
 		csSet->writeByteArr((char *)(surHelper->getSurfaceData()), surHelper->getPitchedSize());
 		csSet->endCommand();
@@ -316,14 +317,14 @@ HRESULT WrapperDirect3DTexture9::SendTextureData(ContextAndCache *ctx){
 		// creation for each surface
 		for(int i = 0; i < Levels; i++){
 			surHelper = texHelper->getSurfaceHelper(i);
-			if(!surHelper->isAquired()){
+			if(!surHelper || !surHelper->isAquired()){
 				// not aquired yet
 				infoRecorder->logError("[WrapperDirect3DTExture9]: surface helper for %d level:%d is not aquired yet.\n", id, i);
 				return E_FAIL;
 			}
 			csSet->beginCommand(TransmitTextureData_Opcode, id);
 			csSet->writeUInt(i);
-			csSet->writeUInt(Levels);
+			csSet->writeUInt(texHelper->isAutoGenable() ? 1: 0);
 			csSet->writeInt(surHelper->getPitchedSize());
 			csSet->writeByteArr((char *)(surHelper->getSurfaceData()), surHelper->getPitchedSize());
 			csSet->endCommand();
@@ -551,7 +552,7 @@ STDMETHODIMP WrapperDirect3DTexture9::QueryInterface(THIS_ REFIID riid, void** p
 }
 STDMETHODIMP_(ULONG) WrapperDirect3DTexture9::AddRef(THIS) {
 #ifdef ENABLE_TEXTURE_LOG
-	infoRecorder->logTrace("WrapperDirect3DTexture9::AddRef() called\n");
+	infoRecorder->logTrace("WrapperDirect3DTexture9::AddRef() called for %d\n", id);
 #endif
 	refCount++;
 	return m_tex->AddRef();
@@ -698,7 +699,7 @@ extern int deviceId;
 
 STDMETHODIMP WrapperDirect3DTexture9::GetSurfaceLevel(THIS_ UINT Level,IDirect3DSurface9** ppSurfaceLevel) {
 #ifdef ENABLE_TEXTURE_LOG
-	infoRecorder->logError("WrapperDirect3DTexture9::GetSurfaceLevel() called, Level:%d, tex id:%d\n",Level, id);
+	infoRecorder->logError("WrapperDirect3DTexture9::GetSurfaceLevel() called, Level:%d, tex id:%d, autogen:%s\n",Level, id, texHelper->isAutoGenable() ? "true":"false");
 #endif
 	IDirect3DSurface9* base_surface = NULL;
 	D3DSURFACE_DESC desc;
@@ -825,4 +826,19 @@ STDMETHODIMP WrapperDirect3DTexture9::AddDirtyRect(THIS_ CONST RECT* pDirtyRect)
 	infoRecorder->logTrace("WrapperDirect3DTexture9::AddDirtyRect() TODO\n");
 #endif
 	return m_tex->AddDirtyRect(pDirtyRect);
+}
+
+UINT WrapperDirect3DTexture9::getUID(int tex_id, char level){
+	UINT ret = tex_id;
+	ret = ret << 8;
+	UINT mask = 0xFFFFFF00;
+	ret &= mask;
+	ret |= level;
+	return ret;
+}
+void WrapperDirect3DTexture9::getTexIdAndLevel(UINT uid, int &id, short &level){
+	UINT tl = uid & 0x000000FF;
+	UINT tid = (uid & 0xFFFFFF00) >> 8;
+	level = tl;
+	id = tid;
 }

@@ -28,20 +28,20 @@ namespace cg{
 			
 			
 			HashSet();
-			PVOID GetDataPtr(int id);
+			PVOID GetDataPtr(UINT id);
 			PVOID GetDataPtr(PVOID pKey);
 			//inline PVOID& operator[](int id){ return GetDataPtr(id);}
 			//inline PVOID& operator[](PVOID pKey){ return GetDataPtr(pKey); }
 
-			bool AddMember(int id, PVOID pData);
+			bool AddMember(UINT id, PVOID pData);
 			bool AddMember(PVOID pKey, PVOID pData);
 			bool DeleteMember(PVOID pKey);
-			bool DeleteMember(int id);
+			bool DeleteMember(UINT id);
 			__forceinline UINT GetHash(PVOID pKey) {
 				DWORD Key = (DWORD)pKey;
 				return (( Key >> 3 ^ Key >> 7 ^ Key >> 11 ^ Key >> 17 ) & HASHSETMASK);
 			}
-			__forceinline UINT GetHash(int id) {
+			__forceinline UINT GetHash(UINT id) {
 				return (( id >> 3 ^ id >> 7 ^ id >> 11 ^ id >> 17 ) & HASHSETMASK);
 			}
 

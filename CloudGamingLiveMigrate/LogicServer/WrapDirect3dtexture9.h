@@ -35,8 +35,12 @@ public:
 	TextureHelper * texHelper;
 
 	static HashSet m_list;
+	static HashSet m_side_list;    // the list store's the id to surface map
 	static int ins_count;
 	WrapperDirect3DTexture9(IDirect3DTexture9* ptr, int _id);
+
+	UINT getUID(int tex_id, char level);
+	void getTexIdAndLevel(UINT uid, int &id, short &level);
 
 	IDirect3DTexture9* GetTex9();
 	void SayHi(char* str);

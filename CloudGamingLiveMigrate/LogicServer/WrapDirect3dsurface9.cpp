@@ -320,7 +320,7 @@ STDMETHODIMP WrapperDirect3DSurface9::GetDesc(THIS_ D3DSURFACE_DESC *pDesc) {
 
 STDMETHODIMP WrapperDirect3DSurface9::LockRect(THIS_ D3DLOCKED_RECT* pLockedRect,CONST RECT* pRect,DWORD Flags) {
 #ifdef ENABLE_SURFACE_LOG
-	infoRecorder->logError("WrapperDirect3DSurface9::LockRect() called\n");
+	infoRecorder->logError("WrapperDirect3DSurface9::LockRect() called, flag:%d.\n", Flags);
 #endif
 
 	HRESULT hr = E_FAIL;
@@ -354,6 +354,9 @@ STDMETHODIMP WrapperDirect3DSurface9::LockRect(THIS_ D3DLOCKED_RECT* pLockedRect
 		// 
 	}
 #else   // use SurfaceHelper
+	if(FAILED(hr)){
+		infoRecorder->logError("[WrapperDirect3DSurface9]:LockRect() failed with:%d.\n", hr);
+	}
 	if(surfaceHelper){
 		surfaceHelper->setRealSurfacePointer(pLockedRect->pBits);
 		// if has a surface helper, means that the surface need to be stored
@@ -363,7 +366,6 @@ STDMETHODIMP WrapperDirect3DSurface9::LockRect(THIS_ D3DLOCKED_RECT* pLockedRect
 			pLockedRect->pBits = surfaceHelper->getSurfaceData();
 		}
 	}
-
 #endif
 
 	return hr;

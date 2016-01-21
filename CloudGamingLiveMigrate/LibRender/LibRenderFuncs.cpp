@@ -1376,7 +1376,7 @@ HRESULT FakedSetTextureStageState(RenderChannel * rch) {
 HRESULT FakedTransmitTextureData(RenderChannel * rch){
 	int id = rch->obj_id;
 	int level = rch->cc->read_int();
-	int levels = rch->cc->read_int();
+	int autoGen = rch->cc->read_int();
 	int totalSize = rch->cc->read_int();
 	//int packets = rch->cc->read_int();
 	//int cur_size = 0;
@@ -1396,7 +1396,9 @@ HRESULT FakedTransmitTextureData(RenderChannel * rch){
 	desc->UnlockRect();
 	desc->Release();
 	desc = NULL;
-	
+	if(autoGen){
+		tex->GenerateMipSubLevels();
+	}
 	return hr;
 }
 

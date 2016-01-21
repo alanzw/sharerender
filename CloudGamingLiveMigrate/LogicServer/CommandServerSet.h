@@ -33,7 +33,7 @@ using namespace cg::core;
 #endif
 
 // this definition will enable log for ref count
-#if 0
+#if 1
 #ifndef LOG_REF_COUNT
 #define LOG_REF_COUNT
 #endif
@@ -309,7 +309,7 @@ public:
 	}
 
 	ContextAndCache * getCtx(int index){
-		print();
+		//print();
 		return array[index];
 	}
 	// print the pool

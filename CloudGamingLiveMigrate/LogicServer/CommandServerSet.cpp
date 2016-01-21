@@ -8,7 +8,7 @@
 //#define ENABLE_SET_LOCK
 
 //#define ENABLE_SET_LOG		// log for command server set
-#define ENABLE_CTX_LOG      // log for context
+//#define ENABLE_CTX_LOG      // log for context
 //#define ENABLE_MGR_LOG      // log for context manager
 
 IndexManager * IndexManager::_indexMgr;

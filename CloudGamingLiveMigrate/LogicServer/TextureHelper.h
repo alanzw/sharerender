@@ -26,6 +26,7 @@ private:
 	short				face;
 	short				level;				// in case the surface belongs to a cube texture
 	bool				aquired;
+	bool				compressed;
 	TEXTURE_TYPE		type;
 	void *				realSurfacePtr;		// the real ptr for surface content
 	static int			TotalBufferedTextureSize;
@@ -33,17 +34,18 @@ public:
 	inline unsigned char *getSurfaceData(){ return surfaceData; }
 	inline int			getPitch(){ return pitch; }
 	inline int			getHeight(){ return height; }
-	inline int			getPitchedSize(){ return pitch * height; }
+	//inline int			getPitchedSize(){ return pitch * height; }
 	inline bool			isAquired(){ return aquired; }
 
-	SurfaceHelper(short level);
-	SurfaceHelper(short level, short face);
+	SurfaceHelper(short level, bool _compressed = false);
+	SurfaceHelper(short level, short face, bool _compressed = false);
 	virtual ~SurfaceHelper();
 
 	static int			GetBufferTextureSize(){ return TotalBufferedTextureSize; }
-	inline void			setRealSurfacePointer(void * ptr){ realSurfacePtr = ptr; }  // must be called before changing the locked rect's pbits
+	inline void			setRealSurfacePointer(void * _ptr){ realSurfacePtr = _ptr; }  // must be called before changing the locked rect's pbits
 	unsigned char *		allocateSurfaceBuffer(int pitch, int height);  // allocate the memory and set aquired
 	bool				copyTextureData();   // copy buffered surface data to video memory and set the video pointer to NULL
+	int					getPitchedSize();
 };
 // for cube texture
 class CubeTextureHelper{
@@ -57,12 +59,14 @@ private:
 	short				levels;				// the levels of the texture
 	SurfaceHelper **	surfaceArray;
 	short				validLevels;		// how many levels is in use
+	bool				compressed;			// DXT1-DXT5
 
 public:
+	inline bool			isCompressed(){ return compressed; }
 	inline bool			isAutoGenable(){ return autoGenable; }
 	inline bool			isAquired(int i){ return surfaceArray[i] && surfaceArray[i]->isAquired(); }
 
-	TextureHelper(short _levels, bool _autogenable = false);
+	TextureHelper(short _levels, D3DFORMAT format, bool _autogenable = false);
 	virtual ~TextureHelper();
 	
 	SurfaceHelper *		getSurfaceHelper(short level);  // return the surface helper for given level, if NULL, create one

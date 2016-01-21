@@ -8,7 +8,7 @@ namespace cg{
 			}
 		}
 
-		PVOID HashSet::GetDataPtr(int id) {
+		PVOID HashSet::GetDataPtr(UINT id) {
 			HashLinkedList* pThis = m_pHead[GetHash(id)];
 			while(pThis) {
 				if(pThis->id == id) {
@@ -32,7 +32,7 @@ namespace cg{
 			return NULL;
 		}
 
-		bool HashSet::AddMember(int id, PVOID pData) {
+		bool HashSet::AddMember(UINT id, PVOID pData) {
 			UINT hash = GetHash(id);
 			HashLinkedList* pThis = new HashLinkedList;
 			if(pThis == NULL) {
@@ -62,7 +62,7 @@ namespace cg{
 			return true;
 		}
 
-		bool HashSet::DeleteMember(int id) {
+		bool HashSet::DeleteMember(UINT id) {
 			UINT hash = GetHash(id);
 			HashLinkedList* pThis = m_pHead[hash];
 			HashLinkedList* pLast = 0L;

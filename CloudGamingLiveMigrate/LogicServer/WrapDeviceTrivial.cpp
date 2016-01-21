@@ -641,7 +641,7 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateTexture(THIS_ UINT Width,UINT Height,
 		wt->Pool = Pool;
 		wt->setDeviceID(id);
 
-		wt->texHelper = new TextureHelper(Levels, deviceHelper->isSupportAutoGenTex() && (Usage & D3DUSAGE_AUTOGENMIPMAP));
+		wt->texHelper = new TextureHelper(Levels, Format, deviceHelper->isSupportAutoGenTex() && (Usage & D3DUSAGE_AUTOGENMIPMAP));
 
 		// set device's creation
 		//this->checkCreation();

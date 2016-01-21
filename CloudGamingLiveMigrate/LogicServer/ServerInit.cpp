@@ -43,6 +43,7 @@ HashSet WrapperDirect3DVertexBuffer9::m_list;
 HashSet WrapperDirect3DPixelShader9::m_list;
 HashSet WrapperDirect3DVertexShader9::m_list;
 HashSet WrapperDirect3DTexture9::m_list;
+HashSet WrapperDirect3DTexture9::m_side_list;
 HashSet WrapperDirect3DDevice9::m_list;
 HashSet WrapperDirect3DCubeTexture9::m_list;
 HashSet WrapperDirect3DSwapChain9::m_list;
