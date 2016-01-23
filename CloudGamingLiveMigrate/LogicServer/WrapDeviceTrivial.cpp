@@ -88,7 +88,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DDevice9::AddRef(THIS) {
 #endif
 	refCount++;
 	ULONG hr = m_device->AddRef();
-	infoRecorder->logError("[WrapperDirect3DDevice9]: addref, m_device ref:%d, ref count:%d.\n", hr, refCount);
+	infoRecorder->logTrace("[WrapperDirect3DDevice9]: addref, m_device ref:%d, ref count:%d.\n", hr, refCount);
 	return hr;
 }
 STDMETHODIMP_(ULONG) WrapperDirect3DDevice9::Release(THIS) {
@@ -211,8 +211,6 @@ STDMETHODIMP WrapperDirect3DDevice9::GetSwapChain(THIS_ UINT iSwapChain,IDirect3
 	}else{
 		// the swap chain exist, check all clients' creation flag
 		csSet->checkObj(dynamic_cast<IdentifierBase *>(chain));
-		//chain->checkCreation(this->GetID());
-		//set creation flags
 	}
 	*pSwapChain = dynamic_cast<IDirect3DSwapChain9 *>(chain);
 	return hr;
@@ -430,7 +428,6 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 		Sleep((DWORD)to_sleep);
 	}
 
-
 	if (elapse_time >= 1000.0) {
 		fps = frame_cnt * 1000.0 / elapse_time;
 		frame_cnt = 0;
@@ -571,6 +568,9 @@ STDMETHODIMP WrapperDirect3DDevice9::GetBackBuffer(THIS_ UINT iSwapChain,UINT iB
 		// set all creation flag for surface
 		csSet->setCreation(ret->creationFlag);
 		ret->creationCommand = D3DDeviceGetBackBuffer_Opcode;
+		ret->iSwapChain = iSwapChain;
+		ret->iBackBuffer = iBackBuffer;
+		ret->type = Type;
 #endif
 
 	}else{
@@ -620,7 +620,7 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateTexture(THIS_ UINT Width,UINT Height,
 #ifdef ENBALE_DEVICE_LOG
 	infoRecorder->logTrace("WrapperDirect3DDevice9::CreateTexture(), width=%d, height=%d, Usage=%d, Format:%d, Pool:%d, id:%d, device id:%d, ", Width, Height, Usage, Format, Pool, WrapperDirect3DTexture9::ins_count, id);
 #endif
-	infoRecorder->logError("WrapperDirect3DDevice9::CreateTexture(), width=%d, height=%d, Usage=%d, Format:%d, Pool:%d, id:%d, device id:%d, levels:%d \n", Width, Height, Usage, Format, Pool, WrapperDirect3DTexture9::ins_count, id, Levels);
+	//infoRecorder->logError("WrapperDirect3DDevice9::CreateTexture(), width=%d, height=%d, Usage=%d, Format:%d, Pool:%d, id:%d, device id:%d, levels:%d \n", Width, Height, Usage, Format, Pool, WrapperDirect3DTexture9::ins_count, id, Levels);
 	if(Height > 1024){
 		infoRecorder->logError("WrapperDirect3DDevice9::CreateTexture(), Levels:%d, width=%d, height=%d, Usage=%d, Format:%d, Pool:%d, id:%d, device id:%d\n ",Levels, Width, Height, Usage, Format, Pool, WrapperDirect3DTexture9::ins_count, id);
 
@@ -640,11 +640,9 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateTexture(THIS_ UINT Width,UINT Height,
 		wt->Usage = Usage;
 		wt->Pool = Pool;
 		wt->setDeviceID(id);
+		//if(!(Usage & D3DUSAGE_RENDERTARGET))
+			wt->texHelper = new TextureHelper(Levels, Format, deviceHelper->isSupportAutoGenTex() && (Usage & D3DUSAGE_AUTOGENMIPMAP));
 
-		wt->texHelper = new TextureHelper(Levels, Format, deviceHelper->isSupportAutoGenTex() && (Usage & D3DUSAGE_AUTOGENMIPMAP));
-
-		// set device's creation
-		//this->checkCreation();
 #ifdef MULTI_CLIENTS
 		// send command
 		csSet->beginCommand(CreateTexture_Opcode, id);
@@ -1918,14 +1916,11 @@ STDMETHODIMP WrapperDirect3DDevice9::SetTexture(THIS_ DWORD Stage,IDirect3DBaseT
 		return hh;
 	}
 	else if(Type == D3DRTYPE_VOLUMETEXTURE){
-#ifdef ENBALE_DEVICE_LOG
 		infoRecorder->logError("TODO, use volume texture.\n");
-#endif
+		return m_device->SetTexture(Stage, pTexture);
 	}
 	else {
-#ifdef ENBALE_DEVICE_LOG
 		infoRecorder->logError("Type is unknown\n");
-#endif
 		return m_device->SetTexture(Stage, pTexture);
 	}
 }

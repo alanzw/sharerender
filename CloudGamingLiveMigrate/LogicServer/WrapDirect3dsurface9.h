@@ -18,64 +18,58 @@ class WrapperDirect3DSurface9 : public IDirect3DSurface9
 #endif
 {
 private:
-	IDirect3DSurface9* m_surface;
-	bool isSent;
-	// add 17:00
+	IDirect3DSurface9*			m_surface;
 	int tex_id;
 	int level;
 #ifdef USE_WRAPPER_TEXTURE
-	WrapperDirect3DTexture9 * wrappterTex9;
+	WrapperDirect3DTexture9 *	wrappterTex9;
 #else
-	SurfaceHelper *surfaceHelper;
+	SurfaceHelper *				surfaceHelper;
+	IdentifierBase *			parentTexture;
 #endif
 public:
 #ifdef MULTI_CLIENTS
-	//map<SOCKET, bool> created; // indicate whether the surface is exist in client, false for initializing
 	// store the surface basic information for depth stencil surface
-	UINT width, height;
-	D3DFORMAT format;
-	D3DMULTISAMPLE_TYPE multiSample;
-	DWORD multisampleQuality;
-	BOOL discard;
-	HANDLE * sharedHandle;
-	D3DSURFACE_DESC desc;
+	UINT						width, height;
+	D3DFORMAT					format;
+	D3DMULTISAMPLE_TYPE			multiSample;
+	DWORD						multisampleQuality;
+	BOOL						discard;
+	HANDLE *					sharedHandle;
+	D3DSURFACE_DESC				desc;
 
-	int iSwapChain;
-	int iBackBuffer;
-	D3DBACKBUFFER_TYPE type;
+	int							iSwapChain;
+	int							iBackBuffer;
+	D3DBACKBUFFER_TYPE			type;
 
-	static HashSet m_list;
-	// used by swap chain
-	int swapChainId;
+	static HashSet				m_list;
 
 	// used by render target
-	int renderTargetIndex;
-	int creationCommand;
+	int							renderTargetIndex;
+	int							creationCommand;
 
-	virtual int checkCreation(void *ctx);
-	virtual int sendCreation(void *ctx);
-	virtual int checkUpdate(void *ctx);
-	virtual int sendUpdate(void *ctx);
+	virtual int					checkCreation(void *ctx);
+	virtual int					sendCreation(void *ctx);
+	virtual int					checkUpdate(void *ctx);
+	virtual int					sendUpdate(void *ctx);
 
 #endif
-	void RepalceSurface(IDirect3DSurface9* pnew);
-	int GetTexId();
-	int GetLevel();
-	inline void SetTexId(int tex){ tex_id = tex; }
-	inline void SetLevel(int _level){ level= _level; }
+	int							GetTexId();
+	int							GetLevel();
+	inline void					SetTexId(int tex){ tex_id = tex; }
+	inline void					SetLevel(int _level){ level= _level; }
+	inline void					setParentTexture(IdentifierBase *parent){ parentTexture = parent;}
+	inline IdentifierBase *		getParentTexture(){ return parentTexture; }
 #ifdef USE_WRAPPER_TEXTURE
 	inline void setTex9(WrapperDirect3DTexture9 * _tex){ wrappterTex9 = _tex; }
 #else
-
-	inline void setSurfaceHelper(SurfaceHelper * _helper){ surfaceHelper = _helper; }
+	inline void					setSurfaceHelper(SurfaceHelper * _helper){ surfaceHelper = _helper; }
 #endif
 
-	static int ins_count;
+	static int					ins_count;
 	WrapperDirect3DSurface9(IDirect3DSurface9* ptr, int id);
 	static WrapperDirect3DSurface9* GetWrapperSurface9(IDirect3DSurface9* ptr);
 	IDirect3DSurface9* GetSurface9();
-
-	void SendSurface();
 
 	/*** IUnknown methods ***/
 	COM_METHOD(HRESULT,QueryInterface)(THIS_ REFIID riid, void** ppvObj);

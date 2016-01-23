@@ -11,41 +11,38 @@ class WrapperDirect3DTexture9: public IDirect3DTexture9
 #endif
 {
 private:
-	IDirect3DTexture9* m_tex;
+	IDirect3DTexture9*	m_tex;
 public:
 
+	D3DFORMAT			Format;
+	D3DPOOL				Pool;
+	UINT				Height, Width;
+	UINT				Levels;
+	DWORD				Usage;
+	DWORD				Filter;
+	DWORD				MipFilter;
+	D3DCOLOR			ColorKey;
+
+	TextureHelper *		texHelper;
+
+	static HashSet		m_list;
+	static HashSet		m_side_list;    // the list store's the id to surface map
+	static int			ins_count;
+
 #ifdef MULTI_CLIENTS
-	
-	virtual int checkCreation(void *ctx);
-	virtual int sendCreation(void * ctx);
-	virtual int checkUpdate(void * ctx);
-	virtual int sendUpdate(void *ctx);
-#endif
+	virtual int			checkCreation(void *ctx);
+	virtual int			sendCreation(void * ctx);
+	virtual int			checkUpdate(void * ctx);
+	virtual int			sendUpdate(void *ctx);
+#endif // MULTI_CLIENTS
+	UINT				getUID(int tex_id, char level);
+	void				getTexIdAndLevel(UINT uid, int &id, short &level);
 
-	bool isSent; // true for send already while false for send the texture right
-	D3DFORMAT Format;
-	D3DPOOL Pool;
-	UINT Height, Width;
-	UINT Levels;
-	DWORD Usage;
-	DWORD Filter;
-	DWORD MipFilter;
-	D3DCOLOR ColorKey;
+	IDirect3DTexture9*	GetTex9();
+	HRESULT				SendTextureData();
+	HRESULT				SendTextureData(ContextAndCache * ctx);
 
-	TextureHelper * texHelper;
-
-	static HashSet m_list;
-	static HashSet m_side_list;    // the list store's the id to surface map
-	static int ins_count;
 	WrapperDirect3DTexture9(IDirect3DTexture9* ptr, int _id);
-
-	UINT getUID(int tex_id, char level);
-	void getTexIdAndLevel(UINT uid, int &id, short &level);
-
-	IDirect3DTexture9* GetTex9();
-	void SayHi(char* str);
-	HRESULT SendTextureData();
-	HRESULT SendTextureData(ContextAndCache * ctx);
 	static WrapperDirect3DTexture9* GetWrapperTexture9(IDirect3DTexture9* ptr);
 
 	/*** IUnknown methods ***/

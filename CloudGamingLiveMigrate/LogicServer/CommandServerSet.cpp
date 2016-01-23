@@ -379,6 +379,7 @@ void ContextManager::checkObj(IdentifierBase * obj){
 		//infoRecorder->logError("no stable, ");
 		//obj->print();
 		//infoRecorder->logError("[ContextManager]: obj %p, type name:%s, id %d is not stable.\n", obj, typeid(*obj).name(), obj->getId());
+
 	}
 #else
 	if(_ctx_cache){
@@ -418,7 +419,7 @@ bool ContextManager::switchCtx(){
 			cur_ctx->status = CTX_PREPARE;
 			cur_ctx->taskQueue->setStatus(QUEUE_CREATE);
 		}
-		else if(cur_ctx->status == CtxStatus::CTX_READY){
+		else if(cur_ctx->status == CtxStatus::CTX_READY && cur_ctx->taskQueue->isDone()){
 			infoRecorder->logError("[ContextManager]: context is ready for switching.\n");
 			// add to the ctx_pool
 			// remove from init pool

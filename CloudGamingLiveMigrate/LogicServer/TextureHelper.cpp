@@ -123,7 +123,7 @@ unsigned char * SurfaceHelper::allocateSurfaceBuffer(int _pitch, int _height){
 			TotalBufferedTextureSize += pitch * compressedHeight;
 		}
 	}
-	cg::core::infoRecorder->logError("[SurfaceHelper]: allocate memory %d, ptr:%p.\n", pitch * compressedHeight, surfaceData);
+	//cg::core::infoRecorder->logError("[SurfaceHelper]: allocate memory %d, ptr:%p.\n", pitch * compressedHeight, surfaceData);
 	return surfaceData;
 }
 bool SurfaceHelper::copyTextureData(){
@@ -136,7 +136,7 @@ bool SurfaceHelper::copyTextureData(){
 	int compressedHeight = (height + devide -1)/devide;
 
 	int copySize = pitch * compressedHeight;
-	cg::core::infoRecorder->logError("[SurfaceHelper]: memcpy, src:%p, dst: %p, size:%d.\n", surfaceData, realSurfacePtr, copySize);
+	//cg::core::infoRecorder->logError("[SurfaceHelper]: memcpy, src:%p, dst: %p, size:%d.\n", surfaceData, realSurfacePtr, copySize);
 	memcpy(realSurfacePtr, surfaceData, copySize);
 #if 0
 	for(int j = 0; j < height; j++){

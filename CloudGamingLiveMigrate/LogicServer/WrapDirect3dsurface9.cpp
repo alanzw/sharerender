@@ -3,7 +3,7 @@
 #include "../LibCore/Opcode.h"
 #include "CommandServerSet.h"
 
-extern int id;
+//extern int id;
 
 #ifdef MULTI_CLIENTS
 #define ENABLE_SURFACE_LOG
@@ -31,7 +31,7 @@ int WrapperDirect3DSurface9::sendCreation(void *ctx){
 #ifdef ENABLE_SURFACE_LOG
 		infoRecorder->logTrace("[WrapperDirect3DSurface9}; swap chain back buffer.\n");
 #endif
-		c->beginCommand(SwapChainGetBackBuffer_Opcode, swapChainId);
+		c->beginCommand(SwapChainGetBackBuffer_Opcode, iSwapChain);
 		c->write_int(getId());
 		c->write_uint(iBackBuffer);
 		c->write_uint(type);
@@ -39,8 +39,12 @@ int WrapperDirect3DSurface9::sendCreation(void *ctx){
 
 	}else if(creationCommand ==  TextureGetSurfaceLevel_Opcode){
 #ifdef ENABLE_SURFACE_LOG
-		infoRecorder->logTrace("[WrapperDirect3DSurface9]: texture level surface.\n");
+		infoRecorder->logError("[WrapperDirect3DSurface9]: surface id:%d, created from texture %d level %d surface.\n", id, tex_id, level);
+		
+			infoRecorder->logError("[WrapperDirect3DSurface9]: parent texture id:%d creation:%s.\n", parentTexture->getId(), c->isCreated(parentTexture->creationFlag) ? "true": "false");
+
 #endif
+		c->checkObj(parentTexture);
 
 		c->beginCommand(TextureGetSurfaceLevel_Opcode, tex_id);
 		c->write_int(tex_id);
@@ -104,7 +108,6 @@ int WrapperDirect3DSurface9::checkCreation(void *ctx){
 	}
 
 	return ret;
-
 }
 int WrapperDirect3DSurface9::checkUpdate(void *ctx)
 {
@@ -127,36 +130,14 @@ int WrapperDirect3DSurface9::sendUpdate(void *ctx){
 
 #endif
 
-void WrapperDirect3DSurface9::RepalceSurface(IDirect3DSurface9* pnew){
-	/*this->m_surface->Release();
-	this->m_surface = pnew;*/
-}
+
 int WrapperDirect3DSurface9::GetTexId(){
 	return this->tex_id;
 }
 int WrapperDirect3DSurface9::GetLevel(){
 	return this->level;
 }
-void WrapperDirect3DSurface9::SendSurface(){
-	//if(isSent == false){
-	// send data to client
-	D3DLOCKED_RECT rect;
-	D3DSURFACE_DESC desc;
-	this->LockRect(&rect, 0, 0);
-	this->GetDesc(&desc);
-	int byte_per_pixel = rect.Pitch / desc.Width;
 
-	LPD3DXBUFFER tbuf = NULL;
-	D3DXSaveSurfaceToFileInMemory(&tbuf,D3DXIFF_PNG,this,NULL,NULL);
-	int size = tbuf->GetBufferSize();
-	
-#if 0
-	char  fname[50];
-	sprintf(fname,"surface\\face_%d.png",this->id);
-	D3DXSaveSurfaceToFile(fname, D3DXIFF_PNG,this, NULL, NULL);
-#endif
-	isSent = true;
-}
 WrapperDirect3DSurface9::WrapperDirect3DSurface9(IDirect3DSurface9* ptr, int _id): m_surface(ptr), IdentifierBase(_id) {
 
 	this->tex_id = -1;
@@ -165,7 +146,6 @@ WrapperDirect3DSurface9::WrapperDirect3DSurface9(IDirect3DSurface9* ptr, int _id
 	infoRecorder->logTrace("WrapperDirect3DSurface9 constructor called! ptr:%d, id:%d, this:%d\n",ptr, id,this);
 #endif
 	m_list.AddMember(ptr, this);
-	this->isSent = false;
 
 	updateFlag = 0x8fffffff;
 	creationFlag = 0;
@@ -179,13 +159,10 @@ WrapperDirect3DSurface9::WrapperDirect3DSurface9(IDirect3DSurface9* ptr, int _id
 }
 
 WrapperDirect3DSurface9* WrapperDirect3DSurface9::GetWrapperSurface9(IDirect3DSurface9* ptr) {
-	//infoRecorder->logError("WrapperDirect3DSurface9::GetWrapperSurface9(), ptr=%u\n", ptr);
 	WrapperDirect3DSurface9* ret = (WrapperDirect3DSurface9*)(m_list.GetDataPtr(ptr));
 #ifdef ENABLE_SURFACE_LOG
 	if(ret == NULL) {
 		infoRecorder->logTrace("WrapperDirect3DSurface9::GetWrapperSurface9(), ret is NULL, IDSurface:%d, ins_count:%d\n",ptr,WrapperDirect3DSurface9::ins_count);
-		// add the following line , 2013/7/23 21:12
-		//	ret = new WrapperDirect3DSurface9(ptr, WrapperDirect3DSurface9::ins_count++);
 	}
 #endif
 	return ret;
@@ -211,7 +188,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DSurface9::AddRef(THIS) {
 #endif
 	refCount++;
 	ULONG hr = m_surface->AddRef();
-	infoRecorder->logError("[WrapperDirect3DSurface9]: %d (tex id:%d, level:%d) add ref, ref:%d, refcount:%d.\n", id, tex_id, level, hr, refCount);
+	//infoRecorder->logError("[WrapperDirect3DSurface9]: %d (tex id:%d, level:%d) add ref, ref:%d, refcount:%d.\n", id, tex_id, level, hr, refCount);
 
 	return hr; 
 }
@@ -224,9 +201,8 @@ STDMETHODIMP_(ULONG) WrapperDirect3DSurface9::Release(THIS) {
 #endif
 	refCount--;
 	//if(refCount <= 0){
-		infoRecorder->logError("[WrapperDirect3DSurface9]: m_surface id:%d(tex id:%d, level:%d) ref:%d, ref count:%d, creation cmd:%d, tex:%d.\n",id, tex_id, level, refCount, hr, creationCommand, tex_id);
+		//infoRecorder->logError("[WrapperDirect3DSurface9]: m_surface id:%d(tex id:%d, level:%d) ref:%d, ref count:%d, creation cmd:%d, tex:%d.\n",id, tex_id, level, refCount, hr, creationCommand, tex_id);
 	//}
-
 
 	if(hr == 0){
 		if(!m_list.DeleteMember(m_surface)){
@@ -313,14 +289,14 @@ STDMETHODIMP WrapperDirect3DSurface9::GetContainer(THIS_ REFIID riid,void** ppCo
 
 STDMETHODIMP WrapperDirect3DSurface9::GetDesc(THIS_ D3DSURFACE_DESC *pDesc) {
 #ifdef ENABLE_SURFACE_LOG
-	infoRecorder->logError("WrapperDirect3DSurface9::GetDesc() called\n");
+	infoRecorder->logTrace("WrapperDirect3DSurface9::GetDesc() called\n");
 #endif
 	return m_surface->GetDesc(pDesc);
 }
 
 STDMETHODIMP WrapperDirect3DSurface9::LockRect(THIS_ D3DLOCKED_RECT* pLockedRect,CONST RECT* pRect,DWORD Flags) {
 #ifdef ENABLE_SURFACE_LOG
-	infoRecorder->logError("WrapperDirect3DSurface9::LockRect() called, flag:%d.\n", Flags);
+	infoRecorder->logError("WrapperDirect3DSurface9::LockRect() (tex id:%d, level:%d) called, flag:%d.\n", tex_id, level, Flags);
 #endif
 
 	HRESULT hr = E_FAIL;
@@ -373,7 +349,7 @@ STDMETHODIMP WrapperDirect3DSurface9::LockRect(THIS_ D3DLOCKED_RECT* pLockedRect
 
 STDMETHODIMP WrapperDirect3DSurface9::UnlockRect(THIS) {
 #ifdef ENABLE_SURFACE_LOG
-	infoRecorder->logError("WrapperDirect3DSurface9::UnlockRect() called\n");
+	infoRecorder->logError("WrapperDirect3DSurface9::UnlockRect() (tex id:%d, level:%d) called\n", tex_id, level);
 #endif
 
 #ifdef USE_WRAPPER_TEXTURE

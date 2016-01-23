@@ -449,7 +449,7 @@ void ContextAndCache::checkFlags(){
 		counter++;
 		totalObjects++;
 		//if(isCreated(obj->creationFlag)){
-			infoRecorder->logError("[WrapperDirect3DSurface9]: %d created: %s,\tflag:0x%x,\trefCount:%d.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag, obj->refCount);
+			infoRecorder->logError("[WrapperDirect3DSurface9]: %d created: %s,\tflag:0x%x,\trefCount:%d, parent tex:%d, level:%d, creation cmd:%d.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag, obj->refCount, obj->GetTexId(), obj->GetLevel(), obj->creationCommand);
 		//}
 	}
 	infoRecorder->logError("[WrapperDirect3DSurface9]: total has %d, checked %d.\n", WrapperDirect3DSurface9::ins_count, counter);

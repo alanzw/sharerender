@@ -6,42 +6,31 @@
 //#define SAVE_IMG
 //#define LOCAL_IMG
 
-
 #define ENABLE_TEXTURE_LOG
 
-int D3DXTexture = 0;
 WrapperDirect3DTexture9::WrapperDirect3DTexture9(IDirect3DTexture9* ptr, int _id): m_tex(ptr), IdentifierBase(_id) {
 #ifdef ENABLE_TEXTURE_LOG
 	infoRecorder->logTrace("WrapperDirect3DTexture9::WrapperDirect3DTexture9(), id=%d, base_tex=%d this=%d\n", id, ptr, this);
-
-	if(ptr == NULL) {
-		infoRecorder->logTrace("WrapperDirect3DTexture9::WrapperDirect3DTexture9(), base_tex is NULL\n");
-	}
 #endif
 	m_list.AddMember(ptr, this);
 
 	creationFlag = 0;
 	updateFlag = 0x8fffffff;
-	stable = true;
+	//stable = true;
+	stable = false;   
 	texHelper = NULL;
 }
 
-void WrapperDirect3DTexture9::SayHi(char* str) {
-#ifdef ENABLE_TEXTURE_LOG
-	infoRecorder->logTrace("%s\n", str);
-#endif
-}
 
 IDirect3DTexture9* WrapperDirect3DTexture9::GetTex9() {
 	return this->m_tex;
 }
 
 WrapperDirect3DTexture9* WrapperDirect3DTexture9::GetWrapperTexture9(IDirect3DTexture9* ptr) {
-	//infoRecorder->logError("WrapperDirect3DTexture9::GetWrapperTexture9(), ptr=%u\n", ptr);
 	WrapperDirect3DTexture9* ret = (WrapperDirect3DTexture9*)( m_list.GetDataPtr(ptr) );
 #ifdef ENABLE_TEXTURE_LOG
 	if(ret == NULL) {
-		infoRecorder->logTrace("WrapperDirect3DTexture9::GetWrapperTexture9(), ret is NULL\n");
+		infoRecorder->logError("WrapperDirect3DTexture9::GetWrapperTexture9(), ret is NULL\n");
 	}
 #endif
 	return ret;
@@ -77,12 +66,12 @@ int WrapperDirect3DTexture9::checkCreation(void *ctx){
 
 	if(!cc->isCreated(creationFlag)){
 #ifdef ENABLE_TEXTURE_LOG
-		infoRecorder->logTrace("[WrapperDirect3DTexture9]: texture %d not created.\n", id);
+		infoRecorder->logError("[WrapperDirect3DTexture9]: texture %d not created.\n", id);
 #endif
 		ret = sendCreation(ctx);
 		cc->setCreation(creationFlag);
-		//sendUpdate(ctx);
-		//cc->resetChanged(updateFlag);
+		sendUpdate(ctx);
+		cc->resetChanged(updateFlag);
 		ret = 1;
 	}else{
 #ifdef ENABLE_TEXTURE_LOG
@@ -123,7 +112,7 @@ int WrapperDirect3DTexture9::sendUpdate(void *ctx){
 	SendTextureData(c);
 	if(pTimer){
 		unsigned int interval_ = pTimer->Stop();
-		infoRecorder->logError("[WrapperDriect3DTexture9]: send texture use: %f.\n", interval_ * 1000.0 / pTimer->getFreq());
+		infoRecorder->logError("[WrapperDriect3DTexture9]: send texture %d use: %f.\n", id, interval_ * 1000.0 / pTimer->getFreq());
 	}
 
 	return ret;
@@ -295,9 +284,12 @@ HRESULT WrapperDirect3DTexture9::SendTextureData(ContextAndCache *ctx){
 	if(NULL == ctx->get_connect_socket())
 		return hr;
 
-	infoRecorder->logTrace("[WrapperDirect3DTexture9]: send texture data for %d.\n", id);
-
+	infoRecorder->logError("[WrapperDirect3DTexture9]: send texture data for %d.\n", id);
 	SurfaceHelper * surHelper = NULL;
+	if(!texHelper || Usage & D3DUSAGE_RENDERTARGET){
+		infoRecorder->logError("[WrapperDirect3DTexture9]: RenderTarget texture, no need to send.\n");
+		return hr;
+	}
 	// update the texture
 	if(texHelper->isAutoGenable()){
 		surHelper = texHelper->getSurfaceHelper(0);
@@ -312,6 +304,7 @@ HRESULT WrapperDirect3DTexture9::SendTextureData(ContextAndCache *ctx){
 		csSet->writeInt(surHelper->getPitchedSize());
 		csSet->writeByteArr((char *)(surHelper->getSurfaceData()), surHelper->getPitchedSize());
 		csSet->endCommand();
+		infoRecorder->logError("[WrapperDirect3DTexture9]; send surface 0, size:%d.\n", surHelper->getPitchedSize());
 	}
 	else{
 		// creation for each surface
@@ -328,6 +321,7 @@ HRESULT WrapperDirect3DTexture9::SendTextureData(ContextAndCache *ctx){
 			csSet->writeInt(surHelper->getPitchedSize());
 			csSet->writeByteArr((char *)(surHelper->getSurfaceData()), surHelper->getPitchedSize());
 			csSet->endCommand();
+			infoRecorder->logError("[WrapperDirect3DTexture9]; send surface %d, size:%d.\n",i, surHelper->getPitchedSize());
 		}
 	}
 
@@ -558,15 +552,15 @@ STDMETHODIMP_(ULONG) WrapperDirect3DTexture9::AddRef(THIS) {
 	return m_tex->AddRef();
 }
 STDMETHODIMP_(ULONG) WrapperDirect3DTexture9::Release(THIS) {
-	HRESULT hr = m_tex->Release();
+	ULONG hr = m_tex->Release();
 #ifdef LOG_REF_COUNT
 #ifdef ENABLE_TEXTURE_LOG
 	infoRecorder->logTrace("WrapperDirect3DTexture9::Release() succeeded, ref:%d\n", hr);
 #endif
 #endif
 	refCount--;
-	if(refCount <= 0){
-		infoRecorder->logError("[WrapperDirect3DTexture9]: m_tex ref:%d, ref count:%d.\n", refCount, hr);
+	if(hr <= 0){
+		infoRecorder->logError("[WrapperDirect3DTexture9]: m_tex id:%d ref:%d, ref count:%d.\n",id, refCount, hr);
 		delete texHelper;
 		texHelper = NULL;
 		m_list.DeleteMember(m_tex);
@@ -623,7 +617,9 @@ STDMETHODIMP_(void) WrapperDirect3DTexture9::PreLoad(THIS) {
 }
 
 STDMETHODIMP_(D3DRESOURCETYPE) WrapperDirect3DTexture9::GetType(THIS) {
-	//infoRecorder->logTrace("WrapperDirect3DTexture9::GetType() TODO\n");
+#ifdef ENABLE_TEXTURE_LOG
+	infoRecorder->logTrace("WrapperDirect3DTexture9::GetType() TODO\n");
+#endif
 	return m_tex->GetType();
 }
 
@@ -643,14 +639,14 @@ STDMETHODIMP_(DWORD) WrapperDirect3DTexture9::GetLOD(THIS) {
 
 STDMETHODIMP_(DWORD) WrapperDirect3DTexture9::GetLevelCount(THIS) {
 #ifdef ENABLE_TEXTURE_LOG
-	infoRecorder->logError("WrapperDirect3DTexture9::GetLevelCount() called, id:%d\n", id);
+	infoRecorder->logTrace("WrapperDirect3DTexture9::GetLevelCount() called, id:%d\n", id);
 #endif
 	return m_tex->GetLevelCount();
 }
 
 STDMETHODIMP WrapperDirect3DTexture9::SetAutoGenFilterType(THIS_ D3DTEXTUREFILTERTYPE FilterType) {
 #ifdef ENABLE_TEXTURE_LOG
-	infoRecorder->logError("WrapperDirect3DTexture9::SetAutoGenFilterType() called\n");
+	infoRecorder->logTrace("WrapperDirect3DTexture9::SetAutoGenFilterType() called\n");
 #endif
 
 #ifndef MULTI_CLIENTS
@@ -658,6 +654,8 @@ STDMETHODIMP WrapperDirect3DTexture9::SetAutoGenFilterType(THIS_ D3DTEXTUREFILTE
 	cs.write_uint(FilterType);
 	cs.end_command();
 #else
+	csSet->checkObj(this);
+
 	csSet->beginCommand(TextureSetAutoGenFilterType_Opcode, id);
 	csSet->writeUInt(FilterType);
 	csSet->endCommand();
@@ -675,13 +673,14 @@ STDMETHODIMP_(D3DTEXTUREFILTERTYPE) WrapperDirect3DTexture9::GetAutoGenFilterTyp
 
 STDMETHODIMP_(void) WrapperDirect3DTexture9::GenerateMipSubLevels(THIS) {
 #ifdef ENABLE_TEXTURE_LOG
-	infoRecorder->logError("WrapperDirect3DTexture9::GenerateMipSubLevels() called\n");
+	infoRecorder->logTrace("WrapperDirect3DTexture9::GenerateMipSubLevels() called\n");
 #endif
 
 #ifndef MULTI_CLIENTS
 	cs.begin_command(TextureGenerateMipSubLevels_Opcode, id);
 	cs.end_command();
 #else
+	csSet->checkObj(this);
 	csSet->beginCommand(TextureGenerateMipSubLevels_Opcode, id);
 	csSet->endCommand();
 #endif
@@ -690,7 +689,7 @@ STDMETHODIMP_(void) WrapperDirect3DTexture9::GenerateMipSubLevels(THIS) {
 
 STDMETHODIMP WrapperDirect3DTexture9::GetLevelDesc(THIS_ UINT Level,D3DSURFACE_DESC *pDesc) {
 #ifdef ENABLE_TEXTURE_LOG
-	infoRecorder->logError("WrapperDirect3DTexture9::GetLevelDesc() called\n");
+	infoRecorder->logTrace("WrapperDirect3DTexture9::GetLevelDesc() called\n");
 #endif
 	return m_tex->GetLevelDesc(Level, pDesc);
 }
@@ -699,17 +698,28 @@ extern int deviceId;
 
 STDMETHODIMP WrapperDirect3DTexture9::GetSurfaceLevel(THIS_ UINT Level,IDirect3DSurface9** ppSurfaceLevel) {
 #ifdef ENABLE_TEXTURE_LOG
-	infoRecorder->logError("WrapperDirect3DTexture9::GetSurfaceLevel() called, Level:%d, tex id:%d, autogen:%s\n",Level, id, texHelper->isAutoGenable() ? "true":"false");
+	infoRecorder->logTrace("WrapperDirect3DTexture9::GetSurfaceLevel() called, Level:%d, tex id:%d, autogen:%s\n",Level, id, texHelper->isAutoGenable() ? "true":"false");
 #endif
 	IDirect3DSurface9* base_surface = NULL;
 	D3DSURFACE_DESC desc;
 
 	HRESULT hr = m_tex->GetSurfaceLevel(Level, &base_surface);//ppSurfaceLevel);
 
+	UINT uid = getUID(id, Level);
+	short recover_level = -1;
+	int recover_id = -1;
+	getTexIdAndLevel(uid, recover_id, recover_level);
+
 	WrapperDirect3DSurface9* surface = WrapperDirect3DSurface9::GetWrapperSurface9(base_surface);
-	if(NULL == surface) {
+	WrapperDirect3DSurface9 * side_surface = (WrapperDirect3DSurface9 *)(m_side_list.GetDataPtr(uid));
+	
+	if(NULL == surface ){ //&& NULL == side_surface) {
 		// create new wrapper surface to hold the surface
 		surface = new WrapperDirect3DSurface9(base_surface, WrapperDirect3DSurface9::ins_count++);
+		m_side_list.AddMember(uid, surface);
+		surface->setParentTexture(this);
+
+		infoRecorder->logError("[WrapperDirect3DTexture9]: texture %d GetSurfaceLevel, create surface: %d with level:%d.\n", id, surface->getId(), Level);
 
 #ifndef MULTI_CLIENTS
 		cs.begin_command(TextureGetSurfaceLevel_Opcode, id);
@@ -719,7 +729,8 @@ STDMETHODIMP WrapperDirect3DTexture9::GetSurfaceLevel(THIS_ UINT Level,IDirect3D
 		cs.end_command();
 #else
 		// TODO : check the texture object is exist or not !
-		csSet->checkCreation(this);
+		//csSet->checkCreation(this);
+		csSet->checkObj(this);
 #if 0
 		// create new surface
 		csSet->beginCommand(TextureGetSurfaceLevel_Opcode, id);
@@ -735,21 +746,37 @@ STDMETHODIMP WrapperDirect3DTexture9::GetSurfaceLevel(THIS_ UINT Level,IDirect3D
 		surface->creationCommand = TextureGetSurfaceLevel_Opcode; 
 		surface->SetTexId(id);
 		surface->SetLevel(Level);
-		//surface->setTex9(this);
 		base_surface->GetDesc(&desc);
 		SurfaceHelper * surHelper = NULL;
-		if(texHelper->isAutoGenable()){
-			if(0 == Level){
+		if(texHelper){
+			if(texHelper->isAutoGenable()){
+				if(0 == Level){
+					surHelper = texHelper->getSurfaceHelper(Level);
+					surface->setSurfaceHelper(surHelper);
+				}
+			}
+			else{
+				// no auto gen, buffer each surface
 				surHelper = texHelper->getSurfaceHelper(Level);
 				surface->setSurfaceHelper(surHelper);
 			}
 		}
-		else{
-			// no auto gen, buffer each surface
-			surHelper = texHelper->getSurfaceHelper(Level);
-			surface->setSurfaceHelper(surHelper);
+	}
+#if 0
+	else if(surface == NULL && NULL != side_surface){
+		infoRecorder->logError("[WrapperDirect3DTexture9]: the surface for tex %d level %d has been created\n", id, Level);
+		surface = side_surface;
+		if(surface->GetTexId() != id  || surface->GetLevel() != Level){
+			infoRecorder->logError("[WrapperDirect3DTexture9]: the suface find with tex id and level, may not right, surface (tex id:%d, level:%d), but this tex id:%d, level:%d.\n", surface->GetTexId(), surface->GetLevel(), id, Level);
 		}
 	}
+	else if(NULL != surface && NULL == side_surface){
+		infoRecorder->logError("[WrapperDirect3DTexture9]: should never happen, cause the surface is created but not mapped in id to surface.\n");
+	}
+	else{
+		// both exist
+	}
+#endif
 	*ppSurfaceLevel = dynamic_cast<IDirect3DSurface9 *>(surface);
 #ifdef ENABLE_TEXTURE_LOG
 	infoRecorder->logTrace("WrapperDirect3DTexture9::GetSurfaceLevel(), base_surface=%d, ppSurfaceLevel=%d\n", base_surface, *ppSurfaceLevel);
@@ -759,7 +786,7 @@ STDMETHODIMP WrapperDirect3DTexture9::GetSurfaceLevel(THIS_ UINT Level,IDirect3D
 
 STDMETHODIMP WrapperDirect3DTexture9::LockRect(THIS_ UINT Level, D3DLOCKED_RECT* pLockedRect,CONST RECT* pRect,DWORD Flags) {
 #ifdef ENABLE_TEXTURE_LOG
-	infoRecorder->logError("WrapperDirect3DTexture9:LockRect(), id:%d, level:%d, rect:%p.\n", id, Level, pRect);
+	infoRecorder->logTrace("WrapperDirect3DTexture9:LockRect(), id:%d, level:%d, rect:%p.\n", id, Level, pRect);
 #endif // ENABLE_TEXTURE_LOG
 	tex_send[id] = false;
 
@@ -770,6 +797,11 @@ STDMETHODIMP WrapperDirect3DTexture9::LockRect(THIS_ UINT Level, D3DLOCKED_RECT*
 	HRESULT hr = m_tex->GetLevelDesc(Level, &desc);
 
 	hr = m_tex->LockRect(Level, pLockedRect, pRect, Flags);
+
+	if(!texHelper){
+		return hr;
+	}
+
 	SurfaceHelper * surHelper = NULL;
 	if(texHelper->isAutoGenable()){
 		// buffer the top surface
@@ -802,19 +834,21 @@ STDMETHODIMP WrapperDirect3DTexture9::LockRect(THIS_ UINT Level, D3DLOCKED_RECT*
 
 STDMETHODIMP WrapperDirect3DTexture9::UnlockRect(THIS_ UINT Level) {
 #ifdef ENABLE_TEXTURE_LOG
-	infoRecorder->logError("WrapperDirect3DTexture9::UnlockRect(), id:%d, Level=%d\n", id, Level);
+	infoRecorder->logTrace("WrapperDirect3DTexture9::UnlockRect(), id:%d, Level=%d\n", id, Level);
 #endif
 	SurfaceHelper* surHelper = NULL;
-	if(texHelper->isAutoGenable()){
-		if(Level == 0){
-			// copy the top data to video memory
+	if(texHelper){
+		if(texHelper->isAutoGenable()){
+			if(Level == 0){
+				// copy the top data to video memory
+				surHelper = texHelper->getSurfaceHelper(Level);
+				surHelper->copyTextureData();
+			}
+		}else{
+			// when no auto gen, buffer each level 
 			surHelper = texHelper->getSurfaceHelper(Level);
 			surHelper->copyTextureData();
 		}
-	}else{
-		// when no auto gen, buffer each level 
-		surHelper = texHelper->getSurfaceHelper(Level);
-		surHelper->copyTextureData();
 	}
 
 	HRESULT hr = m_tex->UnlockRect(Level);

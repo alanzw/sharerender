@@ -189,6 +189,9 @@ STDMETHODIMP WrapperDirect3DSwapChain9::GetBackBuffer(THIS_ UINT iBackBuffer,D3D
 #endif
 		csSet->setCreation(surface->creationFlag);
 		surface->creationCommand = SwapChainGetBackBuffer_Opcode;
+		surface->iBackBuffer = iBackBuffer;
+		surface->type = Type;
+		surface->iSwapChain = iSwapChain;
 	}
 
 	*ppBackBuffer = surface;
