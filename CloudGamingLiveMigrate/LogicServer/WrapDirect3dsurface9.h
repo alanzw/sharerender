@@ -58,10 +58,10 @@ public:
 	int							GetLevel();
 	inline void					SetTexId(int tex){ tex_id = tex; }
 	inline void					SetLevel(int _level){ level= _level; }
-	inline void					setParentTexture(IdentifierBase *parent){ parentTexture = parent;}
+	void						setParentTexture(IdentifierBase *parent);//{ parentTexture = parent;}
 	inline IdentifierBase *		getParentTexture(){ return parentTexture; }
 #ifdef USE_WRAPPER_TEXTURE
-	inline void setTex9(WrapperDirect3DTexture9 * _tex){ wrappterTex9 = _tex; }
+	inline void					setTex9(WrapperDirect3DTexture9 * _tex){ wrappterTex9 = _tex; }
 #else
 	inline void					setSurfaceHelper(SurfaceHelper * _helper){ surfaceHelper = _helper; }
 #endif

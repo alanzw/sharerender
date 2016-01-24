@@ -429,7 +429,7 @@ void ContextAndCache::checkFlags(){
 		counter++;
 		totalObjects++;
 		//if(isCreated(obj->creationFlag)){
-			infoRecorder->logError("[WrapperDirect3DPixelShader9]: %d created: %s,\tflag:0x%x,\trefCount:%d.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag,obj->refCount);
+			infoRecorder->logError("[WrapperDirect3DPixelShader9]: %d created: %s,\tflag:0x%x,\trefCount:%d.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag, obj->refCount);
 		//}
 	}
 	infoRecorder->logError("[WrapperDirect3DPixelShader9]: total has %d, checked %d.\n", WrapperDirect3DPixelShader9::ins_count, counter);
@@ -512,7 +512,6 @@ void ContextAndCache::eraseFlag(){
 	infoRecorder->logError("[ContextAndCache]: Clear context flags.\n");
 	Initializer * initializer = Initializer::GetInitializer();
 	resetCreation(initializer->creationFlag);
-
 
 	HashSet::iterator it;
 	IdentifierBase * obj = NULL;

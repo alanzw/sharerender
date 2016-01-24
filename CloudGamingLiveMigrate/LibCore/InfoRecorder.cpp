@@ -101,7 +101,7 @@ namespace cg{
 
 		void InfoRecorder::lock(){
 			//EnterCriticalSection(&recorderMutex);stati
-			WaitForSingleObject(recoderLock, 30);
+			WaitForSingleObject(recoderLock, 300);
 			//LeaveCriticalSection(&recorderMutex);
 		}
 
@@ -191,7 +191,7 @@ namespace cg{
 		// log the error to file
 		void InfoRecorder::logError(char * format, ...){
 			char tem[512] = {0};
-
+			lock();
 			va_list ap;
 			va_start(ap, format);
 			int  n = vsprintf(tem, format, ap);
@@ -200,7 +200,7 @@ namespace cg{
 #ifdef DEBUG_
 			infoRecorder->logError("[INfoRecorder]: tem:'%s', size:%d.\n", tem, n);
 #endif
-			lock();
+			
 			errorRecorder->log(tem, n);
 			errorRecorder->flush(true);
 

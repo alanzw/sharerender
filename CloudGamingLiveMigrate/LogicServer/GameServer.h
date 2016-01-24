@@ -181,7 +181,7 @@ public:
 	virtual int		checkUpdate(void * ctx) = 0;			// return 1 if need to update
 
 	inline int		getDeviceId(){ return curDeviceId; }
-	inline void		setDeviceID(int id){ curDeviceId = id;}
+	inline void		setDeviceID(int _id){ curDeviceId = _id;}
 	void			print();
 	int				getId();//{ return id; }
 	void			setId(int _id);//{ id = _id; }

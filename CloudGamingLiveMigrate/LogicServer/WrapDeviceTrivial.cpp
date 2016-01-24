@@ -813,7 +813,7 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateVertexBuffer(THIS_ UINT Length,DWORD 
 		if(wvb){
 			*ppVertexBuffer = dynamic_cast<IDirect3DVertexBuffer9*>(wvb);
 #ifdef ENBALE_DEVICE_LOG
-			infoRecorder->logTrace("vb id:%d, size:%d, ", wvb->GetId(), wvb->GetLength());
+			infoRecorder->logTrace("vb id:%d, size:%d, ", wvb->getId(), wvb->GetLength());
 #endif
 
 		}
@@ -886,7 +886,7 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateIndexBuffer(THIS_ UINT Length,DWORD U
 		}
 		else {
 
-			infoRecorder->logTrace("IndexBuffer id=%d, length=%d, ", ((WrapperDirect3DIndexBuffer9*)*ppIndexBuffer)->GetID(), ((WrapperDirect3DIndexBuffer9*)*ppIndexBuffer)->GetLength());
+			infoRecorder->logTrace("IndexBuffer id=%d, length=%d, ", ((WrapperDirect3DIndexBuffer9*)*ppIndexBuffer)->getID(), ((WrapperDirect3DIndexBuffer9*)*ppIndexBuffer)->GetLength());
 
 		}
 #endif
@@ -1151,7 +1151,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetRenderTarget(THIS_ DWORD RenderTargetInd
 	csSet->endCommand();
 #endif
 #ifdef ENBALE_DEVICE_LOG
-	infoRecorder->logTrace("surface id:%d, parent texture id: %d, level: %d\n",((WrapperDirect3DSurface9*)pRenderTarget)->GetID(),sur->GetTexId(), sur->GetLevel());
+	infoRecorder->logTrace("surface id:%d, parent texture id: %d, level: %d\n",((WrapperDirect3DSurface9*)pRenderTarget)->getID(),sur->GetTexId(), sur->GetLevel());
 #endif
 
 #if 0
@@ -1845,7 +1845,6 @@ STDMETHODIMP WrapperDirect3DDevice9::SetTexture(THIS_ DWORD Stage,IDirect3DBaseT
 
 	if(Type == D3DRTYPE_TEXTURE) {
 		WrapperDirect3DTexture9 * wt = (WrapperDirect3DTexture9 *)pTexture;
-		int id = wt->getId();
 #ifdef ENBALE_DEVICE_LOG
 		infoRecorder->logTrace("Type is Texture stage=%d, id=%d, hit or not:%d\n", Stage, id, tex_send[id]);
 #endif
@@ -1885,7 +1884,6 @@ STDMETHODIMP WrapperDirect3DDevice9::SetTexture(THIS_ DWORD Stage,IDirect3DBaseT
 	}
 	else if(Type == D3DRTYPE_CUBETEXTURE) {
 		WrapperDirect3DCubeTexture9 * wct = (WrapperDirect3DCubeTexture9 *)pTexture;
-		int id = wct->getId();
 #ifdef ENBALE_DEVICE_LOG
 		infoRecorder->logError("Type is CubeTexture id=%d, TODO\n", id);
 #endif

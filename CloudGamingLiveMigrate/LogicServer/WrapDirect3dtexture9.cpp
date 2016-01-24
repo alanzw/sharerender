@@ -10,7 +10,7 @@
 
 WrapperDirect3DTexture9::WrapperDirect3DTexture9(IDirect3DTexture9* ptr, int _id): m_tex(ptr), IdentifierBase(_id) {
 #ifdef ENABLE_TEXTURE_LOG
-	infoRecorder->logTrace("WrapperDirect3DTexture9::WrapperDirect3DTexture9(), id=%d, base_tex=%d this=%d\n", id, ptr, this);
+	infoRecorder->logError("WrapperDirect3DTexture9::WrapperDirect3DTexture9(), id=%d, base_tex=%d this=%d\n", id, ptr, this);
 #endif
 	m_list.AddMember(ptr, this);
 
@@ -708,15 +708,20 @@ STDMETHODIMP WrapperDirect3DTexture9::GetSurfaceLevel(THIS_ UINT Level,IDirect3D
 	UINT uid = getUID(id, Level);
 	short recover_level = -1;
 	int recover_id = -1;
-	getTexIdAndLevel(uid, recover_id, recover_level);
+	//getTexIdAndLevel(uid, recover_id, recover_level);
 
 	WrapperDirect3DSurface9* surface = WrapperDirect3DSurface9::GetWrapperSurface9(base_surface);
-	WrapperDirect3DSurface9 * side_surface = (WrapperDirect3DSurface9 *)(m_side_list.GetDataPtr(uid));
+	//WrapperDirect3DSurface9 * side_surface = (WrapperDirect3DSurface9 *)(m_side_list.GetDataPtr(uid));
 	
 	if(NULL == surface ){ //&& NULL == side_surface) {
 		// create new wrapper surface to hold the surface
 		surface = new WrapperDirect3DSurface9(base_surface, WrapperDirect3DSurface9::ins_count++);
-		m_side_list.AddMember(uid, surface);
+		//m_side_list.AddMember(uid, surface);
+		
+		surface->creationCommand = TextureGetSurfaceLevel_Opcode; 
+		surface->SetTexId(id);
+		surface->SetLevel(Level);
+
 		surface->setParentTexture(this);
 
 		infoRecorder->logError("[WrapperDirect3DTexture9]: texture %d GetSurfaceLevel, create surface: %d with level:%d.\n", id, surface->getId(), Level);
@@ -743,9 +748,8 @@ STDMETHODIMP WrapperDirect3DTexture9::GetSurfaceLevel(THIS_ UINT Level,IDirect3D
 #endif
 
 #endif
-		surface->creationCommand = TextureGetSurfaceLevel_Opcode; 
-		surface->SetTexId(id);
-		surface->SetLevel(Level);
+		
+
 		base_surface->GetDesc(&desc);
 		SurfaceHelper * surHelper = NULL;
 		if(texHelper){
@@ -870,9 +874,9 @@ UINT WrapperDirect3DTexture9::getUID(int tex_id, char level){
 	ret |= level;
 	return ret;
 }
-void WrapperDirect3DTexture9::getTexIdAndLevel(UINT uid, int &id, short &level){
+void WrapperDirect3DTexture9::getTexIdAndLevel(UINT uid, int &_id, short &level){
 	UINT tl = uid & 0x000000FF;
 	UINT tid = (uid & 0xFFFFFF00) >> 8;
 	level = tl;
-	id = tid;
+	_id = tid;
 }

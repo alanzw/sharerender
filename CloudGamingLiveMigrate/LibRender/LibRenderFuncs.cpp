@@ -1795,8 +1795,6 @@ HRESULT FakedTextureGetSurfaceLevel(RenderChannel * rch) {
 }
 
 HRESULT FakedSwapChainGetBackBuffer(RenderChannel * rch) {
-	//UINT iBackBuffer,D3DBACKBUFFER_TYPE Type
-	//cg::core::infoRecorder->logTrace("FakedSwapChainGetBackBuffer() called\n");
 	
 	int chain_id = rch->obj_id;
 	int surface_id = rch->cc->read_int();
@@ -1814,7 +1812,6 @@ HRESULT FakedSwapChainGetBackBuffer(RenderChannel * rch) {
 }
 
 HRESULT FakedGetDepthStencilSurface(RenderChannel * rch) {
-	//cg::core::infoRecorder->logTrace("FakedGetDepthStencilSurface() called\n");
 	
 	rch->getDevice(rch->obj_id);
 	int sfid = rch->cc->read_int();
@@ -1833,7 +1830,6 @@ HRESULT FakedGetDepthStencilSurface(RenderChannel * rch) {
 }
 
 HRESULT FakedCreateDepthStencilSurface(RenderChannel * rch) {
-	//UINT Width,UINT Height,D3DFORMAT Format,D3DMULTISAMPLE_TYPE MultiSample,DWORD MultisampleQuality,BOOL Discard,IDirect3DSurface9** ppSurface,HANDLE* pSharedHandle
 	
 	rch->getDevice(rch->obj_id);
 	int id = rch->cc->read_int();
@@ -1855,7 +1851,6 @@ HRESULT FakedCreateDepthStencilSurface(RenderChannel * rch) {
 
 HRESULT FakedCubeGetCubeMapSurface(RenderChannel * rch) {
 	cg::core::infoRecorder->logTrace("FakedCubeGetCubeMapSurface() called\n");
-	//D3DCUBEMAP_FACES FaceType,UINT Level
 	
 	int cube_id = rch->obj_id;
 	int surface_id = rch->cc->read_int();
@@ -1877,8 +1872,6 @@ HRESULT FakeTransmitSurface(RenderChannel * rch){
 	int id = rch->obj_id;
 	int size = rch->cc->read_int();
 	LPDIRECT3DSURFACE9 surface = NULL;
-	//rch->curDevice->CreateDepthStencilSurface(
-	//D3DXLoadSurfaceFromFileInMemory(
 
 	return D3D_OK;
 }
@@ -1919,7 +1912,6 @@ HRESULT FakeD3DGetDeviceCaps(RenderChannel * rch){
 	else{
 		cg::core::infoRecorder->logTrace("FakeD3DGetDeviceCaps() failed!\n");
 	}
-
 
 	return hr;
 }

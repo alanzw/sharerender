@@ -20,7 +20,6 @@
 #define DELAY_TO_DRAW
 #ifdef MULTI_CLIENTS
 
-
 //#define ENABLE_DEVICE_LOG
 
 //#define USE_HELPER_SYNC
