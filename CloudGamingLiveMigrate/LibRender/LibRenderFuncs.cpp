@@ -1768,7 +1768,9 @@ HRESULT FakedSetDepthStencilSurface(RenderChannel * rch) {
 	rch->getDevice(rch->obj_id);
 	int sfid = rch->cc->read_int();
 	cg::core::infoRecorder->logTrace("FakedSetDepthStencilSurface(%d)\n", sfid);
-	if(sfid == -1) return rch->curDevice->SetDepthStencilSurface(NULL);
+	if(sfid == -1) 
+		return rch->curDevice->SetDepthStencilSurface(NULL);
+
 	ClientSurface9* surface = (ClientSurface9*)(rch->surface_list[sfid]);
 	return rch->curDevice->SetDepthStencilSurface(surface->GetSurface9());
 }
@@ -1783,7 +1785,7 @@ HRESULT FakedTextureGetSurfaceLevel(RenderChannel * rch) {
 
 	ClientTexture9* tex = (ClientTexture9*)(rch->tex_list[t_id]);
 	if(!tex){
-		cg::core::infoRecorder->logTrace("client texture null, id:%d\n", t_id);
+		cg::core::infoRecorder->logError("client texture null, id:%d\n", t_id);
 	}
 
 	IDirect3DSurface9* base_surface = NULL;
@@ -1822,7 +1824,7 @@ HRESULT FakedGetDepthStencilSurface(RenderChannel * rch) {
 		cg::core::infoRecorder->logTrace("GetDepthStencilSurface(%p), surface id:%d!\n", &base_surface, sfid);
 		rch->surface_list[sfid] = new ClientSurface9(base_surface);
 	}else{
-		cg::core::infoRecorder->logTrace("ERROR! GetDepthStencilSurface %d failed!\n", sfid);
+		cg::core::infoRecorder->logError("ERROR! GetDepthStencilSurface %d failed!\n", sfid);
 
 	}
 
@@ -1893,7 +1895,7 @@ HRESULT FakeD3DDeviceGetBackBuffer(RenderChannel * rch){
 		cg::core::infoRecorder->logTrace("FakeDeviceGetBackBuffer(%d, %d, %d, %p), id:%d!\n", iSwapChain, iBackBuffer, Type, &base_surface, surface_id);
 		rch->surface_list[surface_id] = new ClientSurface9(base_surface);
 	}else{
-		cg::core::infoRecorder->logTrace("FakeDeviceGetBackBuffer(%d, %d, %d, %p), id:%d, ERROR, Failed!\n", iSwapChain, iBackBuffer, Type, &base_surface, surface_id);
+		cg::core::infoRecorder->logError("FakeDeviceGetBackBuffer(%d, %d, %d, %p), id:%d, ERROR, Failed!\n", iSwapChain, iBackBuffer, Type, &base_surface, surface_id);
 	}
 	return hr;
 }
@@ -1929,7 +1931,7 @@ HRESULT FakeD3DDGetRenderTarget(RenderChannel * rch){
 		
 		rch->surface_list[sid] = new ClientSurface9(target);
 	}else{
-		cg::core::infoRecorder->logTrace("FakeD3DDGetRenderTarget(%d, %p), id:%d, ERROR, Failed!", RenderTargetIndex, &target, sid);
+		cg::core::infoRecorder->logError("FakeD3DDGetRenderTarget(%d, %p), id:%d, ERROR, Failed!", RenderTargetIndex, &target, sid);
 	}
 
 	return hr;
@@ -1955,14 +1957,14 @@ HRESULT FakeD3DDSetScissorRect(RenderChannel * rch){
 }
 
 HRESULT FakedSetVertexBufferFormat(RenderChannel * rch) {
-	cg::core::infoRecorder->logTrace("FakedSetVertexBufferFormat() called, TODO\n");
+	cg::core::infoRecorder->logError("FakedSetVertexBufferFormat() called, TODO\n");
 
 	int id = rch->obj_id;
 
 	ClientVertexBuffer9* svb = NULL;
 	svb = (ClientVertexBuffer9*)(rch->vb_list[id]);
 	if(svb == NULL){
-		cg::core::infoRecorder->logTrace("FakedSetVertexBufferFormat is NULL id:%d\n",id);
+		cg::core::infoRecorder->logError("FakedSetVertexBufferFormat is NULL id:%d\n",id);
 	}else{
 		cg::core::infoRecorder->logTrace("FakedSetVertexBufferFormat id:%d\n",id);
 	}
@@ -2088,7 +2090,7 @@ HRESULT FakeNullInstruct(RenderChannel * rch){
 
 HRESULT FakedD3DCreateRenderTarget(RenderChannel * rch){
 	HRESULT hr = D3D_OK;
-
+	infoRecorder->logError("FakedD3DCreateRenderTarget(), TODO!\n");
 
 
 

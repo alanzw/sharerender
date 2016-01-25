@@ -12,6 +12,7 @@ class WrapperDirect3DTexture9: public IDirect3DTexture9
 {
 private:
 	IDirect3DTexture9*	m_tex;
+	WrapperDirect3DTexture9(const WrapperDirect3DTexture9 &tex);
 public:
 
 	D3DFORMAT			Format;

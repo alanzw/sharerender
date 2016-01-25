@@ -26,6 +26,7 @@ private:
 #else
 	SurfaceHelper *				surfaceHelper;
 	IdentifierBase *			parentTexture;
+	WrapperDirect3DSurface9(const WrapperDirect3DSurface9 &sur);
 #endif
 public:
 #ifdef MULTI_CLIENTS

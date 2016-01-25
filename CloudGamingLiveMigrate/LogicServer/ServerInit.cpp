@@ -449,7 +449,7 @@ void ContextAndCache::checkFlags(){
 		counter++;
 		totalObjects++;
 		//if(isCreated(obj->creationFlag)){
-			infoRecorder->logError("[WrapperDirect3DSurface9]: %d created: %s,\tflag:0x%x,\trefCount:%d, parent tex:%d, level:%d, creation cmd:%d.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag, obj->refCount, obj->GetTexId(), obj->GetLevel(), obj->creationCommand);
+			infoRecorder->logError("[WrapperDirect3DSurface9]: %d created: %s,\tflag:0x%x,\trefCount:%d, parent tex id:%d(vs p tex:%p, id:%d), level:%d, creation cmd:%d.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag, obj->refCount, obj->GetTexId(), obj->getParentTexture(), obj->getParentTexture() ? obj->getParentTexture()->getId(): -1, obj->GetLevel(), obj->creationCommand);
 		//}
 	}
 	infoRecorder->logError("[WrapperDirect3DSurface9]: total has %d, checked %d.\n", WrapperDirect3DSurface9::ins_count, counter);
@@ -514,66 +514,66 @@ void ContextAndCache::eraseFlag(){
 	resetCreation(initializer->creationFlag);
 
 	HashSet::iterator it;
-	IdentifierBase * obj = NULL;
+	//IdentifierBase * obj = NULL;
 	for(it = WrapperDirect3D9::m_list.begin(); it != WrapperDirect3D9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
+		WrapperDirect3D9 *obj = (WrapperDirect3D9 *)it->pData;
 		resetCreation(obj->creationFlag);
-		resetChanged(obj->updateFlag);
+		setChanged(obj->updateFlag);
 	}
 	for(it = WrapperDirect3DCubeTexture9::m_list.begin(); it != WrapperDirect3DCubeTexture9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
+		WrapperDirect3DCubeTexture9 *obj = (WrapperDirect3DCubeTexture9 *)it->pData;
 		resetCreation(obj->creationFlag);
-		resetChanged(obj->updateFlag);
+		setChanged(obj->updateFlag);
 	}
 	for(it = WrapperDirect3DDevice9::m_list.begin(); it != WrapperDirect3DDevice9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
+		WrapperDirect3DDevice9 *obj = (WrapperDirect3DDevice9 *)it->pData;
 		resetCreation(obj->creationFlag);
-		resetChanged(obj->updateFlag);
+		setChanged(obj->updateFlag);
 	}
 	for(it = WrapperDirect3DIndexBuffer9::m_list.begin(); it != WrapperDirect3DIndexBuffer9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
+		WrapperDirect3DIndexBuffer9 *obj = (WrapperDirect3DIndexBuffer9 *)it->pData;
 		resetCreation(obj->creationFlag);
-		resetChanged(obj->updateFlag);
+		setChanged(obj->updateFlag);
 	}
 	for(it = WrapperDirect3DPixelShader9::m_list.begin(); it != WrapperDirect3DPixelShader9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
+		WrapperDirect3DPixelShader9 *obj = (WrapperDirect3DPixelShader9 *)it->pData;
 		resetCreation(obj->creationFlag);
-		resetChanged(obj->updateFlag);
+		setChanged(obj->updateFlag);
 	}
 	for(it = WrapperDirect3DStateBlock9::m_list.begin(); it != WrapperDirect3DStateBlock9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
+		WrapperDirect3DStateBlock9* obj = (WrapperDirect3DStateBlock9 *)it->pData;
 		resetCreation(obj->creationFlag);
-		resetChanged(obj->updateFlag);
+		setChanged(obj->updateFlag);
 	}
 	for(it = WrapperDirect3DSurface9::m_list.begin(); it != WrapperDirect3DSurface9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
+		WrapperDirect3DSurface9 *obj = (WrapperDirect3DSurface9 *)it->pData;
 		resetCreation(obj->creationFlag);
-		resetChanged(obj->updateFlag);
+		setChanged(obj->updateFlag);
 	}
 	for(it = WrapperDirect3DSwapChain9::m_list.begin(); it != WrapperDirect3DSwapChain9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
+		WrapperDirect3DSwapChain9 *obj = (WrapperDirect3DSwapChain9 *)it->pData;
 		resetCreation(obj->creationFlag);
-		resetChanged(obj->updateFlag);
+		setChanged(obj->updateFlag);
 	}
 	for(it = WrapperDirect3DTexture9::m_list.begin(); it != WrapperDirect3DTexture9::m_list.end(); it ++){
-		obj = (IdentifierBase *)it->pData;
+		WrapperDirect3DSwapChain9 *obj = (WrapperDirect3DSwapChain9 *)it->pData;
 		resetCreation(obj->creationFlag);
-		resetChanged(obj->updateFlag);
+		setChanged(obj->updateFlag);
 	}
 	for(it = WrapperDirect3DVertexBuffer9::m_list.begin(); it != WrapperDirect3DVertexBuffer9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
+		WrapperDirect3DVertexBuffer9 *obj = (WrapperDirect3DVertexBuffer9 *)it->pData;
 		resetCreation(obj->creationFlag);
-		resetChanged(obj->updateFlag);
+		setChanged(obj->updateFlag);
 	}
 	for(it = WrapperDirect3DVertexDeclaration9::m_list.begin(); it != WrapperDirect3DVertexDeclaration9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
+		WrapperDirect3DVertexDeclaration9 *obj = (WrapperDirect3DVertexDeclaration9 *)it->pData;
 		resetCreation(obj->creationFlag);
-		resetChanged(obj->updateFlag);
+		setChanged(obj->updateFlag);
 	}
 	for(it = WrapperDirect3DVertexShader9::m_list.begin(); it != WrapperDirect3DVertexShader9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
+		WrapperDirect3DVertexShader9 *obj = (WrapperDirect3DVertexShader9 *)it->pData;
 		resetCreation(obj->creationFlag);
-		resetChanged(obj->updateFlag);
+		setChanged(obj->updateFlag);
 	}
 	// done
 }

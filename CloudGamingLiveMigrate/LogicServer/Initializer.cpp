@@ -19,21 +19,14 @@ Initializer::~Initializer(){
 void Initializer::pushObj(IdentifierBase * obj){
 	objList.push_back(obj);
 }
-// check all of the objects that is in objList
-#if 0
-bool Initializer::checkObjs(){
-	for(iterator it = objList.begin(); it != objList.end(); it++){
-		
-	}
-}
-#endif
+
 
 // only creation need to be checked
 int Initializer::sendCreation(void * ctx){
 	infoRecorder->logTrace("[Initializer]: send creation. %d objects should be created in initialization.\n", objList.size());
 	for(iterator it = objList.begin(); it != objList.end(); it++){
 		(*it)->checkCreation(ctx);
-		//it->checkUpdate(ctx);
+		(*it)->checkUpdate(ctx);
 	}
 
 	return 0;

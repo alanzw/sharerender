@@ -218,8 +218,8 @@ STDMETHODIMP WrapperDirect3DCubeTexture9::GetCubeMapSurface(THIS_ D3DCUBEMAP_FAC
 		cs.end_command();
 #else
 		// check texture creation
-		csSet->checkCreation(this);
-		//csSet->checkObj(this);
+		//csSet->checkCreation(this);
+		csSet->checkObj(dynamic_cast<IdentifierBase *>(this));
 		// second, use the object
 		csSet->beginCommand(CubeGetCubeMapSurface_Opcode, id);
 		csSet->writeInt(surface->getId());

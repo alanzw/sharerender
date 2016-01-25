@@ -1150,6 +1150,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetRenderTarget(THIS_ DWORD RenderTargetInd
 	csSet->writeInt(sur->GetLevel());
 	csSet->endCommand();
 #endif
+	infoRecorder->logError("[WrapperDirect3DDevice9]:SetRenderTarget, surface id:%d, parent texture id: %d, level: %d. (parent tex:%p, id:%d)\n",((WrapperDirect3DSurface9*)pRenderTarget)->getId(),sur->GetTexId(), sur->GetLevel(), ws->getParentTexture(), ws->getParentTexture() ? ws->getParentTexture()->getId(): -1);
 #ifdef ENBALE_DEVICE_LOG
 	infoRecorder->logTrace("surface id:%d, parent texture id: %d, level: %d\n",((WrapperDirect3DSurface9*)pRenderTarget)->getID(),sur->GetTexId(), sur->GetLevel());
 #endif
@@ -1817,9 +1818,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetTexture(THIS_ DWORD Stage,IDirect3DBaseT
 #endif
 
 	if(pTexture == NULL) {
-#ifdef ENBALE_DEVICE_LOG
-		infoRecorder->logTrace("pTexutre is NULL, I got it.\n");
-#endif
+
 #ifndef MULTI_CLIENTS
 		cs.begin_command(SetTexture_Opcode, this->id);
 		cs.write_uint(Stage);
@@ -1918,7 +1917,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetTexture(THIS_ DWORD Stage,IDirect3DBaseT
 		return m_device->SetTexture(Stage, pTexture);
 	}
 	else {
-		infoRecorder->logError("Type is unknown\n");
+		infoRecorder->logError("TODO, Type is unknown\n");
 		return m_device->SetTexture(Stage, pTexture);
 	}
 }

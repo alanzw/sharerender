@@ -8,6 +8,11 @@
 
 #define ENABLE_TEXTURE_LOG
 
+WrapperDirect3DTexture9::WrapperDirect3DTexture9(const WrapperDirect3DTexture9 &tex){
+	infoRecorder->logError("[WrapperDirect3DTexture9]: copy contructor this:%p, id:%d.\n", this, id);
+}
+
+
 WrapperDirect3DTexture9::WrapperDirect3DTexture9(IDirect3DTexture9* ptr, int _id): m_tex(ptr), IdentifierBase(_id) {
 #ifdef ENABLE_TEXTURE_LOG
 	infoRecorder->logError("WrapperDirect3DTexture9::WrapperDirect3DTexture9(), id=%d, base_tex=%d this=%d\n", id, ptr, this);
@@ -287,7 +292,7 @@ HRESULT WrapperDirect3DTexture9::SendTextureData(ContextAndCache *ctx){
 	infoRecorder->logError("[WrapperDirect3DTexture9]: send texture data for %d.\n", id);
 	SurfaceHelper * surHelper = NULL;
 	if(!texHelper || Usage & D3DUSAGE_RENDERTARGET){
-		infoRecorder->logError("[WrapperDirect3DTexture9]: RenderTarget texture, no need to send.\n");
+		infoRecorder->logError("[WrapperDirect3DTexture9]: RenderTarget texture, not to send.\n");
 		return hr;
 	}
 	// update the texture
@@ -705,13 +710,7 @@ STDMETHODIMP WrapperDirect3DTexture9::GetSurfaceLevel(THIS_ UINT Level,IDirect3D
 
 	HRESULT hr = m_tex->GetSurfaceLevel(Level, &base_surface);//ppSurfaceLevel);
 
-	UINT uid = getUID(id, Level);
-	short recover_level = -1;
-	int recover_id = -1;
-	//getTexIdAndLevel(uid, recover_id, recover_level);
-
 	WrapperDirect3DSurface9* surface = WrapperDirect3DSurface9::GetWrapperSurface9(base_surface);
-	//WrapperDirect3DSurface9 * side_surface = (WrapperDirect3DSurface9 *)(m_side_list.GetDataPtr(uid));
 	
 	if(NULL == surface ){ //&& NULL == side_surface) {
 		// create new wrapper surface to hold the surface
@@ -748,7 +747,6 @@ STDMETHODIMP WrapperDirect3DTexture9::GetSurfaceLevel(THIS_ UINT Level,IDirect3D
 #endif
 
 #endif
-		
 
 		base_surface->GetDesc(&desc);
 		SurfaceHelper * surHelper = NULL;

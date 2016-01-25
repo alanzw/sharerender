@@ -163,7 +163,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DVertexBuffer9::Release(THIS) {
 	refCount--;
 	if(refCount <= 0){
 		infoRecorder->logError("[WrapperDirect3DVertexBuffer9]: m_vb ref:%d, ref count:%d.\n", refCount, hr);
-		m_list.DeleteMember(m_vb);
+		//m_list.DeleteMember(m_vb);
 	}
 	return hr;
 }
@@ -298,6 +298,7 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Unlock(THIS) {
 #endif  // USE_MEM_VERTEX_BUFFER
 	base = m_LockData.OffsetToLock;
 
+	//csSet->checkObj(dynamic_cast<IdentifierBase *>(this));
 	csSet->checkCreation(dynamic_cast<IdentifierBase *>(this));
 
 	csSet->beginCommand(VertexBufferUnlock_Opcode, id);

@@ -10,7 +10,7 @@
 #ifdef MULTI_CLIENTS
 
 
-//#define ENABLE_STATE_BLOCK_LOG
+#define ENABLE_STATE_BLOCK_LOG
 
 // build the state block with a list, the list contains the dependency of this state block
 StateBlock::StateBlock(int id, Buffer * buf, list<IdentifierBase *>& dlist): id_(id), cmdBuf_(buf){
@@ -23,7 +23,7 @@ StateBlock::StateBlock(int id, Buffer * buf, list<IdentifierBase *>& dlist): id_
 bool StateBlock::sendCreation(ContextAndCache * ctx){
 	// check the dependency list
 #ifdef ENABLE_STATE_BLOCK_LOG
-	infoRecorder->logTrace("[StateBlock]: send creation.\n");
+	infoRecorder->logError("[StateBlock]: send creation for %d.\n", id_);
 #endif // ENABLE_STATE_BLOCK_LOG
 	IdentifierBase * obj = NULL;
 	if(!dependencyList.empty()){
@@ -35,7 +35,7 @@ bool StateBlock::sendCreation(ContextAndCache * ctx){
 		dependencyList.pop_front();
 	}
 #ifdef ENABLE_STATE_BLOCK_LOG
-	infoRecorder->logTrace("[StateBlock]: to send the buffer.\n");
+	infoRecorder->logError("[StateBlock]: to send the buffer for %d.\n", id_);
 #endif // ENABLE_STATE_BLOCK_LOG
 	ctx->send_packet(cmdBuf_);
 	return true;
@@ -145,6 +145,7 @@ int WrapperDirect3DStateBlock9::sendCreation(void *ctx){
 		if(stateBlock){
 			stateBlock->sendCreation(c);
 		}else{
+			infoRecorder->logError("[WrapperDirect3DStateBlock9]: not find valid state block for %d.\n", id);
 			return -1;
 		}
 	}
@@ -199,7 +200,7 @@ WrapperDirect3DStateBlock9 *WrapperDirect3DStateBlock9::GetWrapperStateBlock9(ID
 	WrapperDirect3DStateBlock9 *ret = (WrapperDirect3DStateBlock9 *)(m_list.GetDataPtr(ptr));
 #ifdef ENABLE_STATE_BLOCK_LOG
 	if(NULL == ret){
-		infoRecorder->logTrace("[WrapperDirect3DStateBlock9]: GetWrapperStateBlock, ret is NULL.\n);
+		infoRecorder->logTrace("[WrapperDirect3DStateBlock9]: GetWrapperStateBlock, ret is NULL.\n");
 	}
 #endif
 	return ret;
@@ -268,7 +269,8 @@ STDMETHODIMP WrapperDirect3DStateBlock9::Capture(THIS) {
 #else
 
 	// before use the state block, check creation
-	csSet->checkCreation(this);
+	//csSet->checkCreation(this);
+	csSet->checkObj(dynamic_cast<IdentifierBase *>(this));
 	csSet->beginCommand(StateBlockCapture_Opcode, id);
 	csSet->endCommand();
 #endif
@@ -285,7 +287,8 @@ STDMETHODIMP WrapperDirect3DStateBlock9::Apply(THIS) {
 	cs.end_command();
 #else
 	// before using the state block, check creation
-	csSet->checkCreation(this);
+	//csSet->checkCreation(this);
+	csSet->checkObj(dynamic_cast<IdentifierBase*>(this));
 	csSet->beginCommand(StateBlockApply_Opcode, id);
 	csSet->endCommand();
 #endif

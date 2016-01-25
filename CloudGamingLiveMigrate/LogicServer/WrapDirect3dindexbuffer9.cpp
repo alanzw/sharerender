@@ -153,7 +153,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DIndexBuffer9::Release(THIS) {
 	refCount--;
 	if(refCount <= 0){
 		infoRecorder->logError("[WrapperDirect3DIndexBuffer9]: m_ib ref:%d, ref count:%d.\n", refCount, hr);
-		m_list.DeleteMember(m_ib);
+		//m_list.DeleteMember(m_ib);
 	}
 	return hr; 
 }
@@ -283,6 +283,7 @@ STDMETHODIMP WrapperDirect3DIndexBuffer9::Unlock(THIS) {
 	base = m_LockData.OffsetToLock;
 
 	csSet->checkCreation(dynamic_cast<IdentifierBase *>(this));
+	//csSet->checkObj(dynamic_cast<IdentifierBase *>(this));
 
 	csSet->beginCommand(IndexBufferUnlock_Opcode, id);
 	csSet->writeUInt(m_LockData.OffsetToLock);

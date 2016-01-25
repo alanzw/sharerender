@@ -9,6 +9,10 @@
 #ifdef MULTI_CLIENTS
 #define ENABLE_SURFACE_LOG
 
+WrapperDirect3DSurface9::WrapperDirect3DSurface9(const WrapperDirect3DSurface9& sur){
+	infoRecorder->logError("[WrapperDirect3DSurface9]: copy constructor for %p, id:%d.\n", this, id);	
+}
+
 void WrapperDirect3DSurface9::setParentTexture(IdentifierBase *parent){
 	WrapperDirect3DTexture9 * wtex = (WrapperDirect3DTexture9 *)parent;
 	infoRecorder->logError("[WrapperDirect3DSurface9]: set parent texture, surface id:%d, parent texture ptr:%p, id:%d(tex id:%d), level: %d.\n", id, parent, wtex->getId(), tex_id, level);
@@ -155,7 +159,7 @@ WrapperDirect3DSurface9::WrapperDirect3DSurface9(IDirect3DSurface9* ptr, int _id
 	this->tex_id = -1;
 	this->level = -1;
 #ifdef ENABLE_SURFACE_LOG
-	infoRecorder->logError("WrapperDirect3DSurface9 constructor called! ptr:%d, id:%d, this:%d\n",ptr, id,this);
+	infoRecorder->logError("WrapperDirect3DSurface9 constructor called! ptr:%d, id:%d, this:%d\n",ptr, id, this);
 #endif
 	m_list.AddMember(ptr, this);
 
@@ -214,6 +218,14 @@ STDMETHODIMP_(ULONG) WrapperDirect3DSurface9::Release(THIS) {
 #endif
 	refCount--;
 	if(refCount <= 0){
+		if(id == 3393){
+			refCount++;
+			refCount--;
+		}
+		if(id == 3392){
+			refCount++;
+			refCount--;
+		}
 		infoRecorder->logError("[WrapperDirect3DSurface9]: m_surface id:%d(tex id:%d, level:%d) ref:%d, ref count:%d, creation cmd:%d, tex:%d.\n",id, tex_id, level, refCount, hr, creationCommand, tex_id);
 	}
 #if 0
