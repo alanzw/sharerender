@@ -9,8 +9,7 @@
 
 #ifdef MULTI_CLIENTS
 
-
-#define ENABLE_STATE_BLOCK_LOG
+//#define ENABLE_STATE_BLOCK_LOG
 
 // build the state block with a list, the list contains the dependency of this state block
 StateBlock::StateBlock(int id, Buffer * buf, list<IdentifierBase *>& dlist): id_(id), cmdBuf_(buf){
@@ -131,7 +130,7 @@ void StateBlockRecorder::WriterVec(int op_code, float * vec, int size){
 
 int WrapperDirect3DStateBlock9::sendCreation(void *ctx){
 #ifdef ENABLE_STATE_BLOCK_LOG
-	infoRecorder->logTrace("[WrapperDirect3DStateBlock9]: send creation, creation command:%s.\n", creationCommand == CreateStateBlock_Opcode ? "CreateStateBlock_Opcode" :(creationCommand == EndStateBlock_Opcode ? "EndStateBlock_Opcode" : "Unknown"));
+	infoRecorder->logError("[WrapperDirect3DStateBlock9]: send creation, creation command:%s.\n", creationCommand == CreateStateBlock_Opcode ? "CreateStateBlock_Opcode" :(creationCommand == EndStateBlock_Opcode ? "EndStateBlock_Opcode" : "Unknown"));
 #endif
 	ContextAndCache * c = (ContextAndCache *)ctx;
 	if(creationCommand == CreateStateBlock_Opcode){
@@ -260,7 +259,7 @@ STDMETHODIMP WrapperDirect3DStateBlock9::GetDevice(THIS_ IDirect3DDevice9** ppDe
 
 STDMETHODIMP WrapperDirect3DStateBlock9::Capture(THIS) {
 #ifdef ENABLE_STATE_BLOCK_LOG
-	infoRecorder->logTrace("WrapperDirect3DStateBlock9::Capture() called, id:%d, creation flag:0x%p\n", id, creationFlag);
+	infoRecorder->logError("WrapperDirect3DStateBlock9::Capture() called, id:%d, creation flag:0x%p\n", id, creationFlag);
 #endif
 
 #ifndef MULTI_CLIENTS
@@ -279,7 +278,7 @@ STDMETHODIMP WrapperDirect3DStateBlock9::Capture(THIS) {
 
 STDMETHODIMP WrapperDirect3DStateBlock9::Apply(THIS) {
 #ifdef ENABLE_STATE_BLOCK_LOG
-	infoRecorder->logTrace("WrapperDirect3DStateBlock9::Apply() called, id:%d, creation flat:0x%x\n", id, creationFlag);
+	infoRecorder->logError("WrapperDirect3DStateBlock9::Apply() called, id:%d, creation flat:0x%x\n", id, creationFlag);
 #endif
 
 #ifndef MULTI_CLIENTS

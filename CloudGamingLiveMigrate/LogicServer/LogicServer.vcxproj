@@ -112,7 +112,6 @@
     <ClInclude Include="WrapDirect3dvertexshader9.h" />
     <ClInclude Include="WrapDirect3dvolume9.h" />
     <ClInclude Include="WrapDirect3dvolumetexture9.h" />
-    <ClInclude Include="YMesh.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CommandServerSet.cpp" />
@@ -142,7 +141,6 @@
     <ClCompile Include="WrapDirect3dvertexshader9.cpp" />
     <ClCompile Include="WrapDirect3dvolume9.cpp" />
     <ClCompile Include="WrapDirect3dvolumetexture9.cpp" />
-    <ClCompile Include="YMesh.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\LibCore\LibCore.vcxproj">

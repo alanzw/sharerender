@@ -479,7 +479,7 @@ void ContextAndCache::checkFlags(){
 		counter++;
 		totalObjects++;
 		//if(isCreated(obj->creationFlag)){
-			infoRecorder->logError("[WrapperDirect3DVertexBuffer9]: %d created: %s,\tflag:0x%x,\trefCount:%d.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag, obj->refCount);
+			infoRecorder->logError("[WrapperDirect3DVertexBuffer9]: %d created: %s,\tflag:0x%x, update flag:0x%x,\trefCount:%d.\n", obj->getId(), isCreated(obj->creationFlag) ? "true" : "false", obj->creationFlag, obj->updateFlag, obj->refCount);
 		//}
 	}
 	infoRecorder->logError("[WrapperDirect3DVertexBuffer9]: total has %d, checked %d.\n", WrapperDirect3DVertexBuffer9::ins_count, counter);
@@ -533,7 +533,7 @@ void ContextAndCache::eraseFlag(){
 	for(it = WrapperDirect3DIndexBuffer9::m_list.begin(); it != WrapperDirect3DIndexBuffer9::m_list.end(); it++){
 		WrapperDirect3DIndexBuffer9 *obj = (WrapperDirect3DIndexBuffer9 *)it->pData;
 		resetCreation(obj->creationFlag);
-		setChanged(obj->updateFlag);
+		//setChanged(obj->updateFlag);
 	}
 	for(it = WrapperDirect3DPixelShader9::m_list.begin(); it != WrapperDirect3DPixelShader9::m_list.end(); it++){
 		WrapperDirect3DPixelShader9 *obj = (WrapperDirect3DPixelShader9 *)it->pData;
@@ -563,7 +563,7 @@ void ContextAndCache::eraseFlag(){
 	for(it = WrapperDirect3DVertexBuffer9::m_list.begin(); it != WrapperDirect3DVertexBuffer9::m_list.end(); it++){
 		WrapperDirect3DVertexBuffer9 *obj = (WrapperDirect3DVertexBuffer9 *)it->pData;
 		resetCreation(obj->creationFlag);
-		setChanged(obj->updateFlag);
+		//setChanged(obj->updateFlag);
 	}
 	for(it = WrapperDirect3DVertexDeclaration9::m_list.begin(); it != WrapperDirect3DVertexDeclaration9::m_list.end(); it++){
 		WrapperDirect3DVertexDeclaration9 *obj = (WrapperDirect3DVertexDeclaration9 *)it->pData;

@@ -239,7 +239,7 @@ namespace cg{
 		}
 
 		void InfoRecorder::logTrace(char *format, ...){
-#if 1
+#if 0
 			char tem[512] = {0};
 
 			va_list ap;

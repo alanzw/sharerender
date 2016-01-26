@@ -7,15 +7,19 @@
 //extern int id;
 
 #ifdef MULTI_CLIENTS
-#define ENABLE_SURFACE_LOG
+//#define ENABLE_SURFACE_LOG
 
 WrapperDirect3DSurface9::WrapperDirect3DSurface9(const WrapperDirect3DSurface9& sur){
+#ifdef ENABLE_SURFACE_LOG
 	infoRecorder->logError("[WrapperDirect3DSurface9]: copy constructor for %p, id:%d.\n", this, id);	
+#endif
 }
 
 void WrapperDirect3DSurface9::setParentTexture(IdentifierBase *parent){
 	WrapperDirect3DTexture9 * wtex = (WrapperDirect3DTexture9 *)parent;
+#ifdef ENABLE_SURFACE_LOG
 	infoRecorder->logError("[WrapperDirect3DSurface9]: set parent texture, surface id:%d, parent texture ptr:%p, id:%d(tex id:%d), level: %d.\n", id, parent, wtex->getId(), tex_id, level);
+#endif
 	parentTexture = parent;
 }
 
@@ -205,7 +209,9 @@ STDMETHODIMP_(ULONG) WrapperDirect3DSurface9::AddRef(THIS) {
 #endif
 	refCount++;
 	ULONG hr = m_surface->AddRef();
+#ifdef ENABLE_SURFACE_LOG
 	infoRecorder->logTrace("[WrapperDirect3DSurface9]: %d (tex id:%d, level:%d) add ref, ref:%d, refcount:%d.\n", id, tex_id, level, hr, refCount);
+#endif
 
 	return hr; 
 }
@@ -226,16 +232,8 @@ STDMETHODIMP_(ULONG) WrapperDirect3DSurface9::Release(THIS) {
 			refCount++;
 			refCount--;
 		}
-		infoRecorder->logError("[WrapperDirect3DSurface9]: m_surface id:%d(tex id:%d, level:%d) ref:%d, ref count:%d, creation cmd:%d, tex:%d.\n",id, tex_id, level, refCount, hr, creationCommand, tex_id);
+		//infoRecorder->logError("[WrapperDirect3DSurface9]: m_surface id:%d(tex id:%d, level:%d) ref:%d, ref count:%d, creation cmd:%d, tex:%d.\n",id, tex_id, level, refCount, hr, creationCommand, tex_id);
 	}
-#if 0
-	if(hr == 0){
-		if(!m_list.DeleteMember(m_surface)){
-			infoRecorder->logError("[WrapperDirect3DSurface9]: delete %d from m_list failed.\n", id);
-
-		}
-	}
-#endif
 
 	return hr;
 }

@@ -66,7 +66,10 @@ TIMEL1:
 			virtual unsigned __int64 Stop(void){
 				LARGE_INTEGER m_endcycle;
 				QueryPerformanceCounter(&m_endcycle);
-				return m_endcycle.QuadPart - m_startcycle.QuadPart - m_overhead;
+				unsigned __int64 ret = m_endcycle.QuadPart - m_startcycle.QuadPart - m_overhead;
+				m_startcycle = m_endcycle;
+
+				return ret;
 			}
 			virtual unsigned __int64 getOverhead(){ return m_overhead; }
 			virtual unsigned int getFreq(){ return freq.QuadPart; }

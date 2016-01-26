@@ -319,6 +319,7 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 #ifdef ENBALE_DEVICE_LOG
 	infoRecorder->logTrace("WrapperDirect3DDevice9::Present(), source %d, dst %d, wind %d, rgbdata %d\n", pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
 #endif
+	infoRecorder->logError("WrapperDirect3DDevice9::Present(), source %d, dst %d, wind %d, rgbdata %d\n", pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
 	bool tm = false, tm1 = false;
 	EnterCriticalSection(&f9);
 	tm = synSign;
@@ -423,10 +424,11 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 		time_total += frame_time;
 		frame_all_count++;
 	}
-
+#if 0
 	if (to_sleep > 0) {
 		Sleep((DWORD)to_sleep);
 	}
+#endif
 
 	if (elapse_time >= 1000.0) {
 		fps = frame_cnt * 1000.0 / elapse_time;
@@ -1150,9 +1152,10 @@ STDMETHODIMP WrapperDirect3DDevice9::SetRenderTarget(THIS_ DWORD RenderTargetInd
 	csSet->writeInt(sur->GetLevel());
 	csSet->endCommand();
 #endif
-	infoRecorder->logError("[WrapperDirect3DDevice9]:SetRenderTarget, surface id:%d, parent texture id: %d, level: %d. (parent tex:%p, id:%d)\n",((WrapperDirect3DSurface9*)pRenderTarget)->getId(),sur->GetTexId(), sur->GetLevel(), ws->getParentTexture(), ws->getParentTexture() ? ws->getParentTexture()->getId(): -1);
+	
 #ifdef ENBALE_DEVICE_LOG
-	infoRecorder->logTrace("surface id:%d, parent texture id: %d, level: %d\n",((WrapperDirect3DSurface9*)pRenderTarget)->getID(),sur->GetTexId(), sur->GetLevel());
+	infoRecorder->logTrace("[WrapperDirect3DDevice9]:SetRenderTarget, surface id:%d, parent texture id: %d, level: %d. (parent tex:%p, id:%d)\n",((WrapperDirect3DSurface9*)pRenderTarget)->getId(),sur->GetTexId(), sur->GetLevel(), ws->getParentTexture(), ws->getParentTexture() ? ws->getParentTexture()->getId(): -1);
+	
 #endif
 
 #if 0

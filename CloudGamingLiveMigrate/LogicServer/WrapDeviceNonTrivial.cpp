@@ -15,7 +15,7 @@
 #include "../LibCore/Opcode.h"
 #include "../LibCore/CmdHelper.h"
 
-#include "YMesh.h"
+//#include "YMesh.h"
 
 #define DELAY_TO_DRAW
 #ifdef MULTI_CLIENTS
@@ -516,7 +516,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetStreamSource(THIS_ UINT StreamNumber,IDi
 	//infoRecorder->logTrace("id:%d\n", wvb->GetId());
 	
 	wvb->streamNumber = StreamNumber;
-	wvb->stride =Stride;
+	//wvb->stride =Stride;
 	wvb->offsetInBytes = OffsetInBytes;
 
 	HRESULT hh = m_device->SetStreamSource(StreamNumber, ((WrapperDirect3DVertexBuffer9*)pStreamData)->GetVB9(), OffsetInBytes, Stride);

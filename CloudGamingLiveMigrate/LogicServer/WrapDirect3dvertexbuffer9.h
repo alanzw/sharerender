@@ -2,12 +2,9 @@
 #define __WRAP_DIRECT3DVERTEXBUFFER9__
 
 #include "GameServer.h"
-#include "NewHash.hpp"
 #include "CommandServerSet.h"
 
 #define USE_MEM_VERTEX_BUFFER
-
-
 
 class YMesh;
 
@@ -19,18 +16,10 @@ class WrapperDirect3DVertexBuffer9: public IDirect3DVertexBuffer9
 private:
 	IDirect3DVertexBuffer9* m_vb;
 	
-	bool isLock;// no use
 public:
-	bool maxFlag;
-	float maxX, maxY, maxZ;
-	bool changed;// this flag indicate that the buffer has been locked
-	bool readed_;
 	
-	char* cache_buffer; //析构的时候记得要删掉
-	char * ram_buffer;   // each context has a buffer
-	char ** ram_buffers;
-
-	YMesh* y_mesh_;
+	char* cache_buffer; // cache for vertex buffer, release at destruction
+	char* ram_buffer;   // each context has a buffer
 
 	bool isFirst;
 	int max_vb;
@@ -42,9 +31,6 @@ public:
 	BufferLockData m_LockData;   
 
 	IDirect3DVertexDeclaration9 * decl;
-	int n_off, t_off, n_size, t_size;
-	short stride;
-	float max_vertex_value;
 
 	// used in SetStreamSource
 	short streamNumber;
@@ -60,7 +46,6 @@ public:
 	virtual int sendUpdate(void * ctx);
 #endif
 
-
 	static HashSet m_list;
 	static int ins_count;
 	WrapperDirect3DVertexBuffer9(IDirect3DVertexBuffer9* ptr, int _id, int _length);
@@ -73,13 +58,13 @@ public:
 
 	static WrapperDirect3DVertexBuffer9* GetWrapperVertexBuffer9(IDirect3DVertexBuffer9* ptr);
 
+#if 0
 	void read_data_from_buffer(char** ptr, int offest, int size);
 	void write_data_to_buffer(char* ptr, int offest, int size);
+#endif
 
-	bool PrepareVertexBuffer();
-	bool PrepareVertexBuffer(ContextAndCache *ctx);
-	bool PrepareVertexBuffer(int n_off, int t_off, int n_size, int t_size, int Stride);
-	//bool PrepareVertexBuffer(GameObj * obj);
+	int PrepareVertexBuffer(ContextAndCache *ctx);
+	int UpdateVertexBuffer(ContextAndCache *ctx);
 
 public:
 	/*** IUnknown methods ***/

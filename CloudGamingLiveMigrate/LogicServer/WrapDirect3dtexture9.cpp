@@ -6,10 +6,12 @@
 //#define SAVE_IMG
 //#define LOCAL_IMG
 
-#define ENABLE_TEXTURE_LOG
+//#define ENABLE_TEXTURE_LOG
 
 WrapperDirect3DTexture9::WrapperDirect3DTexture9(const WrapperDirect3DTexture9 &tex){
+#ifdef ENABLE_TEXTURE_LOG
 	infoRecorder->logError("[WrapperDirect3DTexture9]: copy contructor this:%p, id:%d.\n", this, id);
+#endif
 }
 
 
@@ -288,8 +290,9 @@ HRESULT WrapperDirect3DTexture9::SendTextureData(ContextAndCache *ctx){
 	HRESULT hr = D3D_OK;
 	if(NULL == ctx->get_connect_socket())
 		return hr;
-
+#ifdef ENABLE_TEXTURE_LOG
 	infoRecorder->logError("[WrapperDirect3DTexture9]: send texture data for %d.\n", id);
+#endif
 	SurfaceHelper * surHelper = NULL;
 	if(!texHelper || Usage & D3DUSAGE_RENDERTARGET){
 		infoRecorder->logError("[WrapperDirect3DTexture9]: RenderTarget texture, not to send.\n");
@@ -309,7 +312,9 @@ HRESULT WrapperDirect3DTexture9::SendTextureData(ContextAndCache *ctx){
 		csSet->writeInt(surHelper->getPitchedSize());
 		csSet->writeByteArr((char *)(surHelper->getSurfaceData()), surHelper->getPitchedSize());
 		csSet->endCommand();
+		#ifdef ENABLE_TEXTURE_LOG
 		infoRecorder->logError("[WrapperDirect3DTexture9]; send surface 0, size:%d.\n", surHelper->getPitchedSize());
+#endif
 	}
 	else{
 		// creation for each surface
@@ -326,7 +331,9 @@ HRESULT WrapperDirect3DTexture9::SendTextureData(ContextAndCache *ctx){
 			csSet->writeInt(surHelper->getPitchedSize());
 			csSet->writeByteArr((char *)(surHelper->getSurfaceData()), surHelper->getPitchedSize());
 			csSet->endCommand();
+			#ifdef ENABLE_TEXTURE_LOG
 			infoRecorder->logError("[WrapperDirect3DTexture9]; send surface %d, size:%d.\n",i, surHelper->getPitchedSize());
+#endif
 		}
 	}
 
@@ -722,8 +729,9 @@ STDMETHODIMP WrapperDirect3DTexture9::GetSurfaceLevel(THIS_ UINT Level,IDirect3D
 		surface->SetLevel(Level);
 
 		surface->setParentTexture(this);
-
+#ifdef ENABLE_TEXTURE_LOG
 		infoRecorder->logError("[WrapperDirect3DTexture9]: texture %d GetSurfaceLevel, create surface: %d with level:%d.\n", id, surface->getId(), Level);
+#endif
 
 #ifndef MULTI_CLIENTS
 		cs.begin_command(TextureGetSurfaceLevel_Opcode, id);
@@ -735,17 +743,6 @@ STDMETHODIMP WrapperDirect3DTexture9::GetSurfaceLevel(THIS_ UINT Level,IDirect3D
 		// TODO : check the texture object is exist or not !
 		//csSet->checkCreation(this);
 		csSet->checkObj(this);
-#if 0
-		// create new surface
-		csSet->beginCommand(TextureGetSurfaceLevel_Opcode, id);
-		csSet->writeInt(id);
-		csSet->writeInt(surface->getId());
-		csSet->writeUInt(Level);
-		csSet->endCommand();
-
-		csSet->setCreation(surface->creationFlag);
-#endif
-
 #endif
 
 		base_surface->GetDesc(&desc);

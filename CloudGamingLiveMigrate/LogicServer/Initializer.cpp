@@ -23,7 +23,7 @@ void Initializer::pushObj(IdentifierBase * obj){
 
 // only creation need to be checked
 int Initializer::sendCreation(void * ctx){
-	infoRecorder->logTrace("[Initializer]: send creation. %d objects should be created in initialization.\n", objList.size());
+	infoRecorder->logError("[Initializer]: send creation. %d objects should be created in initialization.\n", objList.size());
 	for(iterator it = objList.begin(); it != objList.end(); it++){
 		(*it)->checkCreation(ctx);
 		(*it)->checkUpdate(ctx);

@@ -90,9 +90,6 @@
     <ClInclude Include="GameClient.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="YMesh.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Initializer.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -174,9 +171,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="GameClient.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="YMesh.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Initializer.cpp">

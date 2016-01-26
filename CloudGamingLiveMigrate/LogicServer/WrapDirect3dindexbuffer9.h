@@ -2,7 +2,6 @@
 #define __WRAP_DIRECT3DINDEXBUFFER9__
 
 #include "GameServer.h"
-#include "NewHash.hpp"
 #include <map>
 #include <iostream>
 #include "CommandServerSet.h"
@@ -20,7 +19,6 @@ class WrapperDirect3DIndexBuffer9: public IDirect3DIndexBuffer9
 {
 private:
 	bool isLock;
-
 public:
 
 #ifdef MULTI_CLIENTS
@@ -30,15 +28,10 @@ public:
 	virtual int sendUpdate(void * ctx);
 
 #endif
-	YashTable mesh_table_;
-	// mesh concern
-	YMesh * GetYMesh(int vb_id, INT baseVertexIndex, UINT startIndex);
-	void PutYMesh(int vb_id, INT baseVertexIndex, UINT startIndex, YMesh * yMesh);
 
 	IDirect3DIndexBuffer9* m_ib;
-	char* cache_buffer; //析构的时候记得要删掉
+	char* cache_buffer; // remember to release the memory when destructing
 	char * ram_buffer; // the temp buffer for lock, each context has a buffer
-	char * ram_buffers;  // arrary for all buffers
 
 	bool isFirst;
 
@@ -59,10 +52,8 @@ public:
 
 	int GetLength();
 
-	int PrepareIndexBuffer();
 	int PrepareIndexBuffer(ContextAndCache * ctx);
-	void read_data_from_buffer(char** ptr, int offest, int size);
-	void write_data_to_buffer(char* ptr, int offest, int size);
+	int UpdateIndexBuffer(ContextAndCache *ctx);
 
 	static WrapperDirect3DIndexBuffer9* GetWrapperIndexedBuffer9(IDirect3DIndexBuffer9* base_indexed_buffer);
 
