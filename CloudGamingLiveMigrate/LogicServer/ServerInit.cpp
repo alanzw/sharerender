@@ -586,12 +586,14 @@ void WINAPI ExitProcessCallback(UINT uExitCode) {
 	int vb_buffer_size = 0;
 	int vs_buffer_size = 0;
 	int ps_buffer_size = 0;
+	int tx_buffer_size = 0;
 
 	HashSet::iterator it;
-	// get the buffer size
+	// get the index buffer size
 	for(it = WrapperDirect3DIndexBuffer9::m_list.begin(); it != WrapperDirect3DIndexBuffer9::m_list.end(); it++){
 		ib_buffer_size += ((WrapperDirect3DIndexBuffer9 *)(it->pData))->GetLength() * 2;   // com_bufer and buffer
 	}
+	// get the vertex buffer size
 	for(it = WrapperDirect3DVertexBuffer9::m_list.begin(); it!= WrapperDirect3DVertexBuffer9::m_list.end(); it++){
 		vb_buffer_size +=((WrapperDirect3DVertexBuffer9 *)(it->pData))->GetLength() * 2;  // com_buffer and buffer
 	}
@@ -600,6 +602,9 @@ void WINAPI ExitProcessCallback(UINT uExitCode) {
 	}
 	for(it = WrapperDirect3DPixelShader9::m_list.begin(); it != WrapperDirect3DPixelShader9::m_list.end(); it++){
 		ps_buffer_size += ((WrapperDirect3DPixelShader9 *)(it->pData))->shaderSize;
+	}
+	for(it = WrapperDirect3DTexture9::m_list.begin(); it != WrapperDirect3DTexture9::m_list.end(); it++){
+		tx_buffer_size += ((WrapperDirect3DTexture9*)(it->pData))->getBufferSize();
 	}
 	//output the static data
 	
@@ -610,7 +615,7 @@ void WINAPI ExitProcessCallback(UINT uExitCode) {
 	infoRecorder->logError("WrapperDirect3DVertexDeclaration9::ins_count = %d\n", WrapperDirect3DVertexDeclaration9::ins_count);
 	infoRecorder->logError("WrapperDirect3DVertexShader9::ins_count = %d, use buffer size:%d\n", WrapperDirect3DVertexShader9::ins_count, vs_buffer_size);
 	infoRecorder->logError("WrapperDirect3DPixelShader9::ins_count = %d, use buffer size:%d\n", WrapperDirect3DPixelShader9::ins_count, ps_buffer_size);
-	infoRecorder->logError("WrapperDirect3DTexture9::ins_count = %d\n", WrapperDirect3DTexture9::ins_count);
+	infoRecorder->logError("WrapperDirect3DTexture9::ins_count = %d, use buffer:%d\n", WrapperDirect3DTexture9::ins_count, tx_buffer_size);
 	infoRecorder->logError("WrapperDirect3DStateBlock9::ins_count = %d\n", WrapperDirect3DStateBlock9::ins_count);
 	infoRecorder->logError("WrapperDirect3DCubeTexture9::ins_count = %d\n", WrapperDirect3DCubeTexture9::ins_count);
 	infoRecorder->logError("WrapperDirect3DSwapChain9::ins_count = %d\n", WrapperDirect3DSwapChain9::ins_count);

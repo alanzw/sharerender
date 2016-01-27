@@ -622,15 +622,15 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateTexture(THIS_ UINT Width,UINT Height,
 #ifdef ENBALE_DEVICE_LOG
 	infoRecorder->logTrace("WrapperDirect3DDevice9::CreateTexture(), width=%d, height=%d, Usage=%d, Format:%d, Pool:%d, id:%d, device id:%d, ", Width, Height, Usage, Format, Pool, WrapperDirect3DTexture9::ins_count, id);
 #endif
-	//infoRecorder->logError("WrapperDirect3DDevice9::CreateTexture(), width=%d, height=%d, Usage=%d, Format:%d, Pool:%d, id:%d, device id:%d, levels:%d \n", Width, Height, Usage, Format, Pool, WrapperDirect3DTexture9::ins_count, id, Levels);
+	infoRecorder->logError("WrapperDirect3DDevice9::CreateTexture(), width=%d, height=%d, Usage=%d, Format:%d, Pool:%d, id:%d, device id:%d, levels:%d \n", Width, Height, Usage, Format, Pool, WrapperDirect3DTexture9::ins_count, id, Levels);
 	if(Height > 1024){
-		infoRecorder->logError("WrapperDirect3DDevice9::CreateTexture(), Levels:%d, width=%d, height=%d, Usage=%d, Format:%d, Pool:%d, id:%d, device id:%d\n ",Levels, Width, Height, Usage, Format, Pool, WrapperDirect3DTexture9::ins_count, id);
+		infoRecorder->logError("WrapperDirect3DDevice9::CreateTexture(), height is > 1024, may error.\n ",Levels, Width, Height, Usage, Format, Pool, WrapperDirect3DTexture9::ins_count, id);
 
 	}
 	LPDIRECT3DTEXTURE9 base_tex = NULL;
 	HRESULT hr = m_device->CreateTexture(Width, Height, Levels, Usage, Format, Pool, &base_tex, pSharedHandle);	
 	WrapperDirect3DTexture9 * wt = NULL;
-
+	D3DFMT_A8B8G8R8;
 	if(SUCCEEDED(hr)) {
 		// store the texture creation information
 		wt = new WrapperDirect3DTexture9(base_tex, WrapperDirect3DTexture9::ins_count++);
@@ -693,6 +693,22 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateTexture(THIS_ UINT Width,UINT Height,
 #ifdef ENBALE_DEVICE_LOG
 		infoRecorder->logError("WrapperDirect3DDevice9::CreateTexture() failed\n");
 #endif
+		infoRecorder->logError("WrapperDirect3DDevice9::CreateTexture() failed for %d ", WrapperDirect3DTexture9::ins_count);
+		switch(hr){
+		case D3DERR_INVALIDCALL:
+			infoRecorder->logError(" Error msg: D3DERR_INVALIDCALL.\n");
+			break;
+		case D3DERR_OUTOFVIDEOMEMORY:
+			infoRecorder->logError(" Error msg: D3DERR_OUTOFVIDEOMEMORY.\n");
+			break;
+		case E_OUTOFMEMORY:
+
+			infoRecorder->logError(" Error msg: E_OUTOFMEMORY.\n");
+			break;
+		default:
+			infoRecorder->logError(" Error msg: UNKNOWN.\n");
+			break;
+		}
 	}
 	return hr;
 }
@@ -804,7 +820,7 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateVertexBuffer(THIS_ UINT Length,DWORD 
 	HRESULT hr = m_device->CreateVertexBuffer(Length, Usage, FVF, Pool, &base_vb, pSharedHandle);
 
 	WrapperDirect3DVertexBuffer9 * wvb = NULL;
-
+	D3DLOCK_NOSYSLOCK;
 	if(SUCCEEDED(hr)) {
 		wvb = new WrapperDirect3DVertexBuffer9(base_vb, WrapperDirect3DVertexBuffer9::ins_count++, Length);
 		wvb->Usage = Usage;

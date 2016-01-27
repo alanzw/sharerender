@@ -25,6 +25,7 @@ public:
 	D3DCOLOR			ColorKey;
 
 	TextureHelper *		texHelper;
+	int					bufferSize;
 
 	static HashSet		m_list;
 	static HashSet		m_side_list;    // the list store's the id to surface map
@@ -42,6 +43,7 @@ public:
 	IDirect3DTexture9*	GetTex9();
 	HRESULT				SendTextureData();
 	HRESULT				SendTextureData(ContextAndCache * ctx);
+	int					getBufferSize();
 
 	WrapperDirect3DTexture9(IDirect3DTexture9* ptr, int _id);
 	static WrapperDirect3DTexture9* GetWrapperTexture9(IDirect3DTexture9* ptr);

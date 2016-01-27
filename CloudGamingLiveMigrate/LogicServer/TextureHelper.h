@@ -30,12 +30,15 @@ private:
 	TEXTURE_TYPE		type;
 	void *				realSurfacePtr;		// the real ptr for surface content
 	static int			TotalBufferedTextureSize;
+	DWORD				lockFlags;
 public:
 	inline unsigned char *getSurfaceData(){ return surfaceData; }
 	inline int			getPitch(){ return pitch; }
 	inline int			getHeight(){ return height; }
 	//inline int			getPitchedSize(){ return pitch * height; }
 	inline bool			isAquired(){ return aquired; }
+	inline void			setLockFlags(DWORD flags){lockFlags = flags;}
+	inline DWORD		getLockFlags(){ return lockFlags; }
 
 	SurfaceHelper(short level, bool _compressed = false);
 	SurfaceHelper(short level, short face, bool _compressed = false);
@@ -70,6 +73,7 @@ public:
 	virtual ~TextureHelper();
 	
 	SurfaceHelper *		getSurfaceHelper(short level);  // return the surface helper for given level, if NULL, create one
+	int					getBufferSize();
 };
 
 class DeviceHelper{

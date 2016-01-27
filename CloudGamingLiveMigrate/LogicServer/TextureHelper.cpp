@@ -34,6 +34,17 @@ TextureHelper::~TextureHelper(){
 	validLevels = 0;
 	levels = 0;
 }
+int TextureHelper::getBufferSize(){
+	int ret = 0;
+	for(int i =0; i< levels; i++){
+		if(surfaceArray[i]){
+			ret += (surfaceArray[i]->getPitchedSize() + sizeof(SurfaceHelper));
+		}
+	}
+	bufferSize = ret;
+	//cg::core::infoRecorder->logError("[TextureHelper]: buffer size:%d.\n", ret);
+	return ret;
+}
 
 SurfaceHelper* TextureHelper::getSurfaceHelper(short level){
 	if(level >= validLevels){
@@ -136,7 +147,7 @@ bool SurfaceHelper::copyTextureData(){
 	int compressedHeight = (height + devide -1)/devide;
 
 	int copySize = pitch * compressedHeight;
-	//cg::core::infoRecorder->logError("[SurfaceHelper]: memcpy, src:%p, dst: %p, size:%d.\n", surfaceData, realSurfacePtr, copySize);
+	cg::core::infoRecorder->logError("[SurfaceHelper]: memcpy, src:%p, dst: %p, size:%d ( pitch:%d x real height:%d).\n", surfaceData, realSurfacePtr, copySize, pitch, compressedHeight);
 	memcpy(realSurfacePtr, surfaceData, copySize);
 #if 0
 	for(int j = 0; j < height; j++){
