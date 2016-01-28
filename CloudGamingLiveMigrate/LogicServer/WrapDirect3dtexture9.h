@@ -4,6 +4,7 @@
 #include "GameServer.h"
 #include "CommandServerSet.h"
 #include "TextureHelper.h"
+#include "WrapDirect3dsurface9.h"
 
 class WrapperDirect3DTexture9: public IDirect3DTexture9 
 #ifdef MULTI_CLIENTS
@@ -13,6 +14,7 @@ class WrapperDirect3DTexture9: public IDirect3DTexture9
 private:
 	IDirect3DTexture9*	m_tex;
 	WrapperDirect3DTexture9(const WrapperDirect3DTexture9 &tex);
+	WrapperDirect3DSurface9 ** surfaceArray;
 public:
 
 	D3DFORMAT			Format;
@@ -45,7 +47,7 @@ public:
 	HRESULT				SendTextureData(ContextAndCache * ctx);
 	int					getBufferSize();
 
-	WrapperDirect3DTexture9(IDirect3DTexture9* ptr, int _id);
+	WrapperDirect3DTexture9(IDirect3DTexture9* ptr, int _id, int levels);
 	static WrapperDirect3DTexture9* GetWrapperTexture9(IDirect3DTexture9* ptr);
 
 	/*** IUnknown methods ***/

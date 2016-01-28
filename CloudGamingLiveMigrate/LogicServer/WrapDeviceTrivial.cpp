@@ -633,7 +633,7 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateTexture(THIS_ UINT Width,UINT Height,
 	D3DFMT_A8B8G8R8;
 	if(SUCCEEDED(hr)) {
 		// store the texture creation information
-		wt = new WrapperDirect3DTexture9(base_tex, WrapperDirect3DTexture9::ins_count++);
+		wt = new WrapperDirect3DTexture9(base_tex, WrapperDirect3DTexture9::ins_count++, Levels);
 		*ppTexture = dynamic_cast<IDirect3DTexture9*>(wt);
 		wt->Format = Format;
 		wt->Levels = Levels;

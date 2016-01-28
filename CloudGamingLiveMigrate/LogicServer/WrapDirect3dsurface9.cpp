@@ -23,6 +23,17 @@ void WrapperDirect3DSurface9::setParentTexture(IdentifierBase *parent){
 	parentTexture = parent;
 }
 
+void WrapperDirect3DSurface9::releaseData(){
+#if 0
+	if(surfaceHelper){
+		delete surfaceHelper;
+		surfaceHelper = NULL;
+	}
+#endif
+	parentTexture = NULL;
+	m_list.DeleteMember(m_surface);
+}
+
 int WrapperDirect3DSurface9::sendCreation(void *ctx){
 #ifdef ENABLE_SURFACE_LOG
 	infoRecorder->logError("[WrapperDirect3DSurface9]: send creation\n");
@@ -338,7 +349,13 @@ STDMETHODIMP WrapperDirect3DSurface9::LockRect(THIS_ D3DLOCKED_RECT* pLockedRect
 	}
 	hr = m_surface->LockRect(pLockedRect, pRect, Flags);
 	
-	infoRecorder->logError("WrapperDirect3DSurface9::LockRect() id:%d (tex id:%d, level:%d) called, flag:%d, locked pitch:%d, desc(width:%d, height:%d).\n",id, tex_id, level, Flags, pLockedRect->Pitch, desc.Width, desc.Height);
+	infoRecorder->logError("WrapperDirect3DSurface9::LockRect() id:%d (tex id:%d, level:%d) called, flag:%d, locked pitch:%d, desc(width:%d, height:%d).",id, tex_id, level, Flags, pLockedRect->Pitch, desc.Width, desc.Height);
+	if(pRect){
+		infoRecorder->logError(" Lock Rect: (%d, %d) -> (%d, %d).\n", pRect->left, pRect->top, pRect->right, pRect->bottom);
+	}
+	else{
+		infoRecorder->logError(" Lock Rect: NULL.\n");
+	}
 #ifdef USE_WRAPPER_TEXTURE   // use WrapperTexture
 	if(wrappterTex9){
 		// if is a texture's surface

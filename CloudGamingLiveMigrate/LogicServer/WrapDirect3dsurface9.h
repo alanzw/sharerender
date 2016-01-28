@@ -60,6 +60,7 @@ public:
 	inline void					SetTexId(int tex){ tex_id = tex; }
 	inline void					SetLevel(int _level){ level= _level; }
 	void						setParentTexture(IdentifierBase *parent);//{ parentTexture = parent;}
+	void						releaseData();
 	inline IdentifierBase *		getParentTexture(){ return parentTexture; }
 #ifdef USE_WRAPPER_TEXTURE
 	inline void					setTex9(WrapperDirect3DTexture9 * _tex){ wrappterTex9 = _tex; }

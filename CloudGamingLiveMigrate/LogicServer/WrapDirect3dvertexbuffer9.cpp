@@ -289,6 +289,7 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Unlock(THIS) {
 	// update the vertex buffer
 #ifdef BUFFER_UNLOCK_UPDATE
 
+	infoRecorder->logError("WrapperDirect3DVertexBuffer9::Unlock(), id:%d, UnlockSize=%d Bytes, total len:%d, start:%d.\n", this->id,m_LockData.SizeToLock, Length, m_LockData.OffsetToLock);
 	if(pTimer){
 		pTimer->Start();
 	}
@@ -377,43 +378,7 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Unlock(THIS) {
 #endif   // BUFFER_UNLOCK_UPDATE
 	return m_vb->Unlock();
 }
-#if 0
-void WrapperDirect3DVertexBuffer9::read_data_from_buffer(char** ptr, int offest, int size) {
-#ifdef ENABLE_VERTEX_BUFFER_LOG
-	infoRecorder->logTrace("WrapperDirect3DVertexBuffer9::read_data_from_buffer() called\n");
-#endif
-	if(size == 0) size = Length - offest;
-	if(!ram_buffer) {
-		ram_buffer = (char*)(malloc(this->Length));
-		m_LockData.pRAMBuffer = ram_buffer;
-	}
 
-	if(readed_) {
-		*ptr = ram_buffer;
-		return;
-	}
-
-	void* p = NULL;
-	Lock(offest, size, &p, 2048);
-	memcpy(ram_buffer, p, size);
-	Unlock();
-
-	readed_ = true;
-
-	*ptr = ram_buffer;
-}
-void WrapperDirect3DVertexBuffer9::write_data_to_buffer(char* ptr, int offest, int size) {
-#ifdef ENABLE_VERTEX_BUFFER_LOG
-	infoRecorder->logTrace("WrapperDirect3DVertexBuffer9::write_data_to_buffer() called\n");
-#endif
-	if(size == 0) size = Length - offest;
-	void* p = NULL;
-	Lock(offest, size, &p, 2048);
-	memcpy((char*)p, ptr, size);
-	Unlock();
-}
-
-#endif
 
 STDMETHODIMP WrapperDirect3DVertexBuffer9::GetDesc(THIS_ D3DVERTEXBUFFER_DESC *pDesc) {
 	//infoRecorder->logTrace("WrapperDirect3DVertexBuffer9::GetDesc() TODO\n");

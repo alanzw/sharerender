@@ -102,7 +102,7 @@ STDMETHODIMP WrapperDirect3DDevice9::DrawPrimitive(THIS_ D3DPRIMITIVETYPE Primit
 		// send command to all clients
 		csSet->beginCommand(DrawPrimitive_Opcode, id);
 		csSet->writeChar(PrimitiveType);
-		csSet->writeUChar(StartVertex);
+		csSet->writeUInt(StartVertex);
 		csSet->writeUInt(PrimitiveCount);
 		csSet->endCommand();
 #endif
