@@ -67,26 +67,26 @@ int WrapperDirect3DTexture9::sendCreation(void *ctx){
 	c->write_uint(Pool);
 	c->endCommand();
 
-	return 0;
+	return 1;
 }
 
 int WrapperDirect3DTexture9::checkCreation(void *ctx){
 #ifdef ENABLE_TEXTURE_LOG
-	infoRecorder->logTrace("[WrapperDirect3DTexture9]: call check creation, creation flag:%x, id:%d.\n", creationFlag, id);
+	infoRecorder->logError("[WrapperDirect3DTexture9]: call check creation, tex id:%d creation flag:%x\n", id, creationFlag);
 #endif
 	ContextAndCache * cc = (ContextAndCache *)ctx;
-	int ret = 0;
+	int ret = 1;
 	//////////////
 
 	if(!cc->isCreated(creationFlag)){
 #ifdef ENABLE_TEXTURE_LOG
-		infoRecorder->logError("[WrapperDirect3DTexture9]: texture %d not created.\n", id);
+		infoRecorder->logError("[WrapperDirect3DTexture9]: texture %d not created, compressed: %s\n", id, texHelper ? (texHelper->isCompressed() ? "true" : "false") : "false");
 #endif
 		ret = sendCreation(ctx);
 		cc->setCreation(creationFlag);
-		sendUpdate(ctx);
-		cc->resetChanged(updateFlag);
-		ret = 1;
+		if(ret = sendUpdate(ctx))
+			cc->resetChanged(updateFlag);
+		//ret = 1;
 	}else{
 #ifdef ENABLE_TEXTURE_LOG
 		infoRecorder->logTrace("[WrapperDirect3DTexture9]: already created.\n");
@@ -99,12 +99,13 @@ int WrapperDirect3DTexture9::checkUpdate(void *ctx){
 #ifdef ENABLE_TEXTURE_LOG
 	infoRecorder->logTrace("[WrapperDirect3DTexture9]: check update for %d.\n", id);
 #endif
-	int ret = 0;
+	int ret = 1;
 	ContextAndCache * c = (ContextAndCache *)ctx;
 	if(c->isChanged(updateFlag)){
 		ret = sendUpdate(c);
-		c->resetChanged(updateFlag);
-		ret = 1;
+		if(ret)
+			c->resetChanged(updateFlag);
+		//ret = 1;
 	}else{
 #ifdef ENABLE_TEXTURE_LOG
 		infoRecorder->logTrace("[WrapperDirect3DTexture9]: not changed!");
@@ -118,12 +119,14 @@ int WrapperDirect3DTexture9::sendUpdate(void *ctx){
 #ifdef ENABLE_TEXTURE_LOG
 	infoRecorder->logTrace("[WrapperDirect3DTexture9]: send update for %d.\n", id);
 #endif
-	int ret = 0;
+	int ret = 1;
 	ContextAndCache * c = (ContextAndCache *)ctx;
 	if(pTimer){
 		pTimer->Start();
 	}
-	SendTextureData(c);
+	if(E_FAIL == SendTextureData(c)){
+		ret = 0;
+	}
 	if(pTimer){
 		unsigned int interval_ = pTimer->Stop();
 		infoRecorder->logError("[WrapperDriect3DTexture9]: send texture %d use: %f.\n", id, interval_ * 1000.0 / pTimer->getFreq());
@@ -301,7 +304,8 @@ int WrapperDirect3DTexture9::getBufferSize(){
 HRESULT WrapperDirect3DTexture9::SendTextureData(ContextAndCache *ctx){
 	HRESULT hr = D3D_OK;
 	if(NULL == ctx->get_connect_socket())
-		return hr;
+		return E_FAIL;
+
 #ifdef ENABLE_TEXTURE_LOG
 	infoRecorder->logError("[WrapperDirect3DTexture9]: send texture data for %d.\n", id);
 #endif
@@ -811,8 +815,8 @@ STDMETHODIMP WrapperDirect3DTexture9::LockRect(THIS_ UINT Level, D3DLOCKED_RECT*
 #ifdef ENABLE_TEXTURE_LOG
 	infoRecorder->logError("WrapperDirect3DTexture9:LockRect(), id:%d, level:%d, rect:%p.\n", id, Level, pRect);
 #endif // ENABLE_TEXTURE_LOG
-	tex_send[id] = false;
-
+	//tex_send[id] = false;
+	csSet->checkObj(this);
 	csSet->setChangedToAll(updateFlag);
 
 	D3DSURFACE_DESC desc;
@@ -862,9 +866,8 @@ STDMETHODIMP WrapperDirect3DTexture9::LockRect(THIS_ UINT Level, D3DLOCKED_RECT*
 
 STDMETHODIMP WrapperDirect3DTexture9::UnlockRect(THIS_ UINT Level) {
 #ifdef ENABLE_TEXTURE_LOG
-	infoRecorder->logTrace("WrapperDirect3DTexture9::UnlockRect(), id:%d, Level=%d\n", id, Level);
-#endif
 	infoRecorder->logError("WrapperDirect3DTexture9::UnlockRect(), id:%d, Level=%d\n", id, Level);
+#endif
 	SurfaceHelper* surHelper = NULL;
 	if(texHelper){
 		if(texHelper->isAutoGenable()){
@@ -872,13 +875,13 @@ STDMETHODIMP WrapperDirect3DTexture9::UnlockRect(THIS_ UINT Level) {
 				// copy the top data to video memory
 				surHelper = texHelper->getSurfaceHelper(Level);
 				if(!(surHelper->getLockFlags() & D3DLOCK_READONLY))
-				surHelper->copyTextureData();
+					surHelper->copyTextureData();
 			}
 		}else{
 			// when no auto gen, buffer each level 
 			surHelper = texHelper->getSurfaceHelper(Level);
 			if(!(surHelper->getLockFlags() & D3DLOCK_READONLY))
-			surHelper->copyTextureData();
+				surHelper->copyTextureData();
 		}
 		bufferSize = texHelper->getBufferSize();
 	}

@@ -57,6 +57,10 @@ private:
 	bool				aquired;
 	int					bufferSize;
 	short				levels;
+
+public:
+	inline bool			isAutoGenable(){ return autoGenable;}
+	inline bool			isAquired(int face, int level);
 };
 class TextureHelper{
 private:

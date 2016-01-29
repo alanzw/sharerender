@@ -9,10 +9,14 @@
 #define MULTI_CLIENTS
 #endif   // MULTI_CLIENTS
 
+#define ENABLE_CUBE_TEXTURE_LOG
+
 #ifdef MULTI_CLIENTS
 
 int WrapperDirect3DCubeTexture9::sendCreation(void * ctx){
-	infoRecorder->logTrace("[WrapperDirect3DCubeTextrue9]: send the creation command.\n");
+#ifdef ENABLE_CUBE_TEXTURE_LOG
+	infoRecorder->logError("[WrapperDirect3DCubeTextrue9]: send the creation for cube tex:%d.\n", id);
+#endif
 	ContextAndCache * c = (ContextAndCache *)ctx;
 
 	c->beginCommand( CreateCubeTexture_Opcode, getDeviceId());
@@ -29,7 +33,9 @@ int WrapperDirect3DCubeTexture9::sendCreation(void * ctx){
 
 int WrapperDirect3DCubeTexture9::checkCreation(void * ctx){
 	int ret = 0;
-	infoRecorder->logError("[WrapperDirect3DCubeTexture9]: call check creation.\n");
+#ifdef ENABLE_CUBE_TEXTURE_LOG
+	infoRecorder->logError("[WrapperDirect3DCubeTexture9]: call check creation for cube tex:%d.\n", id);
+#endif
 	ContextAndCache *cc = (ContextAndCache *)ctx;
 	if(!cc->isCreated(creationFlag)){
 		// did not created
@@ -42,7 +48,9 @@ int WrapperDirect3DCubeTexture9::checkCreation(void * ctx){
 }
 // send the texture data when first used
 int WrapperDirect3DCubeTexture9::checkUpdate(void * ctx){
-	infoRecorder->logTrace("[WrapperDirect3DCubeTexture9]: check update.\n");
+#ifdef ENABLE_CUBE_TEXTURE_LOG
+	infoRecorder->logError("[WrapperDirect3DCubeTexture9]: check update for cube tex:%d.\n", id);
+#endif
 	int ret = 0;
 	ContextAndCache * c = (ContextAndCache *)ctx;
 	if(c->isChanged(updateFlag)){
@@ -59,7 +67,7 @@ int WrapperDirect3DCubeTexture9::checkUpdate(void * ctx){
 	return ret;
 }
 int WrapperDirect3DCubeTexture9::sendUpdate(void *ctx){
-	infoRecorder->logTrace("[WrapeprDirect3DCubeTexture9]: send update, TODO.\n");
+	infoRecorder->logError("[WrapeprDirect3DCubeTexture9]: send update, TODO.\n");
 	int ret = 0;
 
 	return ret;
@@ -115,7 +123,9 @@ STDMETHODIMP_(ULONG) WrapperDirect3DCubeTexture9::Release(THIS) {
 
 /*** IDirect3DBaseTexture9 methods ***/
 STDMETHODIMP WrapperDirect3DCubeTexture9::GetDevice(THIS_ IDirect3DDevice9** ppDevice) {
+#ifdef ENABLE_CUBE_TEXTURE_LOG
 	infoRecorder->logTrace("WrapperDirect3DCubeTexture9::GetDevice() TODO\n");
+#endif
 	//return m_cube_tex->GetDevice(ppDevice);
 	IDirect3DDevice9* base = NULL;
 	HRESULT hr = this->m_cube_tex->GetDevice(&base);
@@ -131,77 +141,107 @@ STDMETHODIMP WrapperDirect3DCubeTexture9::GetDevice(THIS_ IDirect3DDevice9** ppD
 	return hr;
 }
 STDMETHODIMP WrapperDirect3DCubeTexture9::SetPrivateData(THIS_ REFGUID refguid,CONST void* pData,DWORD SizeOfData,DWORD Flags) {
+#ifdef ENABLE_CUBE_TEXTURE_LOG
 	infoRecorder->logTrace("WrapperDirect3DCubeTexture9::SetPrivateData() TODO\n");
+#endif
 	return m_cube_tex->SetPrivateData(refguid, pData, SizeOfData, Flags);
 }
 
 STDMETHODIMP WrapperDirect3DCubeTexture9::GetPrivateData(THIS_ REFGUID refguid,void* pData,DWORD* pSizeOfData) {
+#ifdef ENABLE_CUBE_TEXTURE_LOG
 	infoRecorder->logTrace("WrapperDirect3DCubeTexture9::GetPrivateData() TODO\n");
+#endif
 	return m_cube_tex->GetPrivateData(refguid, pData, pSizeOfData);
 }
 STDMETHODIMP WrapperDirect3DCubeTexture9::FreePrivateData(THIS_ REFGUID refguid) {
+#ifdef ENABLE_CUBE_TEXTURE_LOG
 	infoRecorder->logTrace("WrapperDirect3DCubeTexture9::FreePrivateData() TODO\n");
+#endif
 	return m_cube_tex->FreePrivateData(refguid);
 }
 STDMETHODIMP_(DWORD) WrapperDirect3DCubeTexture9::SetPriority(THIS_ DWORD PriorityNew) {
+#ifdef ENABLE_CUBE_TEXTURE_LOG
 	infoRecorder->logTrace("WrapperDirect3DCubeTexture9::SetPriority() TODO\n");
+#endif
 	return m_cube_tex->SetPriority(PriorityNew);
 }
 
 STDMETHODIMP_(DWORD) WrapperDirect3DCubeTexture9::GetPriority(THIS) {
+#ifdef ENABLE_CUBE_TEXTURE_LOG
 	infoRecorder->logTrace("WrapperDirect3DCubeTexture9::GetPriority() called\n");
+#endif
 	return m_cube_tex->GetPriority();
 }
 
 STDMETHODIMP_(void) WrapperDirect3DCubeTexture9::PreLoad(THIS) {
+#ifdef ENABLE_CUBE_TEXTURE_LOG
 	infoRecorder->logTrace("WrapperDirect3DCubeTexture9::PreLoad() TODO\n");
+#endif
 	return m_cube_tex->PreLoad();
 }
 
 STDMETHODIMP_(D3DRESOURCETYPE) WrapperDirect3DCubeTexture9::GetType(THIS) {
+#ifdef ENABLE_CUBE_TEXTURE_LOG
 	infoRecorder->logTrace("WrapperDirect3DCubeTexture9::GetType() called\n");
+#endif
 	return m_cube_tex->GetType();
 }
 
 STDMETHODIMP_(DWORD) WrapperDirect3DCubeTexture9::SetLOD(THIS_ DWORD LODNew) {
-	infoRecorder->logTrace("WrapperDirect3DCubeTexture9::SetLOD() TODO\n");
+#ifdef ENABLE_CUBE_TEXTURE_LOG
+	infoRecorder->logError("WrapperDirect3DCubeTexture9::SetLOD() TODO\n");
+#endif
 	return m_cube_tex->SetLOD(LODNew);
 }
 
 STDMETHODIMP_(DWORD) WrapperDirect3DCubeTexture9::GetLOD(THIS) {
-	infoRecorder->logTrace("WrapperDirect3DCubeTexture9::GetLOD() called\n");
+#ifdef ENABLE_CUBE_TEXTURE_LOG
+	infoRecorder->logError("WrapperDirect3DCubeTexture9::GetLOD() called\n");
+#endif
 	return m_cube_tex->GetLOD();
 }
 
 STDMETHODIMP_(DWORD) WrapperDirect3DCubeTexture9::GetLevelCount(THIS) {
-	infoRecorder->logTrace("WrapperDirect3DCubeTexture9::GetLevelCount() TODO\n");
+#ifdef ENABLE_CUBE_TEXTURE_LOG
+	infoRecorder->logError("WrapperDirect3DCubeTexture9::GetLevelCount() TODO\n");
+#endif
 	return m_cube_tex->GetLevelCount();
 }
 
 STDMETHODIMP WrapperDirect3DCubeTexture9::SetAutoGenFilterType(THIS_ D3DTEXTUREFILTERTYPE FilterType) {
-	infoRecorder->logTrace("WrapperDirect3DCubeTexture9::SetAutoGenFilterType() TODO\n");
+#ifdef ENABLE_CUBE_TEXTURE_LOG
+	infoRecorder->logError("WrapperDirect3DCubeTexture9::SetAutoGenFilterType() TODO\n");
+#endif
 	return m_cube_tex->SetAutoGenFilterType(FilterType);
 }
 
 STDMETHODIMP_(D3DTEXTUREFILTERTYPE) WrapperDirect3DCubeTexture9::GetAutoGenFilterType(THIS) {
-	infoRecorder->logTrace("WrapperDirect3DCubeTexture9::GetAutoGenFilterType() called\n");
+#ifdef ENABLE_CUBE_TEXTURE_LOG
+	infoRecorder->logError("WrapperDirect3DCubeTexture9::GetAutoGenFilterType() called\n");
+#endif
 	return m_cube_tex->GetAutoGenFilterType();
 }
 
 STDMETHODIMP_(void) WrapperDirect3DCubeTexture9::GenerateMipSubLevels(THIS) {
-	infoRecorder->logTrace("WrapperDirect3DCubeTexture9::GenerateMipSubLevels() TODO\n");
+#ifdef ENABLE_CUBE_TEXTURE_LOG
+	infoRecorder->logError("WrapperDirect3DCubeTexture9::GenerateMipSubLevels() TODO\n");
+#endif
 	return m_cube_tex->GenerateMipSubLevels();
 }
 
 STDMETHODIMP WrapperDirect3DCubeTexture9::GetLevelDesc(THIS_ UINT Level,D3DSURFACE_DESC *pDesc) {
-	infoRecorder->logTrace("WrapperDirect3DCubeTexture9::GetLevelDesc() TODO\n");
+#ifdef ENABLE_CUBE_TEXTURE_LOG
+	infoRecorder->logError("WrapperDirect3DCubeTexture9::GetLevelDesc() TODO\n");
+#endif
 	return m_cube_tex->GetLevelDesc(Level, pDesc);
 }
 
 
 // the get surface is to create a new surface
 STDMETHODIMP WrapperDirect3DCubeTexture9::GetCubeMapSurface(THIS_ D3DCUBEMAP_FACES FaceType,UINT Level,IDirect3DSurface9** ppCubeMapSurface) {
-	infoRecorder->logTrace("WrapperDirect3DCubeTexture9::GetCubeMapSurface()\n");
+#ifdef ENABLE_CUBE_TEXTURE_LOG
+	infoRecorder->logError("WrapperDirect3DCubeTexture9::GetCubeMapSurface(), id:%d, face:%d, level:%d\n", id, FaceType, Level);
+#endif
 	IDirect3DSurface9* base_surface = NULL;
 	HRESULT hr = m_cube_tex->GetCubeMapSurface(FaceType, Level, &base_surface);
 
@@ -215,7 +255,7 @@ STDMETHODIMP WrapperDirect3DCubeTexture9::GetCubeMapSurface(THIS_ D3DCUBEMAP_FAC
 		cs.write_uint(FaceType);
 		cs.write_uint(Level);
 		cs.end_command();
-#else
+#else	// MULTI_CLIENTS
 		// check texture creation
 		//csSet->checkCreation(this);
 		csSet->checkObj(dynamic_cast<IdentifierBase *>(this));
@@ -229,24 +269,29 @@ STDMETHODIMP WrapperDirect3DCubeTexture9::GetCubeMapSurface(THIS_ D3DCUBEMAP_FAC
 		// TODO
 		// do not distinguish the new-add client ?
 		surface->creationCommand = CubeGetCubeMapSurface_Opcode; 
-#endif
+		surface->SetTexId(id);
+		surface->SetLevel(Level);
+		surface->SetFaceType(FaceType);
+#endif	// MULTI_CLIENTS
 		
 	}
-
 	*ppCubeMapSurface = dynamic_cast<IDirect3DSurface9 *>(surface);
 
 	return hr;
 }
 
 STDMETHODIMP WrapperDirect3DCubeTexture9::LockRect(THIS_ D3DCUBEMAP_FACES FaceType,UINT Level,D3DLOCKED_RECT* pLockedRect,CONST RECT* pRect,DWORD Flags) {
-	
-	infoRecorder->logTrace("WrapperDirect3DCubeTexture9::LockRect()\n");
+#ifdef ENABLE_CUBE_TEXTURE_LOG
+	infoRecorder->logError("WrapperDirect3DCubeTexture9::LockRect()\n");
+#endif
 	csSet->setChangedToAll(updateFlag);
 	return m_cube_tex->LockRect(FaceType, Level, pLockedRect, pRect, Flags);
 }
 
 STDMETHODIMP WrapperDirect3DCubeTexture9::UnlockRect(THIS_ D3DCUBEMAP_FACES FaceType,UINT Level) {
-	infoRecorder->logTrace("WrapperDirect3DCubeTexture9::UnlockRect(), Level=%d\n", Level);
+#ifdef ENABLE_CUBE_TEXTURE_LOG
+	infoRecorder->logError("WrapperDirect3DCubeTexture9::UnlockRect(), Level=%d\n", Level);
+#endif
 
 	//this->SendTextureData();
 	//tex_send[this->id] = true;
@@ -255,7 +300,9 @@ STDMETHODIMP WrapperDirect3DCubeTexture9::UnlockRect(THIS_ D3DCUBEMAP_FACES Face
 }
 
 STDMETHODIMP WrapperDirect3DCubeTexture9::AddDirtyRect(THIS_ D3DCUBEMAP_FACES FaceType,CONST RECT* pDirtyRect) {
-	infoRecorder->logTrace("WrapperDirect3DCubeTexture9::AddDirtyRect() TODO\n");
+#ifdef ENABLE_CUBE_TEXTURE_LOG
+	infoRecorder->logError("WrapperDirect3DCubeTexture9::AddDirtyRect() TODO\n");
+#endif
 	
 	return m_cube_tex->AddDirtyRect(FaceType, pDirtyRect);
 }

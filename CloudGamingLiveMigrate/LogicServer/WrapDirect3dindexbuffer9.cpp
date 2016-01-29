@@ -6,7 +6,7 @@ static int max_ib = 0;
 
 
 #ifdef MULTI_CLIENTS
-//#define ENABLE_INDEX_LOG
+#define ENABLE_INDEX_LOG
 
 int WrapperDirect3DIndexBuffer9::sendCreation(void *ctx){
 #ifdef ENABLE_INDEX_LOG
@@ -24,15 +24,14 @@ int WrapperDirect3DIndexBuffer9::sendCreation(void *ctx){
 	// change the creation flag
 	c->setCreation(creationFlag);
 
-
 	if(pTimer) pTimer->Start();
-	PrepareIndexBuffer(c);
+	int ret = PrepareIndexBuffer(c);
 	if(pTimer){
 		unsigned interval = pTimer->Stop();
 		infoRecorder->logError("[WrapeprDirect3DIndexBuffer9]: prepare index buffer %d use %f ms.\n", id, 1000.0 * interval / pTimer->getFreq());
 	}
 
-	return 0;
+	return ret;
 }
 
 int WrapperDirect3DIndexBuffer9::checkCreation(void * ctx){
@@ -45,7 +44,6 @@ int WrapperDirect3DIndexBuffer9::checkCreation(void * ctx){
 	if(!c->isCreated(creationFlag)){
 		ret = sendCreation(ctx);
 		c->setCreation(creationFlag);
-		ret = 1;
 	}
 	return ret;
 }
@@ -56,15 +54,14 @@ int WrapperDirect3DIndexBuffer9::sendUpdate(void * ctx){
 #endif
 	int ret = 0;
 	ContextAndCache * c = (ContextAndCache *)ctx;
-	//sendData(getDeviceId());
 	if(pTimer) pTimer->Start();
-	UpdateIndexBuffer(c);
+	ret = UpdateIndexBuffer(c);
 	if(pTimer){
 		unsigned int interval = pTimer->Stop();
 		infoRecorder->logError("[WrapperDirect3DeIndexBuffer9]: update index buffer %d use %f ms\n", id, 1000.0 * interval / pTimer->getFreq());
 	}
 
-	return 0;
+	return ret;
 }
 
 int WrapperDirect3DIndexBuffer9::checkUpdate(void * ctx){
@@ -76,8 +73,9 @@ int WrapperDirect3DIndexBuffer9::checkUpdate(void * ctx){
 	if(c->isChanged(updateFlag)){
 		ret = sendUpdate(ctx);
 		// tag unchanged
-		c->resetChanged(updateFlag);
-		ret = 1;
+		if(ret)
+			c->resetChanged(updateFlag);
+		//ret = 1;
 	}
 	else{
 		// unchanged

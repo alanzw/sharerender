@@ -19,8 +19,9 @@ class WrapperDirect3DSurface9 : public IDirect3DSurface9
 {
 private:
 	IDirect3DSurface9*			m_surface;
-	int tex_id;
-	int level;
+	int							tex_id;
+	int							level;
+	unsigned int				faceType;
 #ifdef USE_WRAPPER_TEXTURE
 	WrapperDirect3DTexture9 *	wrappterTex9;
 #else
@@ -57,8 +58,11 @@ public:
 #endif
 	int							GetTexId();
 	int							GetLevel();
+	inline unsigned	int			GetFaceType(){ return faceType; }
 	inline void					SetTexId(int tex){ tex_id = tex; }
 	inline void					SetLevel(int _level){ level= _level; }
+	inline void					SetFaceType(unsigned int face){ faceType = face; }
+
 	void						setParentTexture(IdentifierBase *parent);//{ parentTexture = parent;}
 	void						releaseData();
 	inline IdentifierBase *		getParentTexture(){ return parentTexture; }

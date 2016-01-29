@@ -347,6 +347,7 @@ void ContextManager::checkObj(IdentifierBase * obj){
 #ifdef ENABLE_MGR_LOG
 	infoRecorder->logTrace("[ContextManager]: check the object.\n");
 #endif
+	infoRecorder->logError("[ContextManager]: check the object, type:%s, id:%d, frame check flag:0x%x.\n", typeid(*obj).name(), obj->getId(), obj->frameCheckFlag);
 	// for current context, check the creation now
 	// QUEUE_CREATE status
 	if(_ctx_cache){
@@ -359,28 +360,17 @@ void ContextManager::checkObj(IdentifierBase * obj){
 
 #ifndef SINGLE_CONTEXT
 	// set the status to QUEUE_CREATE
-	if(obj->stable){
+	//if(obj->stable){
 		ContextAndCache * otherCtx = NULL; //ctx_init.getNextCtx();
 		// ERROR
 		for(int j = 0; j < ctx_init.getCtxCount(); j++){
 			otherCtx = ctx_init.getCtx(j);
-#if 0
-			//infoRecorder->logError("[ContextManager]: obj type name %s, frame check flag: 0x%x.\n", typeid(*obj).name(), obj->frameCheckFlag);
-			obj->print();
 			if(!otherCtx->isChecked(obj->frameCheckFlag)){
-				otherCtx->setChecked(obj->frameCheckFlag);
 				otherCtx->pushUpdate(obj);
+				otherCtx->setChecked(obj->frameCheckFlag);
 			}
-#else
-			otherCtx->pushUpdate(obj);
-#endif
 		}
-	}else{
-		//infoRecorder->logError("no stable, ");
-		//obj->print();
-		//infoRecorder->logError("[ContextManager]: obj %p, type name:%s, id %d is not stable.\n", obj, typeid(*obj).name(), obj->getId());
-
-	}
+	//}
 #else
 	if(_ctx_cache){
 		_ctx_cache->updateObj(obj);
@@ -392,6 +382,13 @@ void ContextManager::checkObj(IdentifierBase * obj){
 void ContextManager::checkCreation(IdentifierBase * obj){
 	if(_ctx_cache){
 		_ctx_cache->checkObj(obj);
+	}
+	if(obj->stable){
+		ContextAndCache * otherCtx = NULL; //ctx_init.getNextCtx();
+		// ERROR
+		for(int j = 0; j < ctx_init.getCtxCount(); j++){
+			otherCtx = ctx_init.getCtx(j);
+		}
 	}
 }
 

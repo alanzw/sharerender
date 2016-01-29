@@ -219,21 +219,24 @@ STDMETHODIMP WrapperDirect3DDevice9::GetSwapChain(THIS_ UINT iSwapChain,IDirect3
 STDMETHODIMP_(UINT) WrapperDirect3DDevice9::GetNumberOfSwapChains(THIS) { return m_device->GetNumberOfSwapChains(); }
 
 // reset is an important function in multi-windowed games, be careful the window handle in D3DPRESENT_PARAMETERS
-STDMETHODIMP WrapperDirect3DDevice9::Reset(THIS_ D3DPRESENT_PARAMETERS* pPresentationParameters) {
+STDMETHODIMP WrapperDirect3DDevice9::Reset(THIS_ D3DPRESENT_PARAMETERS* pPresentationParameter) {
 #ifdef ENBALE_DEVICE_LOG
 	infoRecorder->logTrace("WrapperDirect3DDevice9::Reset().\n");
 #endif
+	infoRecorder->logError("[WrapperDirect3DDevice9]::Reset(), backbuffer(%d x %d).\n", pPresentationParameter->BackBufferWidth, pPresentationParameter->BackBufferHeight);
 #ifndef MULTI_CLIENTS
 	cs.begin_command(Reset_Opcode, id);
 	cs.write_byte_arr((char*)pPresentationParameters, sizeof(D3DPRESENT_PARAMETERS));
 	cs.end_command();
 #else
 	csSet->beginCommand(Reset_Opcode, id);
-	csSet->writeByteArr((char *)pPresentationParameters, sizeof(D3DPRESENT_PARAMETERS));
+	csSet->writeByteArr((char *)pPresentationParameter, sizeof(D3DPRESENT_PARAMETERS));
 	csSet->endCommand();
+	// copy to store
+	memcpy(this->pPresentParameters, pPresentationParameter, sizeof(D3DPRESENT_PARAMETERS));
 
 #endif
-	return m_device->Reset(pPresentationParameters);
+	return m_device->Reset(pPresentationParameter);
 }
 
 int presented = 0;
@@ -1143,6 +1146,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetRenderTarget(THIS_ DWORD RenderTargetInd
 #ifdef ENBALE_DEVICE_LOG
 		infoRecorder->logTrace("NULL target.\n");
 #endif
+		infoRecorder->logError("WrapperDirect3DDevice9::SetRenderTarget(), NULL target.\n");
 		return hh;
 	}
 
@@ -1169,6 +1173,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetRenderTarget(THIS_ DWORD RenderTargetInd
 	csSet->endCommand();
 #endif
 	
+	infoRecorder->logError("[WrapperDirect3DDevice9]:SetRenderTarget, surface id:%d, parent texture id: %d, level: %d. (parent tex:%p, id:%d)\n",((WrapperDirect3DSurface9*)pRenderTarget)->getId(),sur->GetTexId(), sur->GetLevel(), ws->getParentTexture(), ws->getParentTexture() ? ws->getParentTexture()->getId(): -1);
 #ifdef ENBALE_DEVICE_LOG
 	infoRecorder->logTrace("[WrapperDirect3DDevice9]:SetRenderTarget, surface id:%d, parent texture id: %d, level: %d. (parent tex:%p, id:%d)\n",((WrapperDirect3DSurface9*)pRenderTarget)->getId(),sur->GetTexId(), sur->GetLevel(), ws->getParentTexture(), ws->getParentTexture() ? ws->getParentTexture()->getId(): -1);
 	
@@ -1225,6 +1230,8 @@ STDMETHODIMP WrapperDirect3DDevice9::GetRenderTarget(THIS_ DWORD RenderTargetInd
 #ifdef ENBALE_DEVICE_LOG
 	infoRecorder->logTrace("[WrapperDirect3DDevice9]::GetRenderTarget(), ");
 #endif
+	
+	infoRecorder->logError("[WrapperDirect3DDevice9]::GetRenderTarget(), ");
 
 	HRESULT hr = D3D_OK;
 	WrapperDirect3DSurface9 * ws = NULL;
@@ -1236,8 +1243,9 @@ STDMETHODIMP WrapperDirect3DDevice9::GetRenderTarget(THIS_ DWORD RenderTargetInd
 		if(!ws){
 			ws = new WrapperDirect3DSurface9(ret, WrapperDirect3DSurface9::ins_count++);
 #ifdef ENBALE_DEVICE_LOG
-			infoRecorder->logTrace(" new surface with id:%d\n", ws->GetID());
+			infoRecorder->logTrace(" new surface with id:%d\n", ws->getId());
 #endif
+			infoRecorder->logError(" new surface with id:%d\n", ws->getId());
 
 #ifndef MULTI_CLIENTS
 			cs.begin_command(D3DDGetRenderTarget_Opcode, id);
@@ -1263,6 +1271,7 @@ STDMETHODIMP WrapperDirect3DDevice9::GetRenderTarget(THIS_ DWORD RenderTargetInd
 #ifdef ENBALE_DEVICE_LOG
 			infoRecorder->logTrace("with id:%d\n", ws->GetID());
 #endif
+			infoRecorder->logError("with id:%d, tex id:%d, level:%d\n", ws->getId(), ws->GetTexId(), ws->GetLevel());
 		}
 
 		(*ppRenderTarget)=dynamic_cast<IDirect3DSurface9*>(ws);
@@ -1863,9 +1872,8 @@ STDMETHODIMP WrapperDirect3DDevice9::SetTexture(THIS_ DWORD Stage,IDirect3DBaseT
 
 	if(Type == D3DRTYPE_TEXTURE) {
 		WrapperDirect3DTexture9 * wt = (WrapperDirect3DTexture9 *)pTexture;
-#ifdef ENBALE_DEVICE_LOG
-		infoRecorder->logTrace("Type is Texture stage=%d, id=%d, hit or not:%d\n", Stage, id, tex_send[id]);
-#endif
+
+		infoRecorder->logError("[WrapperDirect3DDevice9]::SetTexture, tex id:%d, stage:%d, type:%s, created: %x.\n",wt->getId(), Stage, "TEXTURE", wt->creationFlag);
 
 		//TODO
 		// check the creation and sending 
@@ -1905,6 +1913,9 @@ STDMETHODIMP WrapperDirect3DDevice9::SetTexture(THIS_ DWORD Stage,IDirect3DBaseT
 #ifdef ENBALE_DEVICE_LOG
 		infoRecorder->logError("Type is CubeTexture id=%d, TODO\n", id);
 #endif
+
+		infoRecorder->logError("[WrapperDirect3DDevice9]::SetTexture, tex id:%d, stage:%d, type:%s.\n",wct->getId(), Stage, "CUBE_TEXTURE");
+
 #ifndef MULTI_CLIENTS
 		cs.begin_command(SetCubeTexture_Opcode, this->id);
 		cs.write_uint(Stage);
@@ -1912,19 +1923,17 @@ STDMETHODIMP WrapperDirect3DDevice9::SetTexture(THIS_ DWORD Stage,IDirect3DBaseT
 		cs.end_command();
 #else
 		// check texture's creation and update
-		WrapperDirect3DCubeTexture9 * ctex = (WrapperDirect3DCubeTexture9 *)pTexture;
-
-		csSet->checkObj(dynamic_cast<IdentifierBase *>(ctex));
+		csSet->checkObj(dynamic_cast<IdentifierBase *>(wct));
 		// send command
 		csSet->beginCommand(SetCubeTexture_Opcode, id);
 		csSet->writeUInt(Stage);
-		csSet->writeInt(ctex->getId());
+		csSet->writeInt(wct->getId());
 		csSet->endCommand();
 		if(stateRecorder){
-			stateRecorder->pushDependency(ctex);
+			stateRecorder->pushDependency(wct);
 			stateRecorder->BeginCommand(SetTexture_Opcode, id);
 			stateRecorder->WriteUInt(Stage);
-			stateRecorder->WriteInt(ctex->getId());
+			stateRecorder->WriteInt(wct->getId());
 			stateRecorder->EndCommand();
 		}
 #endif

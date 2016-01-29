@@ -6,7 +6,7 @@
 #define COMPRESS_TO_DWORD
 
 
-//#define ENABLE_VERTEX_BUFFER_LOG
+#define ENABLE_VERTEX_BUFFER_LOG
 
 
 #ifdef MULTI_CLIENTS
@@ -29,13 +29,13 @@ int WrapperDirect3DVertexBuffer9::sendCreation(void * ctx){
 	if(pTimer){
 		pTimer->Start();
 	}
-	PrepareVertexBuffer(c);
+	int ret = PrepareVertexBuffer(c);
 	if(pTimer){
 		unsigned int interval =  pTimer->Stop();
 		infoRecorder->logError("[WrpaperDirect3DVertexBuffer9]: prepare vertex buffer use: %f ms.\n", interval * 1000.0 / pTimer->getFreq());
 	}
 
-	return 0;
+	return ret;
 }
 int WrapperDirect3DVertexBuffer9::checkCreation(void *ctx){
 #ifdef ENABLE_VERTEX_BUFFER_LOG
@@ -47,8 +47,8 @@ int WrapperDirect3DVertexBuffer9::checkCreation(void *ctx){
 		// not created, send the creation command.
 		ret = sendCreation(ctx);
 		// change the creation flag
-		c->setCreation(creationFlag);
-		ret = 1;
+		if(ret)
+			c->setCreation(creationFlag);
 	}
 	return ret;
 }
@@ -60,9 +60,8 @@ int WrapperDirect3DVertexBuffer9::checkUpdate(void * ctx){
 	ContextAndCache * c = (ContextAndCache *)ctx;
 	if(c->isChanged(updateFlag)){
 		ret = sendUpdate(ctx);
-
-		c->resetChanged(updateFlag);
-		ret = 1;
+		if(ret)
+			c->resetChanged(updateFlag);
 	}else{
 #ifdef ENABLE_VERTEX_BUFFER_LOG
 		// no changed
@@ -75,15 +74,16 @@ int WrapperDirect3DVertexBuffer9::sendUpdate(void * ctx){
 #ifdef ENABLE_VERTEX_BUFFER_LOG
 	infoRecorder->logTrace("[WrapperDirect3DVertexBuffer9]: send update for %d.\n", id);
 #endif
+	int ret = 0;
 	ContextAndCache * c = (ContextAndCache *)ctx;
 	//PrepareVertexBuffer(c);
 	if(pTimer) pTimer->Start();
-	UpdateVertexBuffer(c);
+	ret = UpdateVertexBuffer(c);
 	if(pTimer){
 		unsigned int interval = pTimer->Stop();
 		infoRecorder->logError("[WrapperDirect3DVertexBuffer9]: update vertex buffer %d use %f ms.\n", id, interval * 1000.0 /pTimer->getFreq());
 	}
-	return 0;
+	return ret;
 }
 
 #endif
@@ -269,6 +269,7 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Lock(THIS_ UINT OffsetToLock,UINT Siz
 	// lock the video mem as well
 	HRESULT hr = m_vb->Lock(OffsetToLock, SizeToLock, &(m_LockData.pVideoBuffer), Flags);
 #ifdef MULTI_CLIENTS
+	csSet->checkObj(this);
 	csSet->setChangedToAll(updateFlag);
 #endif // MULTI_CLIENTS
 	return hr;
@@ -307,7 +308,7 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Unlock(THIS) {
 #endif  // USE_MEM_VERTEX_BUFFER
 	base = m_LockData.OffsetToLock;
 
-	csSet->checkObj(dynamic_cast<IdentifierBase *>(this));
+	//csSet->checkObj(dynamic_cast<IdentifierBase *>(this));
 	//csSet->checkCreation(dynamic_cast<IdentifierBase *>(this));
 
 	csSet->beginCommand(VertexBufferUnlock_Opcode, id);
@@ -471,5 +472,5 @@ int WrapperDirect3DVertexBuffer9::UpdateVertexBuffer(ContextAndCache * ctx){
 		}
 	}
 
-	return cnt;
+	return cnt > 0;
 }
