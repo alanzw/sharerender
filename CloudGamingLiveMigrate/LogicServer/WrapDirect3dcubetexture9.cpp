@@ -21,7 +21,6 @@ int WrapperDirect3DCubeTexture9::sendCreation(void * ctx){
 	c->write_uint( this->levels);
 	c->write_uint( this->usage);
 	c->write_uint( this->format);
-	c->write_uint( this->format);
 	c->write_uint( this->pool);
 	c->endCommand();
 

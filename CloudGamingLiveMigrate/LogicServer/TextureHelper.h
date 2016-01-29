@@ -52,7 +52,11 @@ public:
 };
 // for cube texture
 class CubeTextureHelper{
-
+private:
+	bool				autoGenable;
+	bool				aquired;
+	int					bufferSize;
+	short				levels;
 };
 class TextureHelper{
 private:
