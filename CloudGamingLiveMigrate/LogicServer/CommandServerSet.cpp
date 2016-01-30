@@ -408,6 +408,11 @@ bool ContextManager::switchCtx(){
 #endif
 	bool ret = false;
 	ContextAndCache * cur_ctx = NULL;
+	while(ctx_buff.getCtxCount()){
+		cur_ctx = ctx_buff.getCtx(0);
+		ctx_buff.remove(cur_ctx);
+		ctx_init.add(cur_ctx);
+	}
 
 	for(int i = 0; i < ctx_init.getCtxCount(); i++){
 		cur_ctx = ctx_init.getCtx(i);
@@ -509,10 +514,7 @@ REMOVAL:
 // add context to init pool, not ready for using
 int ContextManager::addCtx(ContextAndCache * _ctx){
 	int ret = 0;
-	infoRecorder->logError("[ContextManager]: add ctx:%p.\n", _ctx);
-#ifdef ENABLE_MGR_LOG
-	infoRecorder->logTrace("[ContextManager]: add ctx:%p.\n", _ctx);
-#endif
+	infoRecorder->logError("[ContextManager]: add ctx:%p to ctx buffer.\n", _ctx);
 #ifndef ENABLE_HOT_PLUG
 	if(_ctx_cache){
 		// when exist at least one context, the new one should add to init
@@ -529,7 +531,8 @@ int ContextManager::addCtx(ContextAndCache * _ctx){
 #else
 	// assume that every context that added is not ready to render
 	infoRecorder->logTrace("[ContextManager]: after add ctx to init array, current ctx: %p.\n", this->_ctx_cache);
-	ctx_init.add(_ctx);
+	//ctx_init.add(_ctx);
+	ctx_buff.add(_ctx);			// insert to buffer
 #endif
 	ctxCount ++;
 	_ctx->checkFlags();

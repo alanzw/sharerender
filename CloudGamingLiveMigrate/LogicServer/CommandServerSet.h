@@ -321,7 +321,8 @@ public:
 class ContextManager{
 	int ctxCount;   //the count of ctxs in pool;
 	IndexedContextPool ctx_pool;     // hold the context with ready status
-	IndexedContextPool ctx_init;    // hold the new added context
+	IndexedContextPool ctx_init;    // hold the context that do the init job
+	IndexedContextPool ctx_buff;	// hold the new added context which is not insert into the init pool
 	ContextAndCache * _ctx_cache;   // current ContextAndCache, status is READY
 	SmallHash<SOCKET, bool> socketMap;   /// to find whether the socket exist
 	//ContextAndCache * ctx_array[MAX_RENDER_COUNT * 2];   // all ctx is in the array
