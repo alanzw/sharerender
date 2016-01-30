@@ -3,17 +3,44 @@
 int SurfaceHelper::TotalBufferedTextureSize = 0;
 
 TextureHelper::TextureHelper(short _levels, D3DFORMAT format, bool _autogenable /* = false */)
-	: autoGenable(_autogenable), aquired(false), levels(_levels), bufferSize(0), compressed(false){
+	: autoGenable(_autogenable), aquired(false), levels(_levels), bufferSize(0), compression(1){
 		surfaceArray = new SurfaceHelper *[levels];
 		for(int i = 0; i < levels; i++){
 			surfaceArray[i] = NULL;
 		}
 		validLevels = autoGenable ? 1 : levels;
+#if 0
+
 		if(D3DFMT_DXT1 == format || D3DFMT_DXT2 == format ||
 			D3DFMT_DXT3 == format || D3DFMT_DXT4 == format ||
 			D3DFMT_DXT5 == format){
-				compressed = true;
+				compression = 4;
 		}
+#endif
+		char formatStr[100] = {0};
+		switch(format){
+		case D3DFMT_DXT1:
+			strcpy(formatStr, "DXT1");
+			compression = 4;
+			break;
+		case D3DFMT_DXT2:
+			strcpy(formatStr, "DXT2");
+			compression = 4;
+			break;
+		case D3DFMT_DXT3:
+			strcpy(formatStr, "DXT3");
+			compression = 4;
+			break;
+		case D3DFMT_DXT4:
+			strcpy(formatStr, "DXT4");
+			compression = 4;
+			break;
+		case D3DFMT_DXT5:
+			compression = 4;
+			strcpy(formatStr, "DXT5");
+			break;
+		}
+		cg::core::infoRecorder->logError("[TextureHelper]: auto gen:%s, compression:%d, format:%s.\n", autoGenable ? "true": "false", compression, formatStr);
 }
 
 
@@ -53,7 +80,7 @@ SurfaceHelper* TextureHelper::getSurfaceHelper(short level){
 	}
 	if(!surfaceArray[level]){
 		// not created, create one
-		surfaceArray[level] = new SurfaceHelper(level, compressed);
+		surfaceArray[level] = new SurfaceHelper(level, compression);
 	}
 	return surfaceArray[level];
 }
@@ -93,15 +120,15 @@ bool DeviceHelper::checkSupportForAutoGenMipmap(IDirect3DDevice9 *device){
 
 
 //////// for Surface Helper ///////
-SurfaceHelper::SurfaceHelper(short _level, bool _compressed):
+SurfaceHelper::SurfaceHelper(short _level, short _compression):
 	surfaceData(NULL), ptr(NULL), pitch(0), height(0), face(-1), level(_level),
-	aquired(false), type(TEXTURE), realSurfacePtr(NULL), compressed(_compressed)
+	aquired(false), type(TEXTURE), realSurfacePtr(NULL), compression(_compression)
 {
 
 }
-SurfaceHelper::SurfaceHelper(short _level, short _face, bool _compressed):
+SurfaceHelper::SurfaceHelper(short _level, short _face, short _compression):
 	surfaceData(NULL), ptr(NULL), pitch(0), height(0), face(_face), level(_level),
-	aquired(false), type(CUBE_TEXTURE), realSurfacePtr(NULL), compressed(_compressed)
+	aquired(false), type(CUBE_TEXTURE), realSurfacePtr(NULL), compression(_compression)
 {
 
 }
@@ -117,6 +144,7 @@ SurfaceHelper::~SurfaceHelper(){
 	face = -1;
 	level = -1;
 	aquired = false;
+	compression = 1;
 	realSurfacePtr = NULL;
 }
 
@@ -124,8 +152,8 @@ unsigned char * SurfaceHelper::allocateSurfaceBuffer(int _pitch, int _height){
 	
 	pitch = _pitch;
 	height = _height;
-	int divide = compressed ? 4 : 1;
-	int compressedHeight = (height + divide -1) /divide;
+	//int divide = compressed ? 4 : 1;
+	int compressedHeight = (height + compression -1) /compression;
 	if(0 != pitch * height){
 		
 		surfaceData = (unsigned char *)malloc(sizeof(char) *(pitch * compressedHeight+ 100));
@@ -143,8 +171,8 @@ bool SurfaceHelper::copyTextureData(){
 		return false;
 	}
 	D3DLOCK_DISCARD;
-	int devide = compressed ? 4 : 1;
-	int compressedHeight = (height + devide -1)/devide;
+	//int devide = compressed ? 4 : 1;
+	int compressedHeight = (height + compression -1)/compression;
 
 	int copySize = pitch * compressedHeight;
 	cg::core::infoRecorder->logError("[SurfaceHelper]: memcpy, src:%p, dst: %p, size:%d ( pitch:%d x real height:%d).\n", surfaceData, realSurfacePtr, copySize, pitch, compressedHeight);
@@ -160,7 +188,7 @@ bool SurfaceHelper::copyTextureData(){
 }
 
 int SurfaceHelper::getPitchedSize(){
-	int divide = compressed ? 4 : 1;
-	int compressedHeight = (height + divide -1)/divide;
+	//int divide = compressed ? 4 : 1;
+	int compressedHeight = (height + compression -1)/compression;
 	return pitch * compressedHeight;
 }

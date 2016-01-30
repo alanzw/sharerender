@@ -22,6 +22,7 @@ public:
 	char* ram_buffer;   // each context has a buffer
 
 	bool isFirst;
+	bool readed_;
 	int max_vb;
 
 	DWORD Usage;

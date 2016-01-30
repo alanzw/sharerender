@@ -76,7 +76,7 @@ int WrapperDirect3DCubeTexture9::sendUpdate(void *ctx){
 #endif
 
 WrapperDirect3DCubeTexture9::WrapperDirect3DCubeTexture9(IDirect3DCubeTexture9* ptr, int _id): m_cube_tex(ptr), IdentifierBase(_id) {
-	infoRecorder->logTrace("WrapperDirect3DCubeTexture9::WrapperDirect3DCubeTexture9() called\n");
+	infoRecorder->logTrace("WrapperDirect3DCubeTexture9::WrapperDirect3DCubeTexture9() called, base_tex:0x%p, WrapperedTex:0x%p\n", ptr, this);
 
 	m_list.AddMember(ptr, this);
 	creationFlag = 0;

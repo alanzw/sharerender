@@ -96,6 +96,7 @@ WrapperDirect3DVertexBuffer9::WrapperDirect3DVertexBuffer9(IDirect3DVertexBuffer
 	cache_buffer = new char[_length];
 	memset(cache_buffer, 0, _length);
 	ram_buffer = new char[_length];
+	memset(ram_buffer, 0, _length);
 	m_LockData.pRAMBuffer = ram_buffer;
 	isFirst = true;
 	decl = NULL;
@@ -118,6 +119,7 @@ WrapperDirect3DVertexBuffer9::WrapperDirect3DVertexBuffer9(IDirect3DVertexBuffer
 	m_list.AddMember(ptr, this);
 	max_vb = 0;
 	creationFlag= 0;
+	m_LockData.pRAMBuffer = NULL;
 	//updateFlag = 0x8fffffff;
 	updateFlag = 0;
 	stable = false;
@@ -136,7 +138,7 @@ WrapperDirect3DVertexBuffer9* WrapperDirect3DVertexBuffer9::GetWrapperVertexBuff
 	WrapperDirect3DVertexBuffer9* ret = (WrapperDirect3DVertexBuffer9*)( m_list.GetDataPtr( ptr ) );
 #ifdef ENABLE_VERTEX_BUFFER_LOG
 	if(ret == NULL) {
-		infoRecorder->logTrace("WrapperDirect3DVertexBuffer9::GetWrapperVertexBuffer9(), ret is NULL\n");
+		infoRecorder->logError("WrapperDirect3DVertexBuffer9::GetWrapperVertexBuffer9(), ret is NULL\n");
 	}
 #endif
 	return ret;
@@ -144,9 +146,7 @@ WrapperDirect3DVertexBuffer9* WrapperDirect3DVertexBuffer9::GetWrapperVertexBuff
 
 /*** IUnknown methods ***/
 STDMETHODIMP WrapperDirect3DVertexBuffer9::QueryInterface(THIS_ REFIID riid, void** ppvObj) {
-#ifdef ENABLE_VERTEX_BUFFER_LOG
-	infoRecorder->logTrace("WrapperDirect3DVertexBuffer9::QueryInterface() called, base_vb=%d, this=%d, ppvObj=%d\n", m_vb, this, *ppvObj);
-#endif
+
 	HRESULT hr = m_vb->QueryInterface(riid, ppvObj);
 	*ppvObj = this;
 #ifdef ENABLE_VERTEX_BUFFER_LOG
@@ -167,7 +167,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DVertexBuffer9::Release(THIS) {
 #endif
 	refCount--;
 	if(refCount <= 0){
-		infoRecorder->logError("[WrapperDirect3DVertexBuffer9]: m_vb ref:%d, ref count:%d.\n", refCount, hr);
+		infoRecorder->logError("[WrapperDirect3DVertexBuffer9]: m_vb id:%d ref:%d, ref count:%d.\n",id, refCount, hr);
 		//m_list.DeleteMember(m_vb);
 	}
 	return hr;
@@ -235,10 +235,10 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Lock(THIS_ UINT OffsetToLock,UINT Siz
 #else   // BUFFER_UNLOCK_UPDATE
 
 #ifndef USE_MEM_VERTEX_BUFFER
-
 	void * tmp = NULL;
 	// lock the whole buffer
-	HRESULT hr = m_vb->Lock(0, 0, &tmp, Flags);
+	HRESULT hr = m_vb->Lock(OffsetToLock, SizeToLock, &tmp, Flags);
+
 	m_LockData.OffsetToLock = OffsetToLock;
 	m_LockData.SizeToLock = SizeToLock;
 	m_LockData.Flags = Flags;
@@ -246,16 +246,14 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Lock(THIS_ UINT OffsetToLock,UINT Siz
 
 	*ppbData = (void *)(((char *)tmp) + OffsetToLock);
 	m_LockData.pVideoBuffer = tmp;   // to the start of the entire buffer
+
 #ifdef MULTI_CLIENTS
 	csSet->setChangedToAll(updateFlag);
 #endif // MULTI_CLIENTS
 	readed_ = false;
 	return hr;
 #else  // USE_MEM_VERTEX_BUFFER
-	if(!ram_buffer){
-		ram_buffer = (char *)malloc(sizeof(char) *Length);
-		m_LockData.pRAMBuffer = ram_buffer;
-	}
+	
 	// store the lock information
 	m_LockData.OffsetToLock = OffsetToLock;
 	m_LockData.SizeToLock = SizeToLock;
@@ -282,9 +280,10 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Lock(THIS_ UINT OffsetToLock,UINT Siz
 STDMETHODIMP WrapperDirect3DVertexBuffer9::Unlock(THIS) {
 #ifdef ENABLE_VERTEX_BUFFER_LOG
 	infoRecorder->logTrace("WrapperDirect3DVertexBuffer9::Unlock(), id:%d, UnlockSize=%d Bytes, total len:%d, start:%d.\n", this->id,m_LockData.SizeToLock, Length, m_LockData.OffsetToLock);
+
 #endif  //ENABLE_VERTEX_BUFFER_LOG
 	if(isFirst){
-		memset(cache_buffer, 0, Length);
+		//memset(cache_buffer, 0, Length);
 		isFirst = false;
 	}
 	// update the vertex buffer
@@ -297,19 +296,15 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Unlock(THIS) {
 	// the buffer is updated, read data to ram_buffer
 	int last = 0, cnt = 0, c_len = 0, size = 0, base = 0;
 #ifndef USE_MEM_VERTEX_BUFFER
-
 	// copy from video buffer
-	memcpy(ram_buffer, (char *)m_LockData.pVideoBuffer + m_LockData.OffsetToLock, m_LockData.SizeToLock);
+	memcpy(ram_buffer + m_LockData.OffsetToLock, (char *)m_LockData.pVideoBuffer , m_LockData.SizeToLock);
+
 #else   // USE_MEM_VERTEX_BUFFER
 	// copy to video buffer
 	memcpy(m_LockData.pVideoBuffer, (char *)m_LockData.pRAMBuffer + m_LockData.OffsetToLock, m_LockData.SizeToLock);
 
-
 #endif  // USE_MEM_VERTEX_BUFFER
 	base = m_LockData.OffsetToLock;
-
-	//csSet->checkObj(dynamic_cast<IdentifierBase *>(this));
-	//csSet->checkCreation(dynamic_cast<IdentifierBase *>(this));
 
 	csSet->beginCommand(VertexBufferUnlock_Opcode, id);
 	csSet->writeUInt(m_LockData.OffsetToLock);
@@ -318,13 +313,13 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Unlock(THIS) {
 	csSet->writeInt(CACHE_MODE_DIFF);
 
 	for(unsigned int i = 0; i< m_LockData.SizeToLock; ++i){
-		if(cache_buffer[base + i] ^ *((char *)(m_LockData.pRAMBuffer) + i) ){
+		if(cache_buffer[base + i] ^ *((char *)(m_LockData.pRAMBuffer) + m_LockData.OffsetToLock + i) ){
 			int d = i - last;
 			csSet->writeInt(d);
 			last = i;
-			csSet->writeChar(*((char *)(m_LockData.pRAMBuffer) + i));
+			csSet->writeChar(*((char *)(m_LockData.pRAMBuffer) + m_LockData.OffsetToLock + i));
 			cnt++;
-			cache_buffer[base + i] = *((char *)(m_LockData.pRAMBuffer) + i);
+			cache_buffer[base + i] = *((char *)(m_LockData.pRAMBuffer) + m_LockData.OffsetToLock + i);
 		}
 	}
 	int neg = ( 1 << 28 ) - 1;
@@ -396,6 +391,7 @@ int WrapperDirect3DVertexBuffer9::PrepareVertexBuffer(ContextAndCache *ctx){
 	ctx->write_int(CACHE_MODE_COPY);
 	if(isFirst){
 		ctx->write_byte_arr((char *)ram_buffer, Length);
+		memcpy(cache_buffer, ram_buffer, Length);
 		ctx->resetChanged(updateFlag);
 	}
 	else{
@@ -429,13 +425,13 @@ int WrapperDirect3DVertexBuffer9::UpdateVertexBuffer(ContextAndCache * ctx){
 	ctx->write_int(CACHE_MODE_DIFF);
 
 	for(int i = 0; i< m_LockData.SizeToLock; ++i){
-		if(cache_buffer[base + i] ^ *((char *)(m_LockData.pRAMBuffer) + i) ){
+		if(cache_buffer[base + i] ^ *((char *)(m_LockData.pRAMBuffer) + base + i) ){
 			int d = i - last;
 			last = i;
 			ctx->write_int(d);
-			ctx->write_char(*((char *)(m_LockData.pRAMBuffer) + i));
+			ctx->write_char(*((char *)(m_LockData.pRAMBuffer)+ base + i));
 			cnt++;
-			cache_buffer[base + i] = *((char *)(m_LockData.pRAMBuffer) + i);
+			cache_buffer[base + i] = *((char *)(m_LockData.pRAMBuffer)+base + i);
 		}
 	}
 	int neg = ( 1 << 28 ) - 1;

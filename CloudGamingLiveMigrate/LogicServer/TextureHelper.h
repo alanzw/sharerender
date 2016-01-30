@@ -26,7 +26,7 @@ private:
 	short				face;
 	short				level;				// in case the surface belongs to a cube texture
 	bool				aquired;
-	bool				compressed;
+	short				compression;
 	TEXTURE_TYPE		type;
 	void *				realSurfacePtr;		// the real ptr for surface content
 	static int			TotalBufferedTextureSize;
@@ -40,8 +40,8 @@ public:
 	inline void			setLockFlags(DWORD flags){lockFlags = flags;}
 	inline DWORD		getLockFlags(){ return lockFlags; }
 
-	SurfaceHelper(short level, bool _compressed = false);
-	SurfaceHelper(short level, short face, bool _compressed = false);
+	SurfaceHelper(short level, short _compression);
+	SurfaceHelper(short level, short face, short _compression);
 	virtual ~SurfaceHelper();
 
 	static int			GetBufferTextureSize(){ return TotalBufferedTextureSize; }
@@ -70,10 +70,10 @@ private:
 	short				levels;				// the levels of the texture
 	SurfaceHelper **	surfaceArray;
 	short				validLevels;		// how many levels is in use
-	bool				compressed;			// DXT1-DXT5
+	short				compression;			// DXT1-DXT5
 
 public:
-	inline bool			isCompressed(){ return compressed; }
+	inline short		getCompression(){ return compression; }
 	inline bool			isAutoGenable(){ return autoGenable; }
 	inline bool			isAquired(int i){ return surfaceArray[i] && surfaceArray[i]->isAquired(); }
 

@@ -224,10 +224,11 @@ STDMETHODIMP WrapperDirect3D9::GetDeviceCaps(THIS_ UINT Adapter,D3DDEVTYPE Devic
 	infoRecorder->logTrace("WrapperDirect3D9::GetDeviceCaps called! adapetor:%d, device type:%d\n", Adapter, DeviceType);
 #endif
 	// limit the device capabilities
-	
 	HRESULT hr = m_d3d->GetDeviceCaps(Adapter, DeviceType, pCaps);
+#if 0
 	pCaps->MaxTextureHeight = pCaps->MaxTextureHeight > 1024 ? 1024 : pCaps->MaxTextureHeight;
 	pCaps->MaxTextureWidth = pCaps->MaxTextureWidth > 1024 ? 1024 : pCaps->MaxTextureWidth;
+#endif
 	infoRecorder->logError("[WrapperDirect3d]: max texture with:%d, height:%d.\n", pCaps->MaxTextureWidth, pCaps->MaxTextureHeight);
 	return hr;//m_d3d->GetDeviceCaps(Adapter, DeviceType, pCaps);
 }

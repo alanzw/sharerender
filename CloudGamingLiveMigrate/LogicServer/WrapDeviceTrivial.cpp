@@ -136,8 +136,13 @@ STDMETHODIMP WrapperDirect3DDevice9::GetDeviceCaps(THIS_ D3DCAPS9* pCaps) {
 #ifdef ENBALE_DEVICE_LOG
 	infoRecorder->logTrace("WrapperDirect3DDevice9::GetDeviceCaps() called\n");
 #endif
+	HRESULT hr = m_device->GetDeviceCaps(pCaps);
+#if 0
+	pCaps->MaxTextureHeight = pCaps->MaxTextureHeight > 1024 ? 1024 : pCaps->MaxTextureHeight;
+	pCaps->MaxTextureWidth = pCaps->MaxTextureWidth > 1024 ? 1024 : pCaps->MaxTextureWidth;
+#endif
 	infoRecorder->logTrace("WrapperDirect3DDevice9::GetDeviceCaps() called, max height: %d, max width:%d\n", pCaps->MaxTextureHeight, pCaps->MaxTextureWidth);
-	return m_device->GetDeviceCaps(pCaps);
+	return hr;
 }
 STDMETHODIMP WrapperDirect3DDevice9::GetDisplayMode(THIS_ UINT iSwapChain,D3DDISPLAYMODE* pMode) { 
 #ifdef ENBALE_DEVICE_LOG
@@ -622,10 +627,8 @@ STDMETHODIMP_(void) WrapperDirect3DDevice9::SetGammaRamp(THIS_ UINT iSwapChain,D
 STDMETHODIMP_(void) WrapperDirect3DDevice9::GetGammaRamp(THIS_ UINT iSwapChain,D3DGAMMARAMP* pRamp) {return m_device->GetGammaRamp(iSwapChain, pRamp);}
 
 STDMETHODIMP WrapperDirect3DDevice9::CreateTexture(THIS_ UINT Width,UINT Height,UINT Levels,DWORD Usage,D3DFORMAT Format,D3DPOOL Pool,IDirect3DTexture9** ppTexture,HANDLE* pSharedHandle) {
-#ifdef ENBALE_DEVICE_LOG
-	infoRecorder->logTrace("WrapperDirect3DDevice9::CreateTexture(), width=%d, height=%d, Usage=%d, Format:%d, Pool:%d, id:%d, device id:%d, ", Width, Height, Usage, Format, Pool, WrapperDirect3DTexture9::ins_count, id);
-#endif
-	infoRecorder->logError("WrapperDirect3DDevice9::CreateTexture(), width=%d, height=%d, Usage=%d, Format:%d, Pool:%d, id:%d, device id:%d, levels:%d \n", Width, Height, Usage, Format, Pool, WrapperDirect3DTexture9::ins_count, id, Levels);
+
+	infoRecorder->logError("WrapperDirect3DDevice9::CreateTexture(), width=%d, height=%d, Usage=%d, Format:%d, Pool:%d, id:%d, device id:%d, levels:%d\n", Width, Height, Usage, Format, Pool, WrapperDirect3DTexture9::ins_count, id, Levels);
 	if(Height > 1024){
 		infoRecorder->logError("WrapperDirect3DDevice9::CreateTexture(), height is > 1024, may error.\n ",Levels, Width, Height, Usage, Format, Pool, WrapperDirect3DTexture9::ins_count, id);
 
@@ -680,22 +683,20 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateTexture(THIS_ UINT Width,UINT Height,
 #ifdef ENBALE_DEVICE_LOG
 		if(Usage & D3DUSAGE_AUTOGENMIPMAP){
 			// auto gen mipmap
-			infoRecorder->logError("[Device]: id:%d is AUTOGENMIPMAP.\n", wt->GetID());
+			infoRecorder->logError("[Device]: id:%d is AUTOGENMIPMAP.\n", wt->getId());
 		}
 		if(Usage & D3DUSAGE_DEPTHSTENCIL){
 			// depth stencil
-			infoRecorder->logError("[Device]: id:%d is DEPTHSTENCIL.\n", wt->GetID());
+			infoRecorder->logError("[Device]: id:%d is DEPTHSTENCIL.\n", wt->getId());
 		}
 		if(Usage & D3DUSAGE_RENDERTARGET){
 			// render target
-			infoRecorder->logError("[Device]: id:%d is RENDERTARGET.\n", wt->GetID());
+			infoRecorder->logError("[Device]: id:%d is RENDERTARGET.\n", wt->getId());
 		}
 #endif
 	}
 	else {
-#ifdef ENBALE_DEVICE_LOG
-		infoRecorder->logError("WrapperDirect3DDevice9::CreateTexture() failed\n");
-#endif
+
 		infoRecorder->logError("WrapperDirect3DDevice9::CreateTexture() failed for %d ", WrapperDirect3DTexture9::ins_count);
 		switch(hr){
 		case D3DERR_INVALIDCALL:
@@ -823,7 +824,6 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateVertexBuffer(THIS_ UINT Length,DWORD 
 	HRESULT hr = m_device->CreateVertexBuffer(Length, Usage, FVF, Pool, &base_vb, pSharedHandle);
 
 	WrapperDirect3DVertexBuffer9 * wvb = NULL;
-	D3DLOCK_NOSYSLOCK;
 	if(SUCCEEDED(hr)) {
 		wvb = new WrapperDirect3DVertexBuffer9(base_vb, WrapperDirect3DVertexBuffer9::ins_count++, Length);
 		wvb->Usage = Usage;
@@ -907,7 +907,7 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateIndexBuffer(THIS_ UINT Length,DWORD U
 		}
 		else {
 
-			infoRecorder->logTrace("IndexBuffer id=%d, length=%d, ", ((WrapperDirect3DIndexBuffer9*)*ppIndexBuffer)->getID(), ((WrapperDirect3DIndexBuffer9*)*ppIndexBuffer)->GetLength());
+			infoRecorder->logTrace("IndexBuffer id=%d, length=%d, ", ((WrapperDirect3DIndexBuffer9*)*ppIndexBuffer)->getId(), ((WrapperDirect3DIndexBuffer9*)*ppIndexBuffer)->GetLength());
 
 		}
 #endif
@@ -1047,7 +1047,7 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateDepthStencilSurface(THIS_ UINT Width,
 	csSet->setCreation(ws->creationFlag);
 	ws->setDeviceID(id);
 #ifdef ENBALE_DEVICE_LOG
-	infoRecorder->logTrace("with id:%d.\n", ws->GetID());
+	infoRecorder->logTrace("with id:%d.\n", ws->getId());
 #endif
 #endif
 	*ppSurface = dynamic_cast<IDirect3DSurface9*>(ws);
@@ -1086,7 +1086,7 @@ STDMETHODIMP WrapperDirect3DDevice9::GetRenderTargetData(THIS_ IDirect3DSurface9
 	src = (WrapperDirect3DSurface9 *)pRenderTarget;
 	dst = (WrapperDirect3DSurface9 *)pDestSurface;
 #ifdef ENBALE_DEVICE_LOG
-	infoRecorder->logTrace("WrapperDirect3DSurface::getRenderTargetData called! src id:%d, dst id:%d, src IDirect3DSurface:%d, dst IDirect3DSurface:%d\n", src->GetID(), dst->GetID(), src->GetSurface9(), dst->GetSurface9());
+	infoRecorder->logTrace("WrapperDirect3DSurface::getRenderTargetData called! src id:%d, dst id:%d, src IDirect3DSurface:%d, dst IDirect3DSurface:%d\n", src->getId(), dst->getId(), src->GetSurface9(), dst->GetSurface9());
 #endif
 
 	//return m_device->GetRenderTargetData(pRenderTarget, pDestSurface);
@@ -1269,7 +1269,7 @@ STDMETHODIMP WrapperDirect3DDevice9::GetRenderTarget(THIS_ DWORD RenderTargetInd
 
 		}else{
 #ifdef ENBALE_DEVICE_LOG
-			infoRecorder->logTrace("with id:%d\n", ws->GetID());
+			infoRecorder->logTrace("with id:%d\n", ws->getId());
 #endif
 			infoRecorder->logError("with id:%d, tex id:%d, level:%d\n", ws->getId(), ws->GetTexId(), ws->GetLevel());
 		}
@@ -1842,11 +1842,10 @@ STDMETHODIMP WrapperDirect3DDevice9::GetTexture(THIS_ DWORD Stage,IDirect3DBaseT
 
 STDMETHODIMP WrapperDirect3DDevice9::SetTexture(THIS_ DWORD Stage,IDirect3DBaseTexture9* pTexture) {
 #ifdef ENBALE_DEVICE_LOG
-	infoRecorder->logTrace("WrapperDirect3DDevice9::SetTexture(), ");
+	infoRecorder->logTrace("WrapperDirect3DDevice9::SetTexture(), pTexture:0x%p\n", pTexture);
 #endif
 
 	if(pTexture == NULL) {
-
 #ifndef MULTI_CLIENTS
 		cs.begin_command(SetTexture_Opcode, this->id);
 		cs.write_uint(Stage);
@@ -1867,8 +1866,17 @@ STDMETHODIMP WrapperDirect3DDevice9::SetTexture(THIS_ DWORD Stage,IDirect3DBaseT
 #endif
 		return m_device->SetTexture(Stage, pTexture);
 	}
+	infoRecorder->logError("[WrapperDirect3DDevice9]: to get the texture type, ptr type: %s.\n", typeid(pTexture).name());
 
+#if 0
 	D3DRESOURCETYPE Type = pTexture->GetType();
+#else
+	D3DRESOURCETYPE Type = ((IDirect3DTexture9 *)pTexture)->GetType();
+
+#endif
+
+	infoRecorder->logError("[WrapperDirect3DDevice9]: after get the texture type:%s.\n", Type == D3DRTYPE_TEXTURE ?"Texture" : (Type == D3DRTYPE_CUBETEXTURE ? "CUBE_TEXTURE": "unknown type"));
+
 
 	if(Type == D3DRTYPE_TEXTURE) {
 		WrapperDirect3DTexture9 * wt = (WrapperDirect3DTexture9 *)pTexture;
@@ -2228,7 +2236,7 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateVertexShader(THIS_ CONST DWORD* pFunc
 	wvs->shaderData = (char *)malloc(wvs->shaderLen);
 	memcpy(wvs->shaderData, pFunction, wvs->shaderLen);
 #ifdef ENBALE_DEVICE_LOG
-	infoRecorder->logTrace("id:%d, shader size:%d, function count:%d.\n",wvs->GetID(), wvs->shaderLen, wvs->funCount);
+	infoRecorder->logTrace("id:%d, shader size:%d, function count:%d.\n",wvs->getId(), wvs->shaderLen, wvs->funCount);
 #endif
 
 #endif
@@ -2265,7 +2273,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetVertexShader(THIS_ IDirect3DVertexShader
 		return hh;
 	}
 #ifdef ENBALE_DEVICE_LOG
-	infoRecorder->logTrace("id=%d\n", ((WrapperDirect3DVertexShader9*)pShader)->GetID() );
+	infoRecorder->logTrace("id=%d\n", ((WrapperDirect3DVertexShader9*)pShader)->getId() );
 #endif
 #ifndef MULTI_CLIENTS
 	cs.begin_command(SetVertexShader_Opcode, id);
@@ -2531,7 +2539,7 @@ STDMETHODIMP WrapperDirect3DDevice9::CreatePixelShader(THIS_ CONST DWORD* pFunct
 	wps->pFunc = (char *)malloc(wps->shaderSize);
 	memcpy(wps->pFunc, pFunction, wps->shaderSize);
 #ifdef ENBALE_DEVICE_LOG
-	infoRecorder->logTrace("shader id:%d, size:%d, function count:%d.\n", wps->GetID(), wps->shaderSize, wps->funcCount);
+	infoRecorder->logTrace("shader id:%d, size:%d, function count:%d.\n", wps->getId(), wps->shaderSize, wps->funcCount);
 #endif
 #endif
 
@@ -2587,7 +2595,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetPixelShader(THIS_ IDirect3DPixelShader9*
 		stateRecorder->EndCommand();
 	}
 #ifdef ENBALE_DEVICE_LOG
-	infoRecorder->logTrace("shader id:%d.\n", wps->GetID());
+	infoRecorder->logTrace("shader id:%d.\n", wps->getId());
 #endif
 #endif
 	return m_device->SetPixelShader(((WrapperDirect3DPixelShader9*)pShader)->GetPS9());

@@ -233,7 +233,7 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 				infoRecorder->logTrace("[DllMain]: to create the cmd controller with:%s.\n", cmdLine);
 				cmdCtrl = CmdController::GetCmdCtroller(cmdLine);
 				cmdCtrl->parseCmd();
-				cmdCtrl->setGenVideo();
+				//cmdCtrl->setGenVideo();
 				//cmdCtrl->setEncoderOption(3);
 
 				infoRecorder->logError("[DllMain]: cmd ctrl: %s.\n", cmdCtrl->toString().c_str());
