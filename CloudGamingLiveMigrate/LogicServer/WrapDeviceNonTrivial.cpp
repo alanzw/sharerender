@@ -20,7 +20,7 @@
 #define DELAY_TO_DRAW
 #ifdef MULTI_CLIENTS
 
-#define ENABLE_DEVICE_LOG
+//#define ENABLE_DEVICE_LOG
 
 //#define USE_HELPER_SYNC
 
@@ -387,9 +387,10 @@ STDMETHODIMP WrapperDirect3DDevice9::SetStreamSource(
 #endif
 		return m_device->SetStreamSource(StreamNumber, pStreamData, OffsetInBytes, Stride);
 	}
-
 	WrapperDirect3DVertexBuffer9* wvb = (WrapperDirect3DVertexBuffer9*)pStreamData;
+#ifdef ENABLE_DEVICE_LOG
 	infoRecorder->logError("WrapperDirect3DDevice9::SetStreamSource(), StreamNumber:%d, OffsetInBytes:%d, stride:%d, v_ib:%d.\n", StreamNumber, OffsetInBytes, Stride, wvb->getId());
+#endif
 
 #ifndef USE_MESH
 

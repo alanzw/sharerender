@@ -267,8 +267,8 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Lock(THIS_ UINT OffsetToLock,UINT Siz
 	// lock the video mem as well
 	HRESULT hr = m_vb->Lock(OffsetToLock, SizeToLock, &(m_LockData.pVideoBuffer), Flags);
 #ifdef MULTI_CLIENTS
-	csSet->checkObj(this);
-	csSet->setChangedToAll(updateFlag);
+	
+	//updateFlag = 0x8fffffff;
 #endif // MULTI_CLIENTS
 	return hr;
 
@@ -302,6 +302,12 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Unlock(THIS) {
 #else   // USE_MEM_VERTEX_BUFFER
 	// copy to video buffer
 	memcpy(m_LockData.pVideoBuffer, (char *)m_LockData.pRAMBuffer + m_LockData.OffsetToLock, m_LockData.SizeToLock);
+
+	csSet->checkObj(this);
+	//csSet->setChangedToAll(updateFlag);
+	updateFlag = 0x8fffffff;
+
+
 
 #endif  // USE_MEM_VERTEX_BUFFER
 	base = m_LockData.OffsetToLock;
@@ -440,7 +446,6 @@ int WrapperDirect3DVertexBuffer9::UpdateVertexBuffer(ContextAndCache * ctx){
 
 	// get current command length
 	c_len = ctx->getCommandLength();
-
 
 	if(c_len > m_LockData.SizeToLock){
 		c_len = m_LockData.SizeToLock;

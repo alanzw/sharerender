@@ -274,6 +274,7 @@ STDMETHODIMP WrapperDirect3DIndexBuffer9::Lock(THIS_ UINT OffsetToLock,UINT Size
 #ifdef MULTI_CLIENTS
 	csSet->checkObj(dynamic_cast<IdentifierBase *>(this));
 	csSet->setChangedToAll(updateFlag);
+	//updateFlag = 0x8fffffff;
 #endif // MULTI_CLIENTS
 
 #endif // USE_MEM_INDEX_BUFFER

@@ -122,13 +122,13 @@ bool DeviceHelper::checkSupportForAutoGenMipmap(IDirect3DDevice9 *device){
 //////// for Surface Helper ///////
 SurfaceHelper::SurfaceHelper(short _level, short _compression):
 	surfaceData(NULL), ptr(NULL), pitch(0), height(0), face(-1), level(_level),
-	aquired(false), type(TEXTURE), realSurfacePtr(NULL), compression(_compression)
+	aquired(false), type(TEXTURE), realSurfacePtr(NULL), compression(_compression), updateFlag(0)
 {
 
 }
 SurfaceHelper::SurfaceHelper(short _level, short _face, short _compression):
 	surfaceData(NULL), ptr(NULL), pitch(0), height(0), face(_face), level(_level),
-	aquired(false), type(CUBE_TEXTURE), realSurfacePtr(NULL), compression(_compression)
+	aquired(false), type(CUBE_TEXTURE), realSurfacePtr(NULL), compression(_compression), updateFlag(0)
 {
 
 }
@@ -183,7 +183,7 @@ bool SurfaceHelper::copyTextureData(){
 	}
 #endif
 	realSurfacePtr = NULL;  // reset the surface buffer pointer, because when unlock, the pointer will be invalid.
-
+	updateFlag = 0x8fffffff;
 	return true;
 }
 

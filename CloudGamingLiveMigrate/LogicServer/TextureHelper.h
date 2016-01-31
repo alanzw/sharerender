@@ -32,6 +32,9 @@ private:
 	static int			TotalBufferedTextureSize;
 	DWORD				lockFlags;
 public:
+	unsigned int		updateFlag;
+
+
 	inline unsigned char *getSurfaceData(){ return surfaceData; }
 	inline int			getPitch(){ return pitch; }
 	inline int			getHeight(){ return height; }

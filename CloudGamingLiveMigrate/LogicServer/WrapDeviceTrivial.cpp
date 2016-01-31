@@ -1173,7 +1173,6 @@ STDMETHODIMP WrapperDirect3DDevice9::SetRenderTarget(THIS_ DWORD RenderTargetInd
 	csSet->endCommand();
 #endif
 	
-	infoRecorder->logError("[WrapperDirect3DDevice9]:SetRenderTarget, surface id:%d, parent texture id: %d, level: %d. (parent tex:%p, id:%d)\n",((WrapperDirect3DSurface9*)pRenderTarget)->getId(),sur->GetTexId(), sur->GetLevel(), ws->getParentTexture(), ws->getParentTexture() ? ws->getParentTexture()->getId(): -1);
 #ifdef ENBALE_DEVICE_LOG
 	infoRecorder->logTrace("[WrapperDirect3DDevice9]:SetRenderTarget, surface id:%d, parent texture id: %d, level: %d. (parent tex:%p, id:%d)\n",((WrapperDirect3DSurface9*)pRenderTarget)->getId(),sur->GetTexId(), sur->GetLevel(), ws->getParentTexture(), ws->getParentTexture() ? ws->getParentTexture()->getId(): -1);
 	
@@ -1866,7 +1865,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetTexture(THIS_ DWORD Stage,IDirect3DBaseT
 #endif
 		return m_device->SetTexture(Stage, pTexture);
 	}
-	infoRecorder->logError("[WrapperDirect3DDevice9]: to get the texture type, ptr type: %s.\n", typeid(pTexture).name());
+	//infoRecorder->logError("[WrapperDirect3DDevice9]: to get the texture type, ptr type: %s.\n", typeid(pTexture).name());
 
 #if 0
 	D3DRESOURCETYPE Type = pTexture->GetType();
@@ -1875,7 +1874,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetTexture(THIS_ DWORD Stage,IDirect3DBaseT
 
 #endif
 
-	infoRecorder->logError("[WrapperDirect3DDevice9]: after get the texture type:%s.\n", Type == D3DRTYPE_TEXTURE ?"Texture" : (Type == D3DRTYPE_CUBETEXTURE ? "CUBE_TEXTURE": "unknown type"));
+	//infoRecorder->logError("[WrapperDirect3DDevice9]: after get the texture type:%s.\n", Type == D3DRTYPE_TEXTURE ?"Texture" : (Type == D3DRTYPE_CUBETEXTURE ? "CUBE_TEXTURE": "unknown type"));
 
 
 	if(Type == D3DRTYPE_TEXTURE) {

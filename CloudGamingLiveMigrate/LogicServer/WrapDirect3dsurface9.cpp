@@ -396,6 +396,7 @@ STDMETHODIMP WrapperDirect3DSurface9::LockRect(THIS_ D3DLOCKED_RECT* pLockedRect
 				pLockedRect->pBits = surfaceHelper->getSurfaceData();
 			}
 		}
+		this->getParentTexture()->updateFlag = 0x8fffffff;
 	}
 #endif
 

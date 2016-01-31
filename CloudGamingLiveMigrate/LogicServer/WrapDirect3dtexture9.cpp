@@ -22,7 +22,7 @@ WrapperDirect3DTexture9::WrapperDirect3DTexture9(IDirect3DTexture9* ptr, int _id
 	m_list.AddMember(ptr, this);
 
 	creationFlag = 0;
-	updateFlag = 0x8fffffff;
+	updateFlag = 0; //0x8fffffff;
 	//stable = true;
 	stable = false;   
 	texHelper = NULL;
@@ -84,8 +84,10 @@ int WrapperDirect3DTexture9::checkCreation(void *ctx){
 #endif
 		ret = sendCreation(ctx);
 		cc->setCreation(creationFlag);
+#if 0
 		if(ret = sendUpdate(ctx))
 			cc->resetChanged(updateFlag);
+#endif
 		//ret = 1;
 	}else{
 #ifdef ENABLE_TEXTURE_LOG
@@ -117,7 +119,7 @@ int WrapperDirect3DTexture9::checkUpdate(void *ctx){
 
 int WrapperDirect3DTexture9::sendUpdate(void *ctx){
 #ifdef ENABLE_TEXTURE_LOG
-	infoRecorder->logTrace("[WrapperDirect3DTexture9]: send update for %d.\n", id);
+	infoRecorder->logError("[WrapperDirect3DTexture9]: send update for %d.\n", id);
 #endif
 	int ret = 1;
 	ContextAndCache * c = (ContextAndCache *)ctx;
@@ -322,14 +324,17 @@ HRESULT WrapperDirect3DTexture9::SendTextureData(ContextAndCache *ctx){
 			infoRecorder->logError("[WrapperDirect3DTExture9]: surface helper for %d level:%d is not aquired yet.\n", id, 0);
 			return E_FAIL;
 		}
-		csSet->beginCommand(TransmitTextureData_Opcode, id);
-		csSet->writeUInt(0);
-		csSet->writeUInt(texHelper->isAutoGenable() ? 1: 0);
-		csSet->writeInt(surHelper->getPitchedSize());
-		csSet->writeByteArr((char *)(surHelper->getSurfaceData()), surHelper->getPitchedSize());
-		csSet->endCommand();
-		#ifdef ENABLE_TEXTURE_LOG
-		infoRecorder->logError("[WrapperDirect3DTexture9]; send surface 0, size:%d.\n", surHelper->getPitchedSize());
+		if(ctx->isChanged(surHelper->updateFlag)){
+			csSet->beginCommand(TransmitTextureData_Opcode, id);
+			csSet->writeUInt(0);
+			csSet->writeUInt(texHelper->isAutoGenable() ? 1: 0);
+			csSet->writeInt(surHelper->getPitchedSize());
+			csSet->writeByteArr((char *)(surHelper->getSurfaceData()), surHelper->getPitchedSize());
+			csSet->endCommand();
+#ifdef ENABLE_TEXTURE_LOG
+			infoRecorder->logError("[WrapperDirect3DTexture9]; send surface 0, size:%d, update flag:0x%x.\n", surHelper->getPitchedSize(), surHelper->updateFlag);
+			ctx->resetChanged(surHelper->updateFlag);
+		}
 #endif
 	}
 	else{
@@ -341,15 +346,17 @@ HRESULT WrapperDirect3DTexture9::SendTextureData(ContextAndCache *ctx){
 				infoRecorder->logError("[WrapperDirect3DTExture9]: surface helper for %d level:%d is not aquired yet.\n", id, i);
 				return E_FAIL;
 			}
-			csSet->beginCommand(TransmitTextureData_Opcode, id);
-			csSet->writeUInt(i);
-			csSet->writeUInt(texHelper->isAutoGenable() ? 1: 0);
-			csSet->writeInt(surHelper->getPitchedSize());
-			csSet->writeByteArr((char *)(surHelper->getSurfaceData()), surHelper->getPitchedSize());
-			csSet->endCommand();
-			#ifdef ENABLE_TEXTURE_LOG
-			infoRecorder->logError("[WrapperDirect3DTexture9]; send surface %d, size:%d.\n",i, surHelper->getPitchedSize());
+			if(ctx->isChanged(surHelper->updateFlag)){
+				csSet->beginCommand(TransmitTextureData_Opcode, id);
+				csSet->writeUInt(i);
+				csSet->writeUInt(texHelper->isAutoGenable() ? 1: 0);
+				csSet->writeInt(surHelper->getPitchedSize());
+				csSet->writeByteArr((char *)(surHelper->getSurfaceData()), surHelper->getPitchedSize());
+				csSet->endCommand();
+#ifdef ENABLE_TEXTURE_LOG
+				infoRecorder->logError("[WrapperDirect3DTexture9]; send surface %d, size:%d.\n",i, surHelper->getPitchedSize());	
 #endif
+			}
 		}
 	}
 
@@ -800,7 +807,8 @@ STDMETHODIMP WrapperDirect3DTexture9::LockRect(THIS_ UINT Level, D3DLOCKED_RECT*
 #endif // ENABLE_TEXTURE_LOG
 	//tex_send[id] = false;
 	csSet->checkObj(this);
-	csSet->setChangedToAll(updateFlag);
+	//csSet->setChangedToAll(updateFlag);
+	updateFlag = 0x8fffffff;
 
 	D3DSURFACE_DESC desc;
 	HRESULT hr = m_tex->GetLevelDesc(Level, &desc);

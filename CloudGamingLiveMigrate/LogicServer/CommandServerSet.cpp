@@ -345,9 +345,8 @@ void ContextAndCache::endCommand(CommandRecorder *cr, int force_flush/*= 0*/){
 
 void ContextManager::checkObj(IdentifierBase * obj){
 #ifdef ENABLE_MGR_LOG
-	infoRecorder->logTrace("[ContextManager]: check the object.\n");
-#endif
 	infoRecorder->logError("[ContextManager]: check the object, type:%s, id:%d, frame check flag:0x%x.\n", typeid(*obj).name(), obj->getId(), obj->frameCheckFlag);
+#endif
 	// for current context, check the creation now
 	// QUEUE_CREATE status
 	if(_ctx_cache){
