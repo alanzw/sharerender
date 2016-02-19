@@ -307,8 +307,6 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Unlock(THIS) {
 	//csSet->setChangedToAll(updateFlag);
 	updateFlag = 0x8fffffff;
 
-
-
 #endif  // USE_MEM_VERTEX_BUFFER
 	base = m_LockData.OffsetToLock;
 
