@@ -21,7 +21,6 @@
 #ifdef MULTI_CLIENTS
 
 //#define ENABLE_DEVICE_LOG
-
 //#define USE_HELPER_SYNC
 
 extern StateBlockRecorder * stateRecorder;
@@ -320,11 +319,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetVertexDeclaration(THIS_ IDirect3DVertexD
 #ifdef ENABLE_DEVICE_LOG
 		infoRecorder->logTrace("pDecl is NULL\n");
 #endif
-#ifndef MULTI_CLIENTS
-		cs.begin_command(SetVertexDeclaration_Opcode, id);
-		cs.write_short(-1);
-		cs.end_command();
-#else
+
 		csSet->beginCommand(SetVertexDeclaration_Opcode, id);
 		csSet->writeShort(-1);
 		csSet->endCommand();
@@ -333,7 +328,6 @@ STDMETHODIMP WrapperDirect3DDevice9::SetVertexDeclaration(THIS_ IDirect3DVertexD
 			stateRecorder->WriteShort(-1);
 			stateRecorder->EndCommand();
 		}
-#endif
 		return m_device->SetVertexDeclaration(pDecl);
 	}
 

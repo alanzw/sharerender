@@ -81,7 +81,7 @@ int WrapperDirect3DVertexBuffer9::sendUpdate(void * ctx){
 	ret = UpdateVertexBuffer(c);
 	if(pTimer){
 		unsigned int interval = pTimer->Stop();
-		infoRecorder->logError("[WrapperDirect3DVertexBuffer9]: update vertex buffer %d use %f ms.\n", id, interval * 1000.0 /pTimer->getFreq());
+		//infoRecorder->logError("[WrapperDirect3DVertexBuffer9]: update vertex buffer %d use %f ms.\n", id, interval * 1000.0 /pTimer->getFreq());
 	}
 	return ret;
 }
@@ -280,15 +280,10 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Lock(THIS_ UINT OffsetToLock,UINT Siz
 STDMETHODIMP WrapperDirect3DVertexBuffer9::Unlock(THIS) {
 #ifdef ENABLE_VERTEX_BUFFER_LOG
 	infoRecorder->logTrace("WrapperDirect3DVertexBuffer9::Unlock(), id:%d, UnlockSize=%d Bytes, total len:%d, start:%d.\n", this->id,m_LockData.SizeToLock, Length, m_LockData.OffsetToLock);
-
 #endif  //ENABLE_VERTEX_BUFFER_LOG
-	if(isFirst){
-		//memset(cache_buffer, 0, Length);
-		isFirst = false;
-	}
+	
 	// update the vertex buffer
 #ifdef BUFFER_UNLOCK_UPDATE
-
 	infoRecorder->logError("WrapperDirect3DVertexBuffer9::Unlock(), id:%d, UnlockSize=%d Bytes, total len:%d, start:%d.\n", this->id,m_LockData.SizeToLock, Length, m_LockData.OffsetToLock);
 	if(pTimer){
 		pTimer->Start();
@@ -303,9 +298,8 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Unlock(THIS) {
 	// copy to video buffer
 	memcpy(m_LockData.pVideoBuffer, (char *)m_LockData.pRAMBuffer + m_LockData.OffsetToLock, m_LockData.SizeToLock);
 
-	csSet->checkObj(this);
-	//csSet->setChangedToAll(updateFlag);
 	updateFlag = 0x8fffffff;
+	csSet->checkObj(this);
 
 #endif  // USE_MEM_VERTEX_BUFFER
 	base = m_LockData.OffsetToLock;
@@ -345,7 +339,7 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Unlock(THIS) {
 
 		csSet->writeInt(CACHE_MODE_COPY);
 
-		csSet->writeByteArr((char *)m_LockData.pRAMBuffer, c_len);
+		csSet->writeByteArr(((char *)m_LockData.pRAMBuffer)+m_LockData.OffsetToLock, c_len);
 		csSet->endCommand();
 
 		if(c_len > max_vb){
@@ -386,7 +380,7 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::GetDesc(THIS_ D3DVERTEXBUFFER_DESC *p
 }
 // prepare the vertex buffer
 int WrapperDirect3DVertexBuffer9::PrepareVertexBuffer(ContextAndCache *ctx){
-	infoRecorder->logTrace("[WrapperDirect3DVertexBuffer9]: Prepare vertex buffer for %d.\n", id);
+	infoRecorder->logError("[WrapperDirect3DVertexBuffer9]: Prepare vertex buffer for %d.\n", id);
 	ctx->beginCommand(VertexBufferUnlock_Opcode, getId());
 	ctx->write_uint(0);
 	ctx->write_uint(Length);
@@ -397,6 +391,7 @@ int WrapperDirect3DVertexBuffer9::PrepareVertexBuffer(ContextAndCache *ctx){
 		ctx->write_byte_arr((char *)ram_buffer, Length);
 		memcpy(cache_buffer, ram_buffer, Length);
 		ctx->resetChanged(updateFlag);
+		isFirst = false;
 	}
 	else{
 		ctx->write_byte_arr((char *)cache_buffer, Length); 
@@ -410,14 +405,8 @@ int WrapperDirect3DVertexBuffer9::PrepareVertexBuffer(ContextAndCache *ctx){
 
 int WrapperDirect3DVertexBuffer9::UpdateVertexBuffer(ContextAndCache * ctx){
 #ifdef ENABLE_VERTEX_BUFFER_LOG
-	infoRecorder->logTrace("[WrapperDirect3DVertexBuffer9]: update the vertex buffer.\n");
+	//infoRecorder->logError("[WrapperDirect3DVertexBuffer9]: update the vertex buffer %d, that means data changed after creation but unlock did not happen.\n", id);
 #endif
-	infoRecorder->logError("[WrapperDirect3DVertexBuffer9]: update the vertex buffer %d, that means data chang3ed after creation but unlock didt not happen.\n", id);
-	if(isFirst){
-		//memset(cache_buffer, 0, Length);
-		//isFirst = false;
-		infoRecorder->logError("[WrapperDirect3DVertexBuffer9]: is first is true ? ERROR.\n");
-	}
 
 	int last = 0, cnt = 0, c_len = 0, size = 0;
 	int base = m_LockData.OffsetToLock;
@@ -455,7 +444,7 @@ int WrapperDirect3DVertexBuffer9::UpdateVertexBuffer(ContextAndCache * ctx){
 		ctx->write_uint(m_LockData.Flags);
 
 		ctx->write_int(CACHE_MODE_COPY);
-		ctx->write_byte_arr((char *)m_LockData.pRAMBuffer, c_len);
+		ctx->write_byte_arr(((char *)m_LockData.pRAMBuffer) + m_LockData.OffsetToLock, c_len);
 		ctx->endCommand();
 
 		if(c_len > max_vb){

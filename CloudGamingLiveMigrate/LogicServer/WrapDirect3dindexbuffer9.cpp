@@ -95,15 +95,10 @@ WrapperDirect3DIndexBuffer9::WrapperDirect3DIndexBuffer9(IDirect3DIndexBuffer9* 
 #endif
 	cache_buffer = new char[_length];
 	memset(cache_buffer, 0, _length);
-#ifndef MULTI_CLIENTS
-
-	ram_buffer = new char[_length];
-#else
 	ram_buffer = new char[_length];
 	memset(ram_buffer, 0, _length);
 	m_LockData.pRAMBuffer = ram_buffer;
-	//ram_buffer = NULL;
-#endif
+
 	isFirst = true;
 	m_list.AddMember(ptr, this);
 	creationFlag = 0;
@@ -223,7 +218,6 @@ STDMETHODIMP WrapperDirect3DIndexBuffer9::Lock(THIS_ UINT OffsetToLock,UINT Size
 	
 #ifndef BUFFER_UNLOCK_UPDATE
 	void * tmp = NULL;
-
 	HRESULT hr = m_ib->Lock(OffsetToLock, SizeToLock, &tmp, Flags);
 
 	m_LockData.OffsetToLock = OffsetToLock;
@@ -271,16 +265,13 @@ STDMETHODIMP WrapperDirect3DIndexBuffer9::Lock(THIS_ UINT OffsetToLock,UINT Size
 
 	// lock the video mem as well
 	HRESULT hr = m_ib->Lock(OffsetToLock, SizeToLock, &(m_LockData.pVideoBuffer), Flags);
-#ifdef MULTI_CLIENTS
-	csSet->checkObj(dynamic_cast<IdentifierBase *>(this));
-	csSet->setChangedToAll(updateFlag);
+	//csSet->checkObj(dynamic_cast<IdentifierBase *>(this));
+	//csSet->setChangedToAll(updateFlag);
 	//updateFlag = 0x8fffffff;
-#endif // MULTI_CLIENTS
 
 #endif // USE_MEM_INDEX_BUFFER
 
 #endif  // BUFFER_UNLOCK_UPDATE
-
 
 	return hr;
 }
@@ -290,9 +281,7 @@ STDMETHODIMP WrapperDirect3DIndexBuffer9::Unlock(THIS) {
 	infoRecorder->logTrace("WrapperDirect3DIndexBuffer9::Unlock(),id:%d, UnlockSize=%d Bytes, total len:%d, start:%d.\n",id, m_LockData.SizeToLock, length, m_LockData.OffsetToLock);
 
 #endif
-	if(isFirst) {
-		isFirst = false;
-	}
+
 	if(pTimer){
 		pTimer->Start();
 	}
@@ -306,6 +295,9 @@ STDMETHODIMP WrapperDirect3DIndexBuffer9::Unlock(THIS) {
 #endif  // USE_MEM_INDEX_BUFFER
 
 	base = m_LockData.OffsetToLock;
+	updateFlag = 0x8fffffff;
+	csSet->checkObj(this);
+	
 
 	csSet->beginCommand(IndexBufferUnlock_Opcode, id);
 	csSet->writeUInt(m_LockData.OffsetToLock);
@@ -342,7 +334,7 @@ STDMETHODIMP WrapperDirect3DIndexBuffer9::Unlock(THIS) {
 
 		csSet->writeInt(CACHE_MODE_COPY);
 		csSet->writeChar(stride);
-		csSet->writeByteArr((char *)m_LockData.pRAMBuffer, c_len);
+		csSet->writeByteArr((char *)m_LockData.pRAMBuffer + m_LockData.OffsetToLock, c_len);
 		csSet->endCommand();
 
 		if(c_len > max_ib){
@@ -389,6 +381,7 @@ int WrapperDirect3DIndexBuffer9::PrepareIndexBuffer(ContextAndCache *ctx){
 		ctx->write_byte_arr(ram_buffer, length);
 		memcpy(cache_buffer, ram_buffer, length);
 		ctx->resetChanged(updateFlag);
+		isFirst = false;
 	}
 	else{
 		// the cache_buffer stores the last updated data, no change to update flag
@@ -447,7 +440,7 @@ int WrapperDirect3DIndexBuffer9::UpdateIndexBuffer(ContextAndCache * ctx) {
 
 		ctx->write_int(CACHE_MODE_COPY);
 		ctx->write_char(stride);
-		ctx->write_byte_arr((char *)m_LockData.pRAMBuffer, c_len);
+		ctx->write_byte_arr((char *)m_LockData.pRAMBuffer + m_LockData.OffsetToLock, c_len);
 		ctx->endCommand();
 		if(c_len > max_ib){
 			max_ib = c_len;

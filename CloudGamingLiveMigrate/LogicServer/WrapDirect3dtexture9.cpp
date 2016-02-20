@@ -72,10 +72,10 @@ int WrapperDirect3DTexture9::sendCreation(void *ctx){
 
 int WrapperDirect3DTexture9::checkCreation(void *ctx){
 #ifdef ENABLE_TEXTURE_LOG
-	infoRecorder->logError("[WrapperDirect3DTexture9]: call check creation, tex id:%d creation flag:%x\n", id, creationFlag);
+	//infoRecorder->logError("[WrapperDirect3DTexture9]: call check creation, tex id:%d creation flag:%x\n", id, creationFlag);
 #endif
 	ContextAndCache * cc = (ContextAndCache *)ctx;
-	int ret = 1;
+	int ret = 0;
 	//////////////
 
 	if(!cc->isCreated(creationFlag)){
@@ -310,6 +310,7 @@ HRESULT WrapperDirect3DTexture9::SendTextureData(ContextAndCache *ctx){
 
 #ifdef ENABLE_TEXTURE_LOG
 	infoRecorder->logError("[WrapperDirect3DTexture9]: send texture data for %d.\n", id);
+
 #endif
 	SurfaceHelper * surHelper = NULL;
 	if(!texHelper || Usage & D3DUSAGE_RENDERTARGET){
@@ -695,17 +696,11 @@ STDMETHODIMP WrapperDirect3DTexture9::SetAutoGenFilterType(THIS_ D3DTEXTUREFILTE
 	infoRecorder->logError("WrapperDirect3DTexture9::SetAutoGenFilterType() called\n");
 #endif
 
-#ifndef MULTI_CLIENTS
-	cs.begin_command(TextureSetAutoGenFilterType_Opcode, id);
-	cs.write_uint(FilterType);
-	cs.end_command();
-#else
 	csSet->checkObj(this);
 
 	csSet->beginCommand(TextureSetAutoGenFilterType_Opcode, id);
 	csSet->writeUInt(FilterType);
 	csSet->endCommand();
-#endif
 
 	return m_tex->SetAutoGenFilterType(FilterType);
 }
@@ -806,9 +801,9 @@ STDMETHODIMP WrapperDirect3DTexture9::LockRect(THIS_ UINT Level, D3DLOCKED_RECT*
 	infoRecorder->logError("WrapperDirect3DTexture9:LockRect(), id:%d, level:%d, rect:%p.\n", id, Level, pRect);
 #endif // ENABLE_TEXTURE_LOG
 	//tex_send[id] = false;
-	csSet->checkObj(this);
+	//csSet->checkObj(this);
 	//csSet->setChangedToAll(updateFlag);
-	updateFlag = 0x8fffffff;
+	//updateFlag = 0x8fffffff;
 
 	D3DSURFACE_DESC desc;
 	HRESULT hr = m_tex->GetLevelDesc(Level, &desc);
@@ -881,6 +876,9 @@ STDMETHODIMP WrapperDirect3DTexture9::UnlockRect(THIS_ UINT Level) {
 		bufferSize = texHelper->getBufferSize();
 	}
 #endif
+	updateFlag = 0x8fffffff;
+	//csSet->checkObj(this);
+
 	HRESULT hr = m_tex->UnlockRect(Level);
 	return hr;
 }
