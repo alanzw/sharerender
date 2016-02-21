@@ -349,7 +349,7 @@ namespace cg{
 			Compressor::lzo_decode(buffer->com_buffer_ + 4, total_len - 4, buffer->get_buffer() + 4, out_len);
 
 			buffer->go_back(buffer->get_buffer() + 4);
-			//cg::core::infoRecorder->logTrace("[Network]: recv len:%d, org total len:%d.\n",total_len, out_len + 4);
+			cg::core::infoRecorder->logTrace("[Network]: recv len:%d, org total len:%d.\n",total_len, out_len + 4);
 			return out_len + 4;
 
 #endif   // BLOCKING_NETWORK

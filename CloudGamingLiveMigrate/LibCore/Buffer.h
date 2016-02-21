@@ -37,6 +37,7 @@ namespace cg{
 			USHORT read_ushort();
 			float read_float();
 			void read_byte_arr(char* dst, int length);
+			//void read_large_byte_arr(char * dst, int length);
 
 
 			void write_int(int);
@@ -47,6 +48,7 @@ namespace cg{
 			void write_ushort(USHORT);
 			void write_float(float);
 			void write_byte_arr(char* src, int length);
+			//void write_large_byte_arr(char * src, int length);
 			
 			char* com_buffer_;
 			char* buffer_;

@@ -1392,7 +1392,11 @@ HRESULT FakedTransmitTextureData(RenderChannel * rch){
 	D3DLOCKED_RECT rect;
 	hr = tex->GetTex9()->GetSurfaceLevel(level, &desc);
 	hr = desc->LockRect(&rect, NULL , 0);
+#if 0
 	memcpy(rect.pBits, rch->cc->get_cur_ptr(totalSize), totalSize);
+#else
+	rch->cc->recv_packed_byte_arr((char *)rect.pBits, totalSize);
+#endif
 	desc->UnlockRect();
 	desc->Release();
 	desc = NULL;

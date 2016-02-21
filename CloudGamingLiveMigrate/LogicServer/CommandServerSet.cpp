@@ -167,6 +167,57 @@ void ContextAndCache::pushUpdate(IdentifierBase * obj){
 	taskQueue->add(obj);
 }
 
+void ContextAndCache::write_packed_byte_arr(char * src, int length){
+	// flush the existing commands
+	int prefix_size = 5; // D + IDX + EOF + len(2)
+
+	//if(get_size() + 5 + length >= size_limit_){
+		if(func_count_ && flush() <= 0){
+			infoRecorder->logError("[ContextAndCache]: before write packed byte arr, len <= 0.\n");
+		}
+	//}
+	// packet the array data
+	int to_send = 0, remain = length;
+	short len = 0;
+	unsigned char D = 'D';
+	unsigned short idx = 0;
+	unsigned char endFlag = '0';
+	int send_count = 0;
+	clear();
+
+	//unsigned char package_count = (length + size_limit_ - 1) / size_limit_;
+	while(remain > 0){
+		if(remain <= size_limit_){
+			to_send = remain;
+			endFlag = '1';
+		}
+		else{
+			to_send = size_limit_;
+			endFlag = '0';
+		}
+		//to_send = remain > size_limit_ ? size_limit_ : remain;
+
+		write_uchar(D);
+		write_uchar(endFlag);
+		write_ushort(idx++);
+		write_short(to_send);
+		write_byte_arr(src, to_send);
+
+		infoRecorder->logError("[ContextAndCache]: wite_packed_byte_arr, D:%c, end flag:%c, idx:%d, data len:%d.\n", D, endFlag, idx, to_send);
+		send_packet(this);
+
+		//flush();
+		clear();   // reset the pointer to begin
+		src += to_send;
+		send_count+= to_send;
+		remain -= size_limit_;
+	}
+	infoRecorder->logError("[ContextAndCache]: write_packed_byte_arr, total send:%d.\n", send_count);
+	// unlock the context
+	get_cur_ptr(2);
+	unlock();
+}
+
 void ContextAndCache::write_vec(int op_code, float * vec, int size, CommandRecorder* cr_){
 #ifdef USE_CACHE
 	int hit_id = -1, rep_id = -1;
@@ -382,13 +433,12 @@ void ContextManager::checkCreation(IdentifierBase * obj){
 	if(_ctx_cache){
 		_ctx_cache->checkObj(obj);
 	}
-	if(obj->stable){
 		ContextAndCache * otherCtx = NULL; //ctx_init.getNextCtx();
 		// ERROR
 		for(int j = 0; j < ctx_init.getCtxCount(); j++){
 			otherCtx = ctx_init.getCtx(j);
+			
 		}
-	}
 }
 
 void ContextManager::pushSync(IdentifierBase * obj){

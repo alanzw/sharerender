@@ -164,6 +164,13 @@ DWORD TaskQueue::QueueProc(LPVOID param){
 			createTimes = 0;
 			updateTimes = 0;
 			timeCounter = 0;
+
+#if 0
+			static bool tobreak = true;
+			if(tobreak){
+				DebugBreak();
+			}
+#endif
 		}
 
 		inline bool TaskQueue::isDone(){

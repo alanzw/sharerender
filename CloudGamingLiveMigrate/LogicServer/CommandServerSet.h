@@ -167,6 +167,8 @@ public:
 		else
 			return false;
 	}
+
+	void write_packed_byte_arr(char * src, int length);
 };
 
 // the empty context is for standalone use or test the context build time
@@ -481,6 +483,10 @@ public:
 		if(_ctx_cache)
 		writeByteArr(src, length, _ctx_cache);
 	}
+	inline void		writePackedByteArr(char *src, int len){
+		if(_ctx_cache)
+			writePackedByteArr(src, len, _ctx_cache);
+	}
 	inline void		writeVec(int op_code, float * vec, int size = 16){
 		if(_ctx_cache)
 		writeVec(op_code, vec, _ctx_cache, size);
@@ -620,6 +626,9 @@ private:
 		ctx->write_float(data);
 	}
 	inline void			writeByteArr(char * src, int length, ContextAndCache *ctx){ ctx->write_byte_arr(src, length); }
+	inline void			writePackedByteArr(char *src, int len, ContextAndCache *ctx){
+		ctx->write_packed_byte_arr(src, len); }
+
 	inline void			writeVec(int op_code, float * vec, ContextAndCache * ctx, int size = 16){ ctx->write_vec(op_code, vec, size,  cr_); }
 	inline void			shutDown(ContextAndCache *ctx){ ctx->shutDown(cr_); }
 	inline int			getCommandLength(ContextAndCache *ctx){ return ctx->getCommandLength(); }
@@ -728,6 +737,7 @@ public:
 	inline void		writeUShort(USHORT data){ return ctx_mgr_->writeUShort(data);}
 	inline void		writeFloat(float data){ return ctx_mgr_->writeFloat(data);}
 	inline void		writeByteArr(char * src, int length){ return ctx_mgr_->writeByteArr(src, length);}
+	inline void		writePackedByteArr(char *src, int length){ return ctx_mgr_->writePackedByteArr(src, length); }
 	inline void		writeVec(int op_code, float * vec, int size = 16){ return ctx_mgr_->writeVec(op_code, vec, size);	}
 	
 	void			shutDown();

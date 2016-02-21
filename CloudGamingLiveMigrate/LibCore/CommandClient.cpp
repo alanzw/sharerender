@@ -81,6 +81,35 @@ void CommandClient::record_last_command() {
 	last_command_->length_ = *((int*)data);
 }
 
+void CommandClient::recv_packed_byte_arr(char * dst, int length){
+	unsigned char D = '0';
+	unsigned char endFlag = '0';
+	unsigned short idx = 0;
+	short data_len = 0;
+	int total_len = 0;
+	
+	do{
+		int len = recv_packet(this);
+		if(len <= 0){
+			// recv failed
+			return;
+		}
+		D = read_uchar();
+		endFlag = read_uchar();
+		idx = read_ushort();
+		data_len = read_short();
+		infoRecorder->logError("[CommandClient]: recv_packed_byte_arr, D:%c, end flag:%c, idx:%d, data len:%d.\n", D, endFlag, idx, data_len);
+		read_byte_arr(dst, data_len);
+		total_len += data_len;
+		dst += data_len;
+	}while(endFlag != '1');
+	if(total_len != length){
+		// error
+		infoRecorder->logError("[CommandClient]: recv_packed_byte_arr, total len:%d != data len:%d, cur function count:%d.\n", total_len, length, func_count);
+	}
+	infoRecorder->logError("[CommandClient]: after recv_packed_byte_arr, cur function count:%d.\n", func_count);
+}
+
 void CommandClient::take_command(int& op_code, int& obj_id) {
 	if (sv_ptr){
 		infoRecorder->logTrace("[CommandClinet]: set sv_ptr to %p.\n", sv_ptr);
@@ -94,7 +123,7 @@ void CommandClient::take_command(int& op_code, int& obj_id) {
 	}
 #endif
 
-	//infoRecorder->logTrace("[CommandClient]: func count:%d.\n", func_count);
+	infoRecorder->logTrace("[CommandClient]: take_command, func count:%d.\n", func_count);
 	
 	if(func_count == 0) {
 		int len = recv_packet(this);
