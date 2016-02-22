@@ -358,7 +358,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetStreamSource(
 #ifdef ENABLE_DEVICE_LOG
 	infoRecorder->logTrace("WrapperDirect3DDevice9::SetStreamSource(), StreamNumber:%d, OffsetInBytes:%d, stride:%d, ", StreamNumber, OffsetInBytes, Stride);
 #endif
-	assert(StreamNumber < Source_Count);
+	//assert(StreamNumber < Source_Count);
 	if(pStreamData == NULL) {
 		cur_vbs_[StreamNumber] = NULL;
 

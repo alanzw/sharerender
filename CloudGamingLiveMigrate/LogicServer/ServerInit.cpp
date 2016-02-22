@@ -78,7 +78,7 @@ HWND WINAPI CreateWindowCallback(
 	HINSTANCE hInstance,
 	LPVOID lpParam) {
 
-	infoRecorder->logTrace("[global]: CreateWindowCallback() called, width:%d, height:%d\n", nWidth, nHeight);
+	infoRecorder->logError("[global]: CreateWindowCallback() called, width:%d, height:%d\n", nWidth, nHeight);
 	/*if( nWidth < 800)nWidth = 800;
 	if(nHeight < 600) nHeight = 600;*/
 #ifndef MULTI_CLIENTS
@@ -131,7 +131,7 @@ HWND WINAPI CreateWindowExWCallback(
 	HINSTANCE hInstance, 
 	LPVOID lpParam) {
 
-	infoRecorder->logTrace("[global]: CreateWindowExWCallback() called, Widht:%d, Height:%d\n", nWidth, nHeight);
+	infoRecorder->logError("[global]: CreateWindowExWCallback() called, Widht:%d, Height:%d\n", nWidth, nHeight);
 	/*if( nWidth < 800)nWidth = 800;
 	if(nHeight < 600) nHeight = 600;*/
 

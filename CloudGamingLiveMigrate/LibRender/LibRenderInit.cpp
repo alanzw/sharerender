@@ -123,7 +123,7 @@ HRESULT RenderChannel::clientInit() {
 
 	// create d3d device and register to CUDA
 	LPDIRECT3DDEVICE9 base_device = NULL;
-	d3dpp.Flags |= D3DPRESENTFLAG_LOCKABLE_BACKBUFFER;
+	//d3dpp.Flags |= D3DPRESENTFLAG_LOCKABLE_BACKBUFFER;
 
 	HRESULT hr = gD3d->CreateDevice(Adapter, DeviceType, hh, BehaviorFlags | D3DCREATE_MULTITHREADED, &d3dpp, &base_device);
 	device_list[id] = base_device;

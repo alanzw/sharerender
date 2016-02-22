@@ -45,7 +45,6 @@ HRESULT ClientVertexBuffer9::Unlock(CommandClient * cc) {
 	
 
 	cg::core::infoRecorder->logTrace("ClientVertexBuffer9::Unlock(), OffestToLock=%d, SizeToLock=%d Bytes, Flags=%d\n", m_LockData.OffsetToLock, m_LockData.SizeToLock, m_LockData.Flags);
-
 	UpdateVertexBuffer(cc);
 
 	return D3D_OK;

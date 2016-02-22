@@ -98,7 +98,7 @@ void CommandClient::recv_packed_byte_arr(char * dst, int length){
 		endFlag = read_uchar();
 		idx = read_ushort();
 		data_len = read_short();
-		infoRecorder->logError("[CommandClient]: recv_packed_byte_arr, D:%c, end flag:%c, idx:%d, data len:%d.\n", D, endFlag, idx, data_len);
+		//infoRecorder->logError("[CommandClient]: recv_packed_byte_arr, D:%c, end flag:%c, idx:%d, data len:%d.\n", D, endFlag, idx, data_len);
 		read_byte_arr(dst, data_len);
 		total_len += data_len;
 		dst += data_len;

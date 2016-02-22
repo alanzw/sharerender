@@ -583,8 +583,6 @@ char * PoolToString(D3DPOOL pool){
 #endif
 
 HRESULT FakedCreateVertexBuffer(RenderChannel * rch) {
-	//cg::core::infoRecorder->logTrace("FakedCreateVertexBuffer called\n");
-
 	UINT id = rch->cc->read_uint();
 	UINT Length = rch->cc->read_uint();
 	DWORD Usage = rch->cc->read_uint();
@@ -596,6 +594,9 @@ HRESULT FakedCreateVertexBuffer(RenderChannel * rch) {
 	cg::core::infoRecorder->logTrace("FakedCreateVertexBuffer(%d, K%d, %d, %d, %p, %p)! Length:%d, Usage:%x, FVF:%x, Pool:%d, id:%d\n",Length, Usage, FVF, Pool, &vb, NULL, Length, Usage, FVF, Pool,id);
 	rch->getDevice(rch->obj_id);
 	HRESULT hr = rch->curDevice->CreateVertexBuffer(Length, Usage, FVF, Pool, &vb, NULL);
+	if(FAILED(hr)){
+		infoRecorder->logError("FakedCreateVertexBuffer failed with:%d.\n", hr);
+	}
 	//cg::core::infoRecorder->logTrace("FakedCreateVertexBuffer created. \n");
 	rch->vb_list[id] = new ClientVertexBuffer9(vb, Length);
 
@@ -1927,15 +1928,15 @@ HRESULT FakeD3DDGetRenderTarget(RenderChannel * rch){
 	sid = rch->cc->read_int();
 	DWORD RenderTargetIndex = (DWORD)rch->cc->read_uint();
 	IDirect3DSurface9 * target = NULL;
-	hr= rch->curDevice->GetRenderTarget(RenderTargetIndex, &target);
+	hr = rch->curDevice->GetRenderTarget(RenderTargetIndex, &target);
 
-
-	if(hr== D3D_OK){
+	if(hr == D3D_OK){
 		cg::core::infoRecorder->logTrace("FakeD3DDGetRenderTarget(%d, %d)!\n", RenderTargetIndex, sid);
 		
 		rch->surface_list[sid] = new ClientSurface9(target);
 	}else{
-		cg::core::infoRecorder->logError("FakeD3DDGetRenderTarget(%d, %p), id:%d, ERROR, Failed!", RenderTargetIndex, &target, sid);
+		//DebugBreak();
+		cg::core::infoRecorder->logError("FakeD3DDGetRenderTarget(%d, %p), id:%d, ERROR, Failed with:%d.\n", RenderTargetIndex, target, sid, hr);
 	}
 
 	return hr;

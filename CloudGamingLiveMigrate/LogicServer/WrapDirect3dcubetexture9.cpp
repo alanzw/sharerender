@@ -282,7 +282,7 @@ STDMETHODIMP WrapperDirect3DCubeTexture9::GetCubeMapSurface(THIS_ D3DCUBEMAP_FAC
 
 STDMETHODIMP WrapperDirect3DCubeTexture9::LockRect(THIS_ D3DCUBEMAP_FACES FaceType,UINT Level,D3DLOCKED_RECT* pLockedRect,CONST RECT* pRect,DWORD Flags) {
 #ifdef ENABLE_CUBE_TEXTURE_LOG
-	infoRecorder->logError("WrapperDirect3DCubeTexture9::LockRect()\n");
+	infoRecorder->logError("WrapperDirect3DCubeTexture9::LockRect(), id:%d, face type:%d, level:%d.\n", id, FaceType, Level);
 #endif
 	csSet->setChangedToAll(updateFlag);
 	return m_cube_tex->LockRect(FaceType, Level, pLockedRect, pRect, Flags);

@@ -162,7 +162,7 @@ unsigned char * SurfaceHelper::allocateSurfaceBuffer(int _pitch, int _height){
 			TotalBufferedTextureSize += pitch * compressedHeight;
 		}
 	}
-	//cg::core::infoRecorder->logError("[SurfaceHelper]: allocate memory %d, ptr:%p.\n", pitch * compressedHeight, surfaceData);
+	cg::core::infoRecorder->logError("[SurfaceHelper]: allocate memory %d(%d x %d), ptr:%p.\n", pitch * compressedHeight, pitch, height, surfaceData);
 	return surfaceData;
 }
 bool SurfaceHelper::copyTextureData(){

@@ -544,6 +544,13 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateTexture(THIS_ UINT Width,UINT Height,
 		// set the creation flag for texture
 		csSet->setCreation(wt->creationFlag);
 		infoRecorder->addCreation();
+
+		static bool b= true;
+		if(wt->getId() == 1351){
+			if(b)
+			Sleep(5);
+		}
+
 #ifdef INITIAL_ALL_RESOURCE
 		Initializer::PushObj(wt);
 #endif // INITIAL_ALL_RESOURCE
@@ -582,6 +589,7 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateTexture(THIS_ UINT Width,UINT Height,
 			break;
 		}
 	}
+	D3DUSAGE_RENDERTARGET;
 	return hr;
 }
 
@@ -631,6 +639,7 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateCubeTexture(THIS_ UINT EdgeLength,UIN
 #ifdef ENBALE_DEVICE_LOG
 	infoRecorder->logTrace("WrapperDirect3DDevice9::CreateCubeTexture() called\n");
 #endif
+	
 	IDirect3DCubeTexture9* base_cube_tex = NULL;
 
 	HRESULT hr = m_device->CreateCubeTexture(EdgeLength, Levels, Usage, Format, Pool, &base_cube_tex, pSharedHandle);
@@ -659,6 +668,10 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateCubeTexture(THIS_ UINT EdgeLength,UIN
 		// set creation flag to all
 		csSet->setCreation(wct->creationFlag);
 		infoRecorder->addCreation();
+
+		infoRecorder->logError("[WrapperDirect3DDevice9]::CreateCubeTexture(), edge len:%d, levels:%d, usage:%d, format:%d, id:%d.\n", EdgeLength, Levels, Usage, Format, wct->getId());
+
+
 #ifdef INITIAL_ALL_RESOURCE
 		Initializer::PushObj(wct);
 #endif  // INITIAL_ALL_RESOURCE
@@ -1499,7 +1512,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetTexture(THIS_ DWORD Stage,IDirect3DBaseT
 	if(Type == D3DRTYPE_TEXTURE) {
 		WrapperDirect3DTexture9 * wt = (WrapperDirect3DTexture9 *)pTexture;
 
-		//infoRecorder->logError("[WrapperDirect3DDevice9]::SetTexture, tex id:%d, stage:%d, type:%s, created: %x.\n",wt->getId(), Stage, "TEXTURE", wt->creationFlag);
+		infoRecorder->logError("[WrapperDirect3DDevice9]::SetTexture, tex id:%d, stage:%d, type:%s, created: %x.\n",wt->getId(), Stage, "TEXTURE", wt->creationFlag);
 
 		//TODO
 		// check the texture data is sent or not

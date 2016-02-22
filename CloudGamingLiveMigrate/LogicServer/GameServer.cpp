@@ -192,6 +192,9 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 	WSADATA wsaData;
 	WORD sockVersion = MAKEWORD(2,2);
 	static int first = 0;
+
+	static bool b = true;
+
 	char shareData[1000] = {0};
 
 	if(infoRecorder == NULL){
