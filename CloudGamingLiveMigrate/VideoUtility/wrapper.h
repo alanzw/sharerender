@@ -12,8 +12,8 @@
 #include <DxErr.h>
 #include "pipeline.h"
 
-#define USE_RENDER_TARGET    // enable when use logic server to gen video
-//#define USE_BACK_BUFFER    // enable when use render proxy to gen video
+//#define USE_RENDER_TARGET    // enable when use logic server to gen video
+#define USE_BACK_BUFFER    // enable when use render proxy to gen video
 
 namespace cg{
 
