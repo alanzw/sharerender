@@ -324,13 +324,15 @@ STDMETHODIMP WrapperDirect3D9::CreateDevice(THIS_ UINT Adapter,D3DDEVTYPE Device
 	HWND hd = pPresentationParameters->hDeviceWindow;
 	RECT winRect;
 	BOOL ret = GetWindowRect(hd, &winRect);
-#ifdef ENABLE_DIRECT3D_LOG
+//#ifdef ENABLE_DIRECT3D_LOG
+#if 1
+
 	if (ret == TRUE){
-		infoRecorder->logError("CreateDevice: window rect:(%d, %d) - (%d, %d)\n", winRect.left, winRect.top, winRect.right, winRect.bottom);
+		infoRecorder->logError("CreateDevice: window %p rect:(%d, %d) - (%d, %d)\n", hd, winRect.left, winRect.top, winRect.right, winRect.bottom);
 
 	}
 	else{
-		infoRecorder->logError("CreateDevice: failed to get the window size.\n");
+		infoRecorder->logError("CreateDevice: failed to get the window size, window:%p.\n", hd);
 	}
 #endif
 

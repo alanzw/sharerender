@@ -59,7 +59,7 @@ BOOL WINAPI
 	ShowWindowCallback(
 	__in HWND hWnd,
 	__in int nCmdShow){
-		infoRecorder->logTrace("[global]: ShowWindow()\n");
+		infoRecorder->logError("[global]: ShowWindow(), hwnd:%p\n", hWnd);
 
 		return ShowWindowNext(hWnd, nCmdShow);
 }
@@ -78,19 +78,9 @@ HWND WINAPI CreateWindowCallback(
 	HINSTANCE hInstance,
 	LPVOID lpParam) {
 
-	infoRecorder->logError("[global]: CreateWindowCallback() called, width:%d, height:%d\n", nWidth, nHeight);
+	
 	/*if( nWidth < 800)nWidth = 800;
 	if(nHeight < 600) nHeight = 600;*/
-#ifndef MULTI_CLIENTS
-	cs.begin_command(CreateWindow_Opcode, 0);
-	cs.write_uint(dwExStyle);
-	cs.write_uint(dwStyle);
-	cs.write_int(x);
-	cs.write_int(y);
-	cs.write_int(nWidth);
-	cs.write_int(nHeight);
-	cs.end_command();
-#else
 
 	WindowParam * win = new WindowParam();
 	win->dwExStyle = dwExStyle;
@@ -111,8 +101,8 @@ HWND WINAPI CreateWindowCallback(
 	csSet->endCommand();
 #endif
 
-#endif
 	HWND ret = CreateWindowNext(dwExStyle,lpClassName,lpWindowName,dwStyle,x,y,nWidth,nHeight,hWndParent,hMenu,hInstance,lpParam);
+	infoRecorder->logError("[global]: CreateWindowCallback() called, width:%d, height:%d, window:%p\n", nWidth, nHeight, ret);
 	windowMap.addMap(ret, win);
 	return ret;
 }
@@ -131,20 +121,11 @@ HWND WINAPI CreateWindowExWCallback(
 	HINSTANCE hInstance, 
 	LPVOID lpParam) {
 
-	infoRecorder->logError("[global]: CreateWindowExWCallback() called, Widht:%d, Height:%d\n", nWidth, nHeight);
-	/*if( nWidth < 800)nWidth = 800;
-	if(nHeight < 600) nHeight = 600;*/
+#if 0
+	if(nWidth > 0 && nWidth < 800)nWidth = 800;
+	if(nHeight > 0 && nHeight < 600) nHeight = 600;
+#endif
 
-#ifndef MULTI_CLIENTS
-	cs.begin_command(CreateWindow_Opcode, 0);
-	cs.write_uint(dwExStyle);
-	cs.write_uint(dwStyle);
-	cs.write_int(X);
-	cs.write_int(Y);
-	cs.write_int(nWidth);
-	cs.write_int(nHeight);
-	cs.end_command();
-#else
 #if 0
 	csSet->beginCommand(CreateWindow_Opcode, 0);
 	csSet->writeUInt(dwExStyle);
@@ -156,9 +137,8 @@ HWND WINAPI CreateWindowExWCallback(
 	csSet->endCommand();
 #endif
 
-#endif
 	HWND ret = CreateWindowExWNext(dwExStyle,lpClassName,lpWindowName,dwStyle,X,Y,nWidth,nHeight,hWndParent,hMenu,hInstance,lpParam);
-
+	infoRecorder->logError("[global]: CreateWindowExWCallback() called, x:%d, y:%d, Widht:%d, Height:%d, window:%p\n", X, Y, nWidth, nHeight, ret);
 	WindowParam * win = new WindowParam();
 	win->dwExStyle = dwExStyle;
 	win->dwStyle = dwStyle;

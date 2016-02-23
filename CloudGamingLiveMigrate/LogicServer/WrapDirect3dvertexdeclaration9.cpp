@@ -3,7 +3,7 @@
 
 #ifdef MULTI_CLIENTS
 
-//#define ENABLE_VERTEX_DECLARATION_LOG
+
 #ifdef ENABLE_VERTEX_DECLARATION_LOG
 char * TypeToString(BYTE type){
 	switch(type){

@@ -9,7 +9,7 @@
 
 #ifdef MULTI_CLIENTS
 
-//#define ENABLE_STATE_BLOCK_LOG
+
 
 // build the state block with a list, the list contains the dependency of this state block
 StateBlock::StateBlock(int id, Buffer * buf, list<IdentifierBase *>& dlist): id_(id), cmdBuf_(buf){

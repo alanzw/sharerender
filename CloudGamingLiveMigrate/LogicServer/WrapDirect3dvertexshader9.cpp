@@ -2,7 +2,7 @@
 #include "WrapDirect3dvertexshader9.h"
 #include "CommandServerSet.h"
 #ifdef MULTI_CLIENTS
-//#define ENABLE_VERTEX_SHADER_LOG
+
 
 int WrapperDirect3DVertexShader9::sendCreation(void *ctx){
 #ifdef ENABLE_VERTEX_SHADER_LOG

@@ -1,7 +1,8 @@
 #include "WrapDirect3dpixelshader9.h"
 #include "CommandServerSet.h"
 #ifdef MULTI_CLIENTS
-//#define ENABLE_PIXEL_SHADER_LOG
+
+
 int WrapperDirect3DPixelShader9::sendCreation(void * ctx){
 #ifdef ENABLE_PIXEL_SHADER_LOG
 	infoRecorder->logTrace("[WrapperDirect3DpixelShader9]: send creation.\n");

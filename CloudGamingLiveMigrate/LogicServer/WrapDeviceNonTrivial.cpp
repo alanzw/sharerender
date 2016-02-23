@@ -15,7 +15,6 @@
 #include "../LibCore/Opcode.h"
 #include "../LibCore/CmdHelper.h"
 
-//#include "YMesh.h"
 
 #define DELAY_TO_DRAW
 #ifdef MULTI_CLIENTS
@@ -76,7 +75,7 @@ int WrapperDirect3DDevice9::sendUpdate(void * ctx){
 
 STDMETHODIMP WrapperDirect3DDevice9::DrawPrimitive(THIS_ D3DPRIMITIVETYPE PrimitiveType,UINT StartVertex,UINT PrimitiveCount) {
 #ifdef ENABLE_DEVICE_LOG
-	infoRecorder->logError("WrapperDirect3DDevice9::DrawPrimitive(), PrimitiveType=%d, startVertex=%d, primitiveCount=%d\n", PrimitiveType, StartVertex, PrimitiveCount);
+	infoRecorder->logTrace("WrapperDirect3DDevice9::DrawPrimitive(), PrimitiveType=%d, startVertex=%d, primitiveCount=%d\n", PrimitiveType, StartVertex, PrimitiveCount);
 #endif
 
 	// add sync to taskqueue, the task queue must clear all objects in queue
@@ -104,7 +103,7 @@ STDMETHODIMP WrapperDirect3DDevice9::DrawPrimitive(THIS_ D3DPRIMITIVETYPE Primit
 
 STDMETHODIMP WrapperDirect3DDevice9::DrawIndexedPrimitive(THIS_ D3DPRIMITIVETYPE Type,INT BaseVertexIndex,UINT MinVertexIndex,UINT NumVertices,UINT startIndex,UINT primCount) {
 #ifdef ENABLE_DEVICE_LOG
-	infoRecorder->logError("WrapperDirect3DDevice9::DrawIndexedPrimitive() device id:%d, type=%d, baseVertexIndex=%d, MinVertexIndex=%d, NumVertex=%d, startIndex=%d, count=%d\n", id, Type, BaseVertexIndex, MinVertexIndex, NumVertices, startIndex, primCount);
+	infoRecorder->logTrace("WrapperDirect3DDevice9::DrawIndexedPrimitive() device id:%d, type=%d, baseVertexIndex=%d, MinVertexIndex=%d, NumVertex=%d, startIndex=%d, count=%d\n", id, Type, BaseVertexIndex, MinVertexIndex, NumVertices, startIndex, primCount);
 #endif
 #ifdef USE_HELPER_SYNC
 	SynEntity * sync = new SynEntity();
@@ -126,7 +125,6 @@ STDMETHODIMP WrapperDirect3DDevice9::DrawIndexedPrimitive(THIS_ D3DPRIMITIVETYPE
 		hr = m_device->DrawIndexedPrimitive(Type, BaseVertexIndex, MinVertexIndex, NumVertices, startIndex, primCount);
 #ifdef ENABLE_DEVICE_LOG
 		if(FAILED(hr)){
-
 			infoRecorder->logError("WrapperDirect3DDevice9::DrawIndexedPrimitive failed with:%d.\n", hr);
 		}
 #endif
@@ -141,7 +139,7 @@ UINT arr[4];
 
 STDMETHODIMP WrapperDirect3DDevice9::DrawPrimitiveUP(THIS_ D3DPRIMITIVETYPE PrimitiveType,UINT PrimitiveCount,CONST void* pVertexStreamZeroData,UINT VertexStreamZeroStride) {
 #ifdef ENABLE_DEVICE_LOG
-	infoRecorder->logError("WrapperDirect3DDevice9::DrawPrimitiveUP(), type=%d, count=%d\n", PrimitiveType, PrimitiveCount);
+	infoRecorder->logTrace("WrapperDirect3DDevice9::DrawPrimitiveUP(), type=%d, count=%d\n", PrimitiveType, PrimitiveCount);
 #endif
 #ifdef USE_HELPER_SYNC
 	SynEntity * sync =new SynEntity();
@@ -203,7 +201,7 @@ STDMETHODIMP WrapperDirect3DDevice9::DrawIndexedPrimitiveUP(
 	D3DFORMAT IndexDataFormat,
 	CONST void* pVertexStreamZeroData,UINT VertexStreamZeroStride) {
 #ifdef ENABLE_DEVICE_LOG
-	infoRecorder->logError("WrapperDirect3DDevice9::DrawIndexedPrimitiveUP(), type=%d, count=%d\n", PrimitiveType, PrimitiveCount);
+	infoRecorder->logTrace("WrapperDirect3DDevice9::DrawIndexedPrimitiveUP(), type=%d, count=%d\n", PrimitiveType, PrimitiveCount);
 #endif
 	int IndexSize = 2;
 	if(IndexDataFormat == D3DFMT_INDEX32) IndexSize = 4;
@@ -244,7 +242,6 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateVertexDeclaration(
 #ifdef ENABLE_DEVICE_LOG
 		infoRecorder->logTrace("WrapperDirect3DDevice9::CreateVertexDeclaration(), ");
 #endif // ENABLE_DEVICE_LOG
-
 		int ve_cnt = 0;
 		D3DVERTEXELEMENT9 end = D3DDECL_END();
 
@@ -280,7 +277,6 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateVertexDeclaration(
 			return hr;
 		}
 
-
 		vd->setDeviceID(id);
 
 		// send the command to all connected clients
@@ -295,7 +291,7 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateVertexDeclaration(
 
 		if(vd){
 #ifdef ENABLE_DEVICE_LOG
-			infoRecorder->logTrace("numElement:%d and id:%d\n",ve_cnt + 1, vd->getId());
+			infoRecorder->logTrace("numElement:%d and id:%d\n",ve_cnt, vd->getId());
 #endif
 			//set the VERTEXELEMENT and numElemts
 			vd->numElements = ve_cnt;
@@ -358,9 +354,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetStreamSource(
 #ifdef ENABLE_DEVICE_LOG
 	infoRecorder->logTrace("WrapperDirect3DDevice9::SetStreamSource(), StreamNumber:%d, OffsetInBytes:%d, stride:%d, ", StreamNumber, OffsetInBytes, Stride);
 #endif
-	//assert(StreamNumber < Source_Count);
 	if(pStreamData == NULL) {
-		cur_vbs_[StreamNumber] = NULL;
 
 		csSet->beginCommand(SetStreamSource_Opcode, id);
 		csSet->writeUInt(StreamNumber);
@@ -377,16 +371,14 @@ STDMETHODIMP WrapperDirect3DDevice9::SetStreamSource(
 			stateRecorder->EndCommand();
 		}
 #ifdef ENABLE_DEVICE_LOG
-		infoRecorder->logError("WrapperDirect3DDevice9::SetStreamSource(), StreamNumber:%d, OffsetInBytes:%d, stride:%d, pStreamData is NULL\n", StreamNumber, OffsetInBytes, Stride);
+		infoRecorder->logTrace("WrapperDirect3DDevice9::SetStreamSource(), StreamNumber:%d, OffsetInBytes:%d, stride:%d, pStreamData is NULL\n", StreamNumber, OffsetInBytes, Stride);
 #endif
 		return m_device->SetStreamSource(StreamNumber, pStreamData, OffsetInBytes, Stride);
 	}
 	WrapperDirect3DVertexBuffer9* wvb = (WrapperDirect3DVertexBuffer9*)pStreamData;
 #ifdef ENABLE_DEVICE_LOG
-	infoRecorder->logError("WrapperDirect3DDevice9::SetStreamSource(), StreamNumber:%d, OffsetInBytes:%d, stride:%d, v_ib:%d.\n", StreamNumber, OffsetInBytes, Stride, wvb->getId());
+	infoRecorder->logTrace("WrapperDirect3DDevice9::SetStreamSource(), StreamNumber:%d, OffsetInBytes:%d, stride:%d, v_ib:%d.\n", StreamNumber, OffsetInBytes, Stride, wvb->getId());
 #endif
-
-#ifndef USE_MESH
 
 	// TODO, not check creation directly????
 	csSet->checkObj(dynamic_cast<IdentifierBase *>(wvb));
@@ -406,9 +398,6 @@ STDMETHODIMP WrapperDirect3DDevice9::SetStreamSource(
 		stateRecorder->WriteUInt(Stride);
 		stateRecorder->EndCommand();
 	}
-#else
-	cur_vbs_[StreamNumber] = wvb;
-#endif  // USE_MESH
 
 	wvb->streamNumber = StreamNumber;
 	//wvb->stride =Stride;
@@ -444,7 +433,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetIndices(THIS_ IDirect3DIndexBuffer9* pIn
 
 	WrapperDirect3DIndexBuffer9* wib = (WrapperDirect3DIndexBuffer9*)pIndexData;
 #ifdef ENABLE_DEVICE_LOG
-	infoRecorder->logError("WrapperDirect3DDevice9::SetIndics(), index buffer id:%d\n", wib->getId());
+	infoRecorder->logTrace("WrapperDirect3DDevice9::SetIndics(), index buffer id:%d\n", wib->getId());
 #endif
 	// send the index
 #ifndef USE_MESH

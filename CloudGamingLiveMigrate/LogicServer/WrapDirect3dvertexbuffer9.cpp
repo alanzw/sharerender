@@ -6,9 +6,6 @@
 #define COMPRESS_TO_DWORD
 
 
-#define ENABLE_VERTEX_BUFFER_LOG
-
-
 #ifdef MULTI_CLIENTS
 // check the creation flag for each client
 int WrapperDirect3DVertexBuffer9::sendCreation(void * ctx){

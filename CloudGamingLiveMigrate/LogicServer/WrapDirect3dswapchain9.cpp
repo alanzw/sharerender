@@ -3,7 +3,7 @@
 #include "CommandServerSet.h"
 #ifdef MULTI_CLIENTS
 
-//#define ENABLE_SWAP_CHAIN_LOG
+
 
 extern int deviceId;
 int WrapperDirect3DSwapChain9::sendCreation(void *ctx){

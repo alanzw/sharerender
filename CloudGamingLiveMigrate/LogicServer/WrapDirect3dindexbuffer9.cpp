@@ -6,7 +6,7 @@ static int max_ib = 0;
 
 
 #ifdef MULTI_CLIENTS
-#define ENABLE_INDEX_LOG
+
 
 int WrapperDirect3DIndexBuffer9::sendCreation(void *ctx){
 #ifdef ENABLE_INDEX_LOG

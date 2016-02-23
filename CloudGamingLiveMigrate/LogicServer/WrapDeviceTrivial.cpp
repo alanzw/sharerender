@@ -23,8 +23,6 @@
 //#define SCRATCH_MEMO
 #define DELAY_TO_DRAW
 
-//#define ENBALE_DEVICE_LOG
-
 cg::VideoGen * gGenerator = NULL;
 bool tex_send[4024] = {0};
 double time_total = 0.0f;
@@ -507,12 +505,10 @@ STDMETHODIMP_(void) WrapperDirect3DDevice9::SetGammaRamp(THIS_ UINT iSwapChain,D
 STDMETHODIMP_(void) WrapperDirect3DDevice9::GetGammaRamp(THIS_ UINT iSwapChain,D3DGAMMARAMP* pRamp) {return m_device->GetGammaRamp(iSwapChain, pRamp);}
 
 STDMETHODIMP WrapperDirect3DDevice9::CreateTexture(THIS_ UINT Width,UINT Height,UINT Levels,DWORD Usage,D3DFORMAT Format,D3DPOOL Pool,IDirect3DTexture9** ppTexture,HANDLE* pSharedHandle) {
-
+#ifdef ENABLE_DEVICE_LOG
 	infoRecorder->logError("WrapperDirect3DDevice9::CreateTexture(), width=%d, height=%d, Usage=%d, Format:%d, Pool:%d, id:%d, device id:%d, levels:%d\n", Width, Height, Usage, Format, Pool, WrapperDirect3DTexture9::ins_count, id, Levels);
-	if(Height > 1024){
-		infoRecorder->logError("WrapperDirect3DDevice9::CreateTexture(), height is > 1024, may error.\n ",Levels, Width, Height, Usage, Format, Pool, WrapperDirect3DTexture9::ins_count, id);
-
-	}
+#endif
+	
 	LPDIRECT3DTEXTURE9 base_tex = NULL;
 	HRESULT hr = m_device->CreateTexture(Width, Height, Levels, Usage, Format, Pool, &base_tex, pSharedHandle);	
 	WrapperDirect3DTexture9 * wt = NULL;
@@ -545,11 +541,6 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateTexture(THIS_ UINT Width,UINT Height,
 		csSet->setCreation(wt->creationFlag);
 		infoRecorder->addCreation();
 
-		static bool b= true;
-		if(wt->getId() == 1351){
-			if(b)
-			Sleep(5);
-		}
 
 #ifdef INITIAL_ALL_RESOURCE
 		Initializer::PushObj(wt);
@@ -910,7 +901,6 @@ STDMETHODIMP WrapperDirect3DDevice9::GetRenderTargetData(THIS_ IDirect3DSurface9
 
 #ifdef ENBALE_DEVICE_LOG
 	if(pRenderTarget == NULL || pDestSurface == NULL) {
-
 		infoRecorder->logTrace("WrapperDirect3DDevice9::GetRenderTargetData(), surface is NULL\n");
 	}
 #endif
@@ -1031,9 +1021,6 @@ STDMETHODIMP WrapperDirect3DDevice9::GetRenderTarget(THIS_ DWORD RenderTargetInd
 			Initializer::PushObj(ws);
 
 		}else{
-#ifdef ENBALE_DEVICE_LOG
-			infoRecorder->logTrace("with id:%d\n", ws->getId());
-#endif
 			infoRecorder->logError("with id:%d, tex id:%d, level:%d\n", ws->getId(), ws->GetTexId(), ws->GetLevel());
 		}
 
@@ -1082,7 +1069,6 @@ STDMETHODIMP WrapperDirect3DDevice9::SetDepthStencilSurface(THIS_ IDirect3DSurfa
 	return hh;
 }
 
-
 // create new depth stencil surface
 STDMETHODIMP WrapperDirect3DDevice9::GetDepthStencilSurface(THIS_ IDirect3DSurface9** ppZStencilSurface) {
 #ifdef ENBALE_DEVICE_LOG
@@ -1116,8 +1102,6 @@ STDMETHODIMP WrapperDirect3DDevice9::BeginScene(THIS) {
 #endif
 	sceneBegin = true;
 
-	//TODO :unlock the scene
-	//csSet->unlockNew();
 	Initializer::EndInitialize();
 	// send command
 	csSet->beginCommand(BeginScene_Opcode, id);
@@ -1144,9 +1128,6 @@ STDMETHODIMP WrapperDirect3DDevice9::Clear(THIS_ DWORD Count,CONST D3DRECT* pRec
 #ifdef ENBALE_DEVICE_LOG
 	infoRecorder->logTrace("[WrapperDirect3DDevice9]::Clear()\n");
 #endif
-
-	// check device's creation
-	//this->checkCreation();
 	// send command
 	csSet->beginCommand(Clear_Opcode, id);
 	csSet->writeUInt(Count);
@@ -1511,8 +1492,9 @@ STDMETHODIMP WrapperDirect3DDevice9::SetTexture(THIS_ DWORD Stage,IDirect3DBaseT
 
 	if(Type == D3DRTYPE_TEXTURE) {
 		WrapperDirect3DTexture9 * wt = (WrapperDirect3DTexture9 *)pTexture;
-
+#ifdef ENABLE_DEVICE_LOG
 		infoRecorder->logError("[WrapperDirect3DDevice9]::SetTexture, tex id:%d, stage:%d, type:%s, created: %x.\n",wt->getId(), Stage, "TEXTURE", wt->creationFlag);
+#endif
 
 		//TODO
 		// check the texture data is sent or not
@@ -1537,9 +1519,8 @@ STDMETHODIMP WrapperDirect3DDevice9::SetTexture(THIS_ DWORD Stage,IDirect3DBaseT
 		WrapperDirect3DCubeTexture9 * wct = (WrapperDirect3DCubeTexture9 *)pTexture;
 #ifdef ENBALE_DEVICE_LOG
 		infoRecorder->logError("Type is CubeTexture id=%d, TODO\n", id);
-#endif
-
 		infoRecorder->logError("[WrapperDirect3DDevice9]::SetTexture, tex id:%d, stage:%d, type:%s.\n",wct->getId(), Stage, "CUBE_TEXTURE");
+#endif
 
 		// check texture's creation and update
 		csSet->checkObj(dynamic_cast<IdentifierBase *>(wct));
@@ -1560,7 +1541,21 @@ STDMETHODIMP WrapperDirect3DDevice9::SetTexture(THIS_ DWORD Stage,IDirect3DBaseT
 	}
 	else if(Type == D3DRTYPE_VOLUMETEXTURE){
 		infoRecorder->logError("TODO, use volume texture.\n");
-		return m_device->SetTexture(Stage, pTexture);
+		WrapperDirect3DVolumeTexture9 * wvt = (WrapperDirect3DVolumeTexture9 *)pTexture;
+		infoRecorder->logError("[WrapperDirect3DDevice9]::SetTexture, tex id:%d, stage:%d, type:%s.\n", wvt->getId(), Stage, "VOLUME_TEXTURE");
+		csSet->checkObj(dynamic_cast<IdentifierBase *>(wvt));
+		// send command
+
+		// recorde state
+		if(stateRecorder){
+			stateRecorder->pushDependency(wvt);
+			stateRecorder->BeginCommand(SetTexture_Opcode, id);
+			stateRecorder->WriteUInt(Stage);
+			stateRecorder->WriteInt(wvt->getId());
+			stateRecorder->EndCommand();
+		}
+
+		return m_device->SetTexture(Stage, wvt->GetVolumeTex9());
 	}
 	else {
 		infoRecorder->logError("TODO, Type is unknown\n");
@@ -1598,6 +1593,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetTextureStageState(THIS_ DWORD Stage,D3DT
 }
 
 STDMETHODIMP WrapperDirect3DDevice9::GetSamplerState(THIS_ DWORD Sampler,D3DSAMPLERSTATETYPE Type,DWORD* pValue) {return m_device->GetSamplerState(Sampler, Type, pValue);}
+
 STDMETHODIMP WrapperDirect3DDevice9::SetSamplerState(THIS_ DWORD Sampler,D3DSAMPLERSTATETYPE Type,DWORD Value) {
 #ifdef ENBALE_DEVICE_LOG
 	infoRecorder->logTrace("[WrapperDirect3DDevice9]::SetSamplerState() invoke\n");
@@ -1866,7 +1862,10 @@ float vs_data[10000];
 
 STDMETHODIMP WrapperDirect3DDevice9::SetVertexShaderConstantF(THIS_ UINT StartRegister,CONST float* pConstantData,UINT Vector4fCount) {
 #ifdef ENBALE_DEVICE_LOG
-	infoRecorder->logTrace("WrapperDirect3DDevice9::SetVertexShaderConstantF()\n");
+	infoRecorder->logTrace("WrapperDirect3DDevice9::SetVertexShaderConstantF(), size:%d\n", Vector4fCount * 16);
+	if(Vector4fCount * 16 > 10000){
+		infoRecorder->logError("[WrfapperDirect3DDevice9]:SetVetexShaderConstantF(), size:%d > 10000, error.\n", Vector4fCount * 16);
+	}
 #endif
 
 	memcpy((char*)vs_data, (char*)pConstantData, Vector4fCount * 16);
@@ -1977,7 +1976,7 @@ STDMETHODIMP WrapperDirect3DDevice9::GetStreamSource(THIS_ UINT StreamNumber,IDi
 // change the pipeline state
 STDMETHODIMP WrapperDirect3DDevice9::SetStreamSourceFreq(THIS_ UINT StreamNumber,UINT Setting) {
 #ifdef ENBALE_DEVICE_LOG
-	infoRecorder->logTrace("WrapperDirect3DDevice9::SetStreamSourceFreq() TODO\n");
+	infoRecorder->logTrace("WrapperDirect3DDevice9::SetStreamSourceFreq(), stream number:%d, Setting:%d, TODO\n", StreamNumber, Setting);
 #endif
 	return m_device->SetStreamSourceFreq(StreamNumber, Setting);
 }
@@ -2110,7 +2109,10 @@ STDMETHODIMP WrapperDirect3DDevice9::GetPixelShader(THIS_ IDirect3DPixelShader9*
 
 STDMETHODIMP WrapperDirect3DDevice9::SetPixelShaderConstantF(THIS_ UINT StartRegister,CONST float* pConstantData,UINT Vector4fCount) {
 #ifdef ENBALE_DEVICE_LOG
-	infoRecorder->logTrace("WrapperDirect3DDevice9::SetPixelShaderConstantF()\n");
+	infoRecorder->logTrace("WrapperDirect3DDevice9::SetPixelShaderConstantF(), size:%d\n", Vector4fCount * 16);
+	if(Vector4fCount * 16 > 10000){
+		infoRecorder->logError("[WrapperDirect3DDevice9]:SetPixelShaderConstantF(), size:%d > 10000, error.\n", Vector4fCount * 16);
+	}
 #endif
 	// TODO ,store the pixel shader data
 	memcpy((char*)vs_data, (char*)pConstantData, Vector4fCount * 16);

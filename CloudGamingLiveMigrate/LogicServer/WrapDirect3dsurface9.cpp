@@ -7,7 +7,7 @@
 //extern int id;
 
 #ifdef MULTI_CLIENTS
-#define ENABLE_SURFACE_LOG
+
 
 WrapperDirect3DSurface9::WrapperDirect3DSurface9(const WrapperDirect3DSurface9& sur){
 #ifdef ENABLE_SURFACE_LOG

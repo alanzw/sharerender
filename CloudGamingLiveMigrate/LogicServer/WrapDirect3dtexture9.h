@@ -6,7 +6,7 @@
 #include "TextureHelper.h"
 #include "WrapDirect3dsurface9.h"
 
-class WrapperDirect3DTexture9: public IDirect3DTexture9 
+class WrapperDirect3DTexture9: public IDirect3DTexture9
 #ifdef MULTI_CLIENTS
 	, public IdentifierBase
 #endif

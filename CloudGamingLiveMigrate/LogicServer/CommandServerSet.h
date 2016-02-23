@@ -39,6 +39,23 @@ using namespace cg::core;
 #endif
 #endif
 
+/// logs
+#if 0
+#define ENBALE_DEVICE_LOG
+#define ENABLE_DEVICE_LOG
+#define ENABLE_STATE_BLOCK_LOG
+#define ENABLE_PIXEL_SHADER_LOG
+#define ENABLE_INDEX_LOG
+#define ENABLE_SURFACE_LOG
+#define ENABLE_SWAP_CHAIN_LOG
+#define ENABLE_TEXTURE_LOG
+#define ENABLE_VERTEX_BUFFER_LOG
+#define ENABLE_VERTEX_DECLARATION_LOG
+#define ENABLE_VERTEX_SHADER_LOG
+#endif
+
+#define ENABLE_TEXTURE_LOG
+
 #define RENDER_STEP 2
 
 extern bool isEnableRender();
