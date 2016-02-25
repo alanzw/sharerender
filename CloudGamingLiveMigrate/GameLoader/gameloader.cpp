@@ -261,7 +261,6 @@ HANDLE GameLoader::load2DGame(char * gameName){
 	return ret;
 #else
 
-
 	GameInfoItem * item = gameInfo->findGameInfo(gameName);
 
 	/// seemed OK, for now
@@ -379,6 +378,9 @@ HANDLE GameLoader::loadGame(char * gameName, char * arg, char * dllName){
 		printf("[GameLoacder]: game '%s' not support d3d.\n", gameName);
 		ret = this->load2DGame(gameName, arg, dllName);
 	}
+
+	// create usage logger for each process
+
 	return ret;
 }
 // start a 2D game, not used
@@ -1339,4 +1341,82 @@ void RTSPAcceptErrorCB(struct evconnlistener * listener, void * ctx){
 	event_base_loopexit(base, NULL);
 }
 
+
+LoaderLogger::LoaderLogger(std::string _processName):
+processName(_processName), processHandle(NULL), mappingHandle(NULL), mutexHandle(NULL), cpuWatcher(NULL), gpuWatcher(NULL), recorder(NULL){
+	// create the file mapping and the mutex
+	std::string mappingName = processName + string("_mapping");
+	std::string mutexName = processName + string("_mutex");
+
+	printf("[LoaderLogger]: create logger with process name:%s, mapping name:%s, mutex name:%s.\n", processName.c_str(), mappingName.c_str(), mutexName.c_str());
+
+	//mutexHandle = CreateMutex(NULL, FALSE, mutexName.c_str());
+	mutexHandle = CreateEvent(NULL, FALSE, FALSE, mutexName.c_str());
+	mappingHandle = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, mappingName.c_str());
+	if(mappingHandle){
+		// open mapping success.
+		mappingAddr = MapViewOfFile(mappingHandle, FILE_MAP_ALL_ACCESS, 0, 0 ,0);
+	}
+	else{
+		// to create new
+		mappingHandle = CreateFileMapping((HANDLE)0xFFFFFFFF, NULL, PAGE_READWRITE, 0, 64, mappingName.c_str());
+		mappingAddr = MapViewOfFile(mappingHandle, FILE_MAP_ALL_ACCESS, 0, 0 ,0);
+	}
+}
+LoaderLogger::~LoaderLogger(){
+	if(mappingAddr){
+		UnmapViewOfFile(mappingAddr);
+		mappingAddr  = NULL;
+	}
+	if(mutexHandle){
+		CloseHandle(mutexHandle);
+		mutexHandle = NULL;
+	}
+	if(mappingHandle){
+		CloseHandle(mappingHandle);
+		mappingHandle = NULL;
+	}
+}
+bool LoaderLogger::initLogger(){
+	
+	
+	// create the watcher
+	cpuWatcher = new CpuWatch();
+	gpuWatcher = GpuWatch::GetGpuWatch();
+	// create the recorder
+	recorder = new LightWeightRecorder((char*)processName.c_str());
+	printf("[LoaderLogger]: init logger, create the recorder file: %p.\n", recorder);
+	return true;
+
+}
+void LoaderLogger::onThreadMsg(UINT msg, WPARAM wParam, LPARAM lParam){
+
+}
+BOOL LoaderLogger::onThreadStart(){
+	initLogger();
+	return TRUE;
+}
+BOOL LoaderLogger::run(){
+	printf("loader logger run...\n");
+	DWORD ret = WaitForSingleObject(mutexHandle, 3000);
+	if(ret == WAIT_OBJECT_0){
+		// read the fps in shared file mapping
+		int index = *(int*)mappingAddr;
+		int fps = *(((int*)mappingAddr)+1);
+		float cpuUsage = (float)cpuWatcher->GetProcessCpuUtilization(processHandle);
+		int gpuUsage = gpuWatcher->GetGpuUsage();
+		recorder->log("%d %d %f %d\n", index, fps, cpuUsage, gpuUsage);
+		printf("%d %d %f %d\n", index, fps, cpuUsage, gpuUsage);
+		recorder->flush(true);
+	}
+	else if(ret == WAIT_TIMEOUT){
+		printf("time out.\n");
+	}else{
+		printf("unknown: %d.\n", ret);
+	}
+	return TRUE;
+}
+void LoaderLogger::onQuit(){
+
+}
 #endif

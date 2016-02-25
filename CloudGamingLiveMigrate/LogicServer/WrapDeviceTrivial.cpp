@@ -344,7 +344,8 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 	/////////////////////////////////////////////////////////////////////
 
 	is_even_frame_ ^= 1;
-	infoRecorder->onFrameEnd(cmdCtrl->getMode() ? false : true);
+	//infoRecorder->onFrameEnd(cmdCtrl->getMode() ? false : true);
+	infoRecorder->onFrameEnd();
 
 	HRESULT hh = D3D_OK;
 
@@ -355,7 +356,6 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 #endif
 
 	if(cmdCtrl->isRender()){
-
 #ifdef ENBALE_DEVICE_LOG
 		infoRecorder->logTrace("[WrapperDirect3Device9]: present, enable render.\n");
 #endif // ENABLE_DEVICE_LOG

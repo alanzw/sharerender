@@ -6,12 +6,14 @@
 
 
 ////基类
-//class GpuInterface
-//{
-//public:
-//	virtual int GetGpuUsage(){	return -1;	};
-//	virtual int GetGpuTemp(){	return -1;	};
-//};
+class GpuInterface
+{
+public:
+	virtual int GetGpuUsage(){	return -1;	};
+	virtual int GetGpuTemp(){	return -1;	};
+	virtual bool InitInterface(){return true;}
+	~GpuInterface(){}
+};
 namespace cg{
 	namespace core{
 
@@ -19,35 +21,48 @@ namespace cg{
 		class GpuWatch
 		{
 		public:
-			GpuWatch(void);
+			
 			~GpuWatch(void);
 			//初始化显卡
-			static bool InitGpuInterface(void);
-			static int GetGpuUsage();	//获取GPU利用率
-			static int GetGpuTemp();	//获取GPU温度
-			static void GetGpuInformation(char *buf,int size);	//获取GPU描述信息
-			static int gpuUtilization , gpuTemp , graNum;	//gpu利用率和温度,显卡数目
+			bool InitGpuInterface(void);
+			int GetGpuUsage();	//获取GPU利用率
+			int GetGpuTemp();	//获取GPU温度
+			void GetGpuInformation(char *buf,int size);	//获取GPU描述信息
+			int gpuUtilization , gpuTemp , graNum;	//gpu利用率和温度,显卡数目
 			/*static GpuInterface* pInterface;*/
-			static std::string graInfo;	//显卡信息
-			static void ChangeToLower(std::string &str);
-			static int type;
+			std::string graInfo;	//显卡信息
+			void ChangeToLower(std::string &str);
+			int type;
+
+			static GpuWatch * GetGpuWatch(){
+				if(!gpuWatch){
+					gpuWatch = new GpuWatch();
+				}
+				return gpuWatch;
+			}
+
 
 		private:
 			bool isInit;	//显卡是否已经初始化
+			GpuInterface * gpuInterface;
+			GpuWatch(void);
+
+			static GpuWatch * gpuWatch;
 		};
 
 
 		//AMD显卡相关的类,继承GpuInterface类
-		class AMDInterface/*: public GpuInterface*/
+		class AMDInterface: public GpuInterface
 		{
 		public:
 			AMDInterface(void);	//构造函数
-			~AMDInterface();
+			virtual ~AMDInterface();
 			static void* _stdcall ADLMainMemoryAlloc(int size);	//申请空间
 			static void _stdcall ADLMainMemoryFree(void **buf);	//释放空间
 
-			int GetGpuUsage();	//获取GPU负载
-			int GetGpuTemp();	//获取GPU温度
+			virtual int GetGpuUsage();	//获取GPU负载
+			virtual int GetGpuTemp();	//获取GPU温度
+			virtual bool InitInterface();
 
 			//定义函数指针
 			static ADL_MAIN_CONTROL_CREATE  AdlMainControlCreate;
@@ -61,18 +76,38 @@ namespace cg{
 		};
 
 		//Nvidia显卡相关的类，继承GpuInterface类
-		class NvidiaInterface/*: public GpuInterface*/
+		class NvidiaInterface: public GpuInterface
 		{
 		public:
 			NvidiaInterface(void);	//构造函数
-			~NvidiaInterface();
-			int GetGpuUsage();	//获取GPU利用率
-			int GetGpuTemp();	//获取GPU温度
-
+			virtual ~NvidiaInterface();
+			virtual int GetGpuUsage();	//获取GPU利用率
+			virtual int GetGpuTemp();	//获取GPU温度
+			virtual bool InitInterface();
+			
 		private:
 			bool InitNvApi();	//初始化N卡
 			bool isInit;
 			NvPhysicalGpuHandle phys;
+		};
+
+		class NvApiInterface: public GpuInterface{
+		public:
+			NvApiInterface();
+			virtual ~NvApiInterface();
+			virtual int GetGpuUsage();
+			virtual int GetGpuTemp();
+			virtual bool InitInterface();
+		private:
+			bool isInit;
+			int data0;
+
+			// function pointer
+			void * call0;
+			void * call1;
+			void * call2;
+
+			int buffer[1024];
 		};
 
 	}

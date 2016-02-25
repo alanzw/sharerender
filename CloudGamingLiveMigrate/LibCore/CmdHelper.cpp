@@ -147,6 +147,7 @@ namespace cg{
 				}else if(vt[i] == string("-a") || vt[i] == string("-A")){
 					// the socket number if any
 					sockString = string(vt[i+1]);
+					exeName = string(vt[i+1]);
 					useInternalSocket = true;
 				}
 				else if(vt[i] == string("-p") || vt[i] == string("-P")){

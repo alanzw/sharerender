@@ -11,7 +11,7 @@ namespace cg{
 #endif
 
 		// constructor and destructor
-		InfoRecorder::InfoRecorder(char * prefix){
+		InfoRecorder::InfoRecorder(char * prefix): namedMutex(NULL), mappingHandle(NULL), mappingAddr(NULL), useMapping(false){
 			char recorderName[100];
 
 			// init he frame recorder
@@ -27,10 +27,17 @@ namespace cg{
 			traceRecorder = new LightWeightRecorder(recorderName);
 
 			// create all the watcher
+#if 0
 			frameCpuWatcher = new CpuWatch();
 			secondCpuWatcher = new CpuWatch();
-			gpuWatcher = new GpuWatch();
+			gpuWatcher = GpuWatch::GetGpuWatch();
+#else
+			frameCpuWatcher = NULL;
+			secondCpuWatcher = NULL;
+			gpuWatcher = NULL;
+#endif
 
+			processHandle = NULL;
 			processHandle = GetCurrentProcess();
 			if (processHandle == NULL){
 				MessageBox(NULL, "null process handle, get current process failed.", "Error", MB_OK);
@@ -55,6 +62,8 @@ namespace cg{
 			logFrame("FrameIndex FPS cpu gpu\n");
 			logSecond("SecondIndex FPS cpu gpu\n");
 		}
+
+		
 
 		InfoRecorder::~InfoRecorder(){
 
@@ -96,6 +105,63 @@ namespace cg{
 			if(recoderLock){
 				CloseHandle(recoderLock);
 				recoderLock = NULL;
+			}
+			releaseMapping();
+		}
+
+		bool InfoRecorder::init(){
+			frameCpuWatcher = new CpuWatch();
+			secondCpuWatcher = new CpuWatch();
+			gpuWatcher = GpuWatch::GetGpuWatch();
+			return true;
+		}
+
+		bool InfoRecorder::initMapping(std::string exeName){
+			useMapping = true;
+			std::string mutexName = exeName + std::string("_mutex");
+			std::string mappingName = exeName + std::string("_mapping");
+
+			errorRecorder->log("[InfoRecorder]: init mapping, exe name:%s, mutex name:%s, mapping name:%s.\n", exeName.c_str(), mutexName.c_str(), mappingName.c_str());
+			//namedMutex = OpenMutex(MUTEX_ALL_ACCESS, FALSE, mutexName.c_str());
+			namedMutex = OpenEvent(EVENT_ALL_ACCESS, FALSE, mutexName.c_str());
+			if(namedMutex){
+				errorRecorder->log("[InfoRecorder]: open mutex success, already exist.\n");
+			}
+			else{
+				//namedMutex = CreateMutex(NULL, FALSE, mutexName.c_str());
+				namedMutex = CreateEvent(NULL, FALSE, FALSE, mutexName.c_str());
+				errorRecorder->log("[InfoRecorder]: open mutex failed. create new.\n");
+			}
+			// file mapping
+			mappingHandle = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, mappingName.c_str());
+			if(mappingHandle){
+				// get the file data
+				mappingAddr = MapViewOfFile(mappingHandle, FILE_MAP_ALL_ACCESS, 0,0,0);
+				errorRecorder->log("[InfoRecorder]: open mapping success, already exist.\n");
+			}else{
+				errorRecorder->log("[InfoRecorder]: open mapping failed, create new.\n");
+				// create mapped file
+				mappingHandle = CreateFileMapping((HANDLE)0xFFFFFFFF,NULL, PAGE_READWRITE,0, 64, mappingName.c_str());
+				mappingAddr = MapViewOfFile(mappingHandle, FILE_MAP_ALL_ACCESS, 0,0,0);
+			}
+			if(mappingAddr == NULL){
+				errorRecorder->log("[DllMain]: file map:%s get NULL, error:%d.\n", mappingName.c_str(), GetLastError());
+			}
+
+			return true;
+		}	
+		void InfoRecorder::releaseMapping(){
+			if(namedMutex){
+				CloseHandle(namedMutex);
+				namedMutex = NULL;
+			}
+			if(mappingAddr){
+				UnmapViewOfFile(mappingAddr);
+				mappingAddr = NULL;
+			}
+			if(mappingHandle){
+				CloseHandle(mappingHandle);
+				mappingHandle = NULL;
 			}
 		}
 
@@ -179,6 +245,15 @@ namespace cg{
 					gpuUsage = gpuWatcher->GetGpuUsage();
 
 				secondRecorder->log("%d %f %f %f\n", secondIndex, fpsInSecond, cpuUsage, gpuUsage);
+				if(useMapping){
+					// write to mapping file and notify
+					int * p = (int *)mappingAddr;
+					*p = secondIndex;
+					p++;
+					*p = (int)fpsInSecond;
+					//ReleaseMutex(namedMutex);
+					SetEvent(namedMutex);
+				}
 			}
 			else{
 				secondStarted = true;

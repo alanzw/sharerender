@@ -27,6 +27,7 @@ int main(int argc, char ** argv){
 	memset(args, 0, 1024);
 
 	infoRecorder = new InfoRecorder("Loader");
+	infoRecorder->init();
 	// choose the work mode according to argv
 	if(argc == 1){
 		// only listen the render proxy
@@ -75,17 +76,36 @@ int main(int argc, char ** argv){
 			loader = GameLoader::GetLoader();
 		}
 
+		HANDLE gameProcess = NULL;
+		LoaderLogger * loaderLogger = NULL;
+
 		if(gameNameReady){
 			printf("[Main]: will start the game with cmd line:%s %s.\n", \
 			argv[1], args);
+
+			loaderLogger = new LoaderLogger(gameName);
+
 			if(!useDll)
-				loader->loadGame(gameName, args);
+				gameProcess = loader->loadGame(gameName, args);
 			else
-				loader->loadGame(gameName, args, externDllName);
+				gameProcess = loader->loadGame(gameName, args, externDllName);
+
+			// set the process handle
+			loaderLogger->setProcessHandle(gameProcess);
+			loaderLogger->start();
 		}
 		else{
 			cout << "[Main]: cannot find the game name in the args. To exit." << endl;
 		}
+
+		//use extern logger to record the usage
+		DWORD ret = WaitForSingleObject(gameProcess, INFINITE);
+		if(ret == WAIT_OBJECT_0){
+			loaderLogger->stop();
+			delete loaderLogger;
+			loaderLogger = NULL;
+		}
+
 		// free resources
 		free(args);
 		args = NULL;
@@ -164,6 +184,10 @@ int main(int argc, char ** argv){
 
 #endif
 #endif
+
+	GameLoader * loader = GameLoader::GetLoader();
+
+
 	}
 	return 0;
 }

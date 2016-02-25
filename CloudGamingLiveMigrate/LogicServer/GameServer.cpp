@@ -192,13 +192,12 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 	WSADATA wsaData;
 	WORD sockVersion = MAKEWORD(2,2);
 	static int first = 0;
-
 	static bool b = true;
-
 	char shareData[1000] = {0};
 
 	if(infoRecorder == NULL){
 		infoRecorder = new InfoRecorder("GameServer");
+		infoRecorder->init();
 	}
 	if(NULL == pTimer){
 		pTimer = new cg::core::PTimer();
@@ -240,6 +239,15 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 				//cmdCtrl->setEncoderOption(3);
 
 				infoRecorder->logError("[DllMain]: cmd ctrl: %s.\n", cmdCtrl->toString().c_str());
+				// open the mapping and the mutex
+				string exeName = cmdCtrl->getExeName();
+
+				infoRecorder->initMapping(exeName);
+
+				
+				// set the logger
+
+
 			}
 			if (StartHookCalled == 0){
 				infoRecorder->logTrace("[Global]: start to hook.\n");

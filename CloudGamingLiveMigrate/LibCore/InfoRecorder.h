@@ -6,10 +6,13 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <Windows.h>
+#include <string>
 
 #include "lightweightreocder.h"
 #include "CpuWatch.h"
 #include "GpuWatch.h"
+
+
 namespace cg{
 	namespace core{
 
@@ -46,9 +49,18 @@ namespace cg{
 			// add to record the new created objects in this frame
 			int newCreated;
 
+			HANDLE namedMutex;
+			HANDLE mappingHandle;
+			LPVOID mappingAddr;
+			bool useMapping;
+
 		public:
 			InfoRecorder(char * prefix);
 			~InfoRecorder();
+
+			bool initMapping(std::string exeName);
+			void releaseMapping();
+			bool init();
 
 			void flush();
 			bool onFrameEnd(bool recordGpu = true);
@@ -71,6 +83,23 @@ namespace cg{
 
 		// the global info recorder
 		extern InfoRecorder * infoRecorder;
+
+
+
+		//// to log the data write in the shared memory map
+		class SharedDataLogger{
+
+		public:
+			SharedDataLogger(std::string logFilename, std::string shardMappingName);
+			~SharedDataLogger();
+
+			void log(char * format, ...);
+
+		private:
+			HANDLE namedMutex;
+			HANDLE targetProcess;
+			LightWeightRecorder * recorder;
+		};
 	}
 }
 

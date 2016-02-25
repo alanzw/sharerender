@@ -5,6 +5,7 @@
 namespace cg{
 	namespace core{
 
+#if 0
 		//初始化静态变量
 		int GpuWatch::gpuUtilization=-1;
 		int GpuWatch::gpuTemp=-1;
@@ -12,16 +13,19 @@ namespace cg{
 		//GpuInterface* GpuWatch::pInterface=NULL;
 		std::string GpuWatch::graInfo="";
 		int GpuWatch::type=-1;
+#else
+		GpuWatch * GpuWatch::gpuWatch = NULL;
+
+#endif
 
 		ADL_MAIN_CONTROL_CREATE AMDInterface::AdlMainControlCreate=NULL;
 		ADL_MAIN_CONTROL_REFRESH AMDInterface::AdlMainControlRefresh=NULL;
 		ADL_OVERDRIVE5_TEMPERATURE_GET AMDInterface::AdlOverDrive5TemperatureGet=NULL;
 		ADL_OVERDRIVE5_CURRENTACTIVITY_GET AMDInterface::AdlOverDrive5CurrentActivityGet=NULL;
 
-
 		/////////////////////////////////////////////
 		//获取GPU温度、利用率信息的类
-		GpuWatch::GpuWatch(void): isInit(false)
+		GpuWatch::GpuWatch(void): isInit(false), gpuInterface(NULL)
 		{
 			InitGpuInterface();
 		}
@@ -52,41 +56,43 @@ namespace cg{
 			HRESULT h=pD3D->GetAdapterIdentifier(D3DADAPTER_DEFAULT,0,&di);
 			if(FAILED(h))
 			{
-				/*pInterface = new GpuInterface;*/
-				//infoRecorder->logError("[NvdiaInterface]: get adapter identifier failed.\n");
 
 				type=-1;
 				return false;
 			}
 			//显卡描述信息
 			graInfo = di.Description;
-			//infoRecorder->logError("[NvdiaInterface]: graphic infor:%s\n", graInfo.c_str());
 
 			pD3D->Release();	//释放D3D对象
-			//将字符串转换成统一的小写形式，方便对比
 			ChangeToLower(graInfo);
-			//判断是何种类型显卡
+			
 			//amd卡
-			if( (graInfo.find("amd")!=-1) || (graInfo.find("ati")!=-1) )
+			if( (graInfo.find("amd")!=-1) || (graInfo.find("ati")!=-1) ){
 				/*pInterface = new AMDInterface;*/
 				type=0;
+				// create the  interface
+				gpuInterface = new AMDInterface();
+			}
 			//N卡
 			else {
-				if( graInfo.find("nvidia")!=-1 )
+				if( graInfo.find("nvidia")!=-1 ){
 					type=1;
-				//非A卡也非N卡，不能处理，返回false
+					// create the interface
+					gpuInterface = new NvidiaInterface();
+					//gpuInterface = new NvApiInterface();
+				}
 				else
 				{
 					/*pInterface = new GpuInterface;*/
+					infoRecorder->logError("[GpuWatch]: type is unknown.\n");
 					type=-1;
 					return false;
 				}
 			}
+
 			return true;
 		}
 
-
-		//字符串中大写字母转换成小写字母
 		void GpuWatch::ChangeToLower(std::string &str)
 		{
 			auto iter=str.begin();
@@ -101,16 +107,10 @@ namespace cg{
 		//观测显卡利用率
 		int GpuWatch::GetGpuUsage()
 		{
-			//创建对象成功，获取GPU利用率，否则返回-1
-			//if(pInterface)
-			//	{
-			//		gpuUtilization = pInterface->GetGpuUsage();	//获取GPU利用率
-			//	}
-			//else gpuUtilization=-1;
 			if(type==-1){
-				//infoRecorder->logError("[NvdiaInterface]: gpu type is:%d.\n", type);
 				gpuUtilization=-1;
 			}
+#if 0
 			//A卡
 			if(type==0)
 			{
@@ -123,6 +123,11 @@ namespace cg{
 				NvidiaInterface nv;
 				gpuUtilization = nv.GetGpuUsage();
 			}
+#else
+			if(gpuInterface){
+				gpuUtilization = gpuInterface->GetGpuUsage();
+			}
+#endif
 			return gpuUtilization;
 		}
 
@@ -135,6 +140,8 @@ namespace cg{
 			gpuTemp = -1;*/
 			if(type == -1)
 				gpuTemp = -1;
+
+#if 0
 			//A卡
 			if(type == 0)
 			{
@@ -147,14 +154,18 @@ namespace cg{
 				NvidiaInterface nv;
 				gpuTemp = nv.GetGpuTemp();
 			}
+#else
+			if(gpuInterface){
+				gpuTemp = gpuInterface->GetGpuTemp();
+			}
+
+#endif
 			return gpuTemp;
 		}
 
 		//获取显卡信息
 		void GpuWatch::GetGpuInformation(char *buf,int size)
 		{
-			/*if(!pInterface)
-			return;*/
 			if(type == -1)
 				return;
 			if(!graInfo.size())
@@ -164,20 +175,12 @@ namespace cg{
 				return;
 			strcpy_s(buf,size,graInfo.c_str());
 		}
-		/////////////////////////////////////////////
 
-		////////////////////////////////////////////
-		//AMDInterface类函数
-
-		//构造函数
 		AMDInterface::AMDInterface(): isInit(false)
 		{
-			//初始化A卡
 			InitAdlApi();
-
 		}
 
-		//析构函数
 		AMDInterface::~AMDInterface()
 		{
 
@@ -188,7 +191,6 @@ namespace cg{
 		{
 			void *pbuf=NULL;
 			pbuf = malloc(size);
-
 			return pbuf;
 		}
 
@@ -202,7 +204,9 @@ namespace cg{
 			}
 		}
 
-
+		bool AMDInterface::InitInterface(){
+			return InitAdlApi();
+		}
 
 		//初始化A卡
 		bool AMDInterface::InitAdlApi()
@@ -267,28 +271,27 @@ namespace cg{
 			temper=tempStruct.iTemperature/1000;
 			return temper;
 		}
-		///////////////////////////////////////////////
 
-		//////////////////////////////////////////////
 		//NvidiaInterface类函数
-
-		//构造函数
 		NvidiaInterface::NvidiaInterface():isInit(false),phys(NULL)
 		{
 			InitNvApi();	//初始化N卡
 		}
 
-		//析构函数
 		NvidiaInterface::~NvidiaInterface()
 		{
 
+		}
+
+		bool NvidiaInterface::InitInterface(){
+			return InitNvApi();
 		}
 
 		//初始化N卡
 		bool NvidiaInterface::InitNvApi()
 		{
 			NvU32 nv;
-			if(NvAPI_Initialize() !=NVAPI_OK)
+			if(NvAPI_Initialize() != NVAPI_OK)
 				return false;
 			isInit = true;
 
@@ -297,6 +300,7 @@ namespace cg{
 			{
 				phys=NULL;	//系统中无N卡
 			}
+			
 			return true;
 		}
 
@@ -305,21 +309,22 @@ namespace cg{
 		{
 			NV_GPU_DYNAMIC_PSTATES_INFO_EX nvInfo;
 
-			//无N卡，或者初始化失败
 			if ( (isInit == false) || (phys == NULL) ){
-				//infoRecorder->logError("[NvdiaInterface]: not inited or get NULL phys.\n");
 				return -1;
 			}
 			//版本信息
 			nvInfo.version = NV_GPU_DYNAMIC_PSTATES_INFO_EX_VER;
 			//获取GPU使用率失败
-			if(NvAPI_GPU_GetDynamicPstatesInfoEx(phys,&nvInfo)!=NVAPI_OK || nvInfo.utilization[0].bIsPresent ==0)
+			NvAPI_Status status = NVAPI_OK;
+			if((status = NvAPI_GPU_GetDynamicPstatesInfoEx(phys,&nvInfo))!=NVAPI_OK || nvInfo.utilization[0].bIsPresent ==0)
 			{
-
-				//infoRecorder->logError("[NvdiaInterface]: get dynamicPststaicInforEx failed.\n");
+				//NvAPI_ShortString str = {0};
+				//NvAPI_GetErrorMessage(status, str);
+				infoRecorder->logError("[NvidiaInterface]::GetGpuUsage(), NvAPI_GPU_GetDynamicPstatesInfoEx ret:%d, is present:%d.\n", status, nvInfo.utilization[0].bIsPresent);
 				return -1;
 			}
 			//返回使用率
+			infoRecorder->logError("[NvidiaInterface]: 0:%d, 1:%d, 2:%d, 3:%d, 4:%d, 5:%d, 6:%d, 7:%d.\n", nvInfo.utilization[0].percentage, nvInfo.utilization[1].percentage, nvInfo.utilization[2].percentage, nvInfo.utilization[3].percentage, nvInfo.utilization[4].percentage, nvInfo.utilization[5].percentage, nvInfo.utilization[6].percentage, nvInfo.utilization[7].percentage);
 			return static_cast<int>(nvInfo.utilization[0].percentage);
 		}
 
@@ -336,7 +341,44 @@ namespace cg{
 			}
 			//返回温度
 			return static_cast<int>(thermal.sensor[0].currentTemp);
+		}
 
+
+
+		// NvApiInterface
+		NvApiInterface::NvApiInterface(): isInit(false), data0(0), call0(NULL), call1(NULL), call2(NULL){
+			InitInterface();
+		}
+		NvApiInterface::~NvApiInterface(){}
+		bool NvApiInterface::InitInterface(){
+
+			HANDLE handle = LoadLibraryA("nvapi.dll");
+			void * func = GetProcAddress((HMODULE)handle, "nvapi_QueryInterface");
+			call0 = ((void *(*)(unsigned int))func)(22079528u);
+			call1 = ((void *(*)(unsigned int))func)(3853292063u);
+			call2 = ((void *(*)(unsigned int))func)(412753887u);
+
+			int ret = ((int(*)())call0)();
+			int data1 = 1;
+			ret = ((int (*)(void *, void *))call1)(&data0, &data1);
+
+			return true;
+		}
+
+		int NvApiInterface::GetGpuUsage(){
+			buffer[0] = 65672;
+			int ret = ((int (*)(int , int *))call2)(data0, buffer);
+			if(ret != 0){
+				infoRecorder->logError("[NvApiInterface]: get usage ret:%d.\n", ret);
+			}
+			int gpuLoad = buffer[3];
+			return gpuLoad;
+		}
+
+		int NvApiInterface::GetGpuTemp(){
+			return -1;
 		}
 	}
+
+
 }

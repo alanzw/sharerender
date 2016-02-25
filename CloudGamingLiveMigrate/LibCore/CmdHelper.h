@@ -131,6 +131,7 @@ namespace cg{
 			inline string	getLogicUrl(){ return logicUrl; }
 			inline string	getOutputPath(){ return outputPath; }
 			inline string	getVideoName(){ return videoName; }
+			inline string	getExeName(){ return exeName; }
 
 			inline bool		enableGenerateVideo(){ return generateVideo; }
 			inline bool		isListenMode(){ return listenMode; }

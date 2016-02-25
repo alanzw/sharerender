@@ -8,6 +8,10 @@
 #include "../LibDistrubutor/Context.h"
 #include "../LibDistrubutor/Distributor.h"
 #include "../LibDistrubutor/DistributorForLogic.h"
+
+#include "../LibCore/CpuWatch.h"
+#include "../LibCore/GpuWatch.h"
+#include "../LibCore/CThread.h"
 #include "../LibCore/InfoRecorder.h"
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -305,6 +309,36 @@ public:
 
 	// from parent 
 	virtual bool dealCmd(BaseContext * ctx);
+};
+
+
+
+class LoaderLogger: public cg::core::CThread{
+	HANDLE processHandle;
+	std::string processName;
+	HANDLE mappingHandle;
+	HANDLE mutexHandle;
+	LPVOID mappingAddr;
+
+	CpuWatch * cpuWatcher;
+	GpuWatch * gpuWatcher;
+	
+	LightWeightRecorder * recorder;
+
+	bool initLogger();
+
+public:
+	virtual void onThreadMsg(UINT msg, WPARAM wParam, LPARAM lParam);
+	virtual BOOL onThreadStart();
+	virtual void onQuit();
+	virtual BOOL run();
+
+	inline void setProcessHandle(HANDLE handle){ processHandle = handle; } 
+
+	LoaderLogger(std::string _processName);
+
+	~LoaderLogger();
+	
 };
 
 #endif
