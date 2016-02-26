@@ -274,6 +274,7 @@ bool dealCmd(int argc, char ** argv){
 int main(int argc, char ** argv){
 	// init the logger
 	infoRecorder = new InfoRecorder("RenderProxy");
+	infoRecorder->init();
 	// start the network
 	WSADATA WSAData;
 	WSAStartup(0x101, &WSAData);

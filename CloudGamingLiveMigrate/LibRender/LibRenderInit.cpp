@@ -154,26 +154,26 @@ HRESULT RenderChannel::clientInit() {
 
 	switch(hr){
 	case D3D_OK:
-		cg::core::infoRecorder->logTrace("client_init(), create devie return D3D_OK\n");
+		cg::core::infoRecorder->logError("client_init(), create devie return D3D_OK. id:%d, device:%p.\n", id, base_device);
 		break;
 	case D3DERR_DEVICELOST:
-		cg::core::infoRecorder->logTrace("client_init(), create device return D3DERR_DEVICELOST.\n");
+		cg::core::infoRecorder->logError("client_init(), create device return D3DERR_DEVICELOST.\n");
 		break;
 	case D3DERR_INVALIDCALL:
-		cg::core::infoRecorder->logTrace("client_init(), create devie return D3DERR_INVALIDCALL\n");
+		cg::core::infoRecorder->logError("client_init(), create devie return D3DERR_INVALIDCALL\n");
 		break;
 	case D3DERR_NOTAVAILABLE:
-		cg::core::infoRecorder->logTrace("client_init(), create device return D3DERR_NOTAVAILABLE.\n");
+		cg::core::infoRecorder->logError("client_init(), create device return D3DERR_NOTAVAILABLE.\n");
 		break;
 	case D3DERR_OUTOFVIDEOMEMORY:
-		cg::core::infoRecorder->logTrace("client_init(), create device return D3DERR_OUTOFVIDEOMEMORY.\n");
+		cg::core::infoRecorder->logError("client_init(), create device return D3DERR_OUTOFVIDEOMEMORY.\n");
 		break;
 	default:
 		break;
 
 	}
 	if(base_device == NULL) {
-		cg::core::infoRecorder->logTrace("client_init(), device is NULL, id=%d\n", id);
+		cg::core::infoRecorder->logError("client_init(), device is NULL, id=%d\n", id);
 	}
 	else {
 		cg::core::infoRecorder->logTrace("client_init(), device is good, id=%d\n", id);

@@ -102,7 +102,7 @@ char * UsageToString(BYTE usage){
 
 void WrapperDirect3DVertexDeclaration9::print(){
 #ifdef ENABLE_VERTEX_DECLARATION_LOG
-	infoRecorder->logTrace("[WrapperDirect3DVertexDeclaration]:id:%d, count:%d.\n", id, numElements + 1);
+	infoRecorder->logTrace("[WrapperDirect3DVertexDeclaration]:id:%d, count:%d.\n", id, numElements);
 	char * strType = NULL;
 	char * strMethod = NULL;
 	char * strUsage = NULL;
@@ -126,8 +126,8 @@ int WrapperDirect3DVertexDeclaration9::sendCreation(void *ctx){
 
 	c->beginCommand(CreateVertexDeclaration_Opcode, getDeviceId());
 	c->write_int(getId());
-	c->write_int(this->numElements + 1);
-	c->write_byte_arr((char *)this->pDecl, (this->numElements + 1) * sizeof(D3DVERTEXELEMENT9));
+	c->write_int(this->numElements);
+	c->write_byte_arr((char *)this->pDecl, (this->numElements) * sizeof(D3DVERTEXELEMENT9));
 	c->endCommand();
 	return 0;
 }

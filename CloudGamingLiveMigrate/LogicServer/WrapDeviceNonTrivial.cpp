@@ -161,6 +161,9 @@ STDMETHODIMP WrapperDirect3DDevice9::DrawPrimitiveUP(THIS_ D3DPRIMITIVETYPE Prim
 		VertexCount = PrimitiveCount * 3;
 		break;
 	case D3DPT_TRIANGLESTRIP:
+		VertexCount = PrimitiveCount + 2;
+		break;
+
 	case D3DPT_TRIANGLEFAN:
 		VertexCount = PrimitiveCount + 2;
 		break;
@@ -291,13 +294,13 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateVertexDeclaration(
 
 		if(vd){
 #ifdef ENABLE_DEVICE_LOG
-			infoRecorder->logTrace("numElement:%d and id:%d\n",ve_cnt, vd->getId());
+			infoRecorder->logTrace("numElement:%d and id:%d\n",ve_cnt + 1, vd->getId());
 #endif
 			//set the VERTEXELEMENT and numElemts
-			vd->numElements = ve_cnt;
+			vd->numElements = ve_cnt + 1;
 			//vd->pDecl = pVertexElements; // check when use, the pointer may be NULL
-			vd->pDecl = (D3DVERTEXELEMENT9 *)malloc(sizeof(D3DVERTEXELEMENT9) * (ve_cnt +1));
-			memcpy(vd->pDecl, (const void *)pVertexElements, sizeof(D3DVERTEXELEMENT9) * (ve_cnt +1));
+			vd->pDecl = (D3DVERTEXELEMENT9 *)malloc(sizeof(D3DVERTEXELEMENT9) * (ve_cnt + 1));
+			memcpy(vd->pDecl, (const void *)pVertexElements, sizeof(D3DVERTEXELEMENT9) * (ve_cnt + 1));
 			vd->print();
 		}
 

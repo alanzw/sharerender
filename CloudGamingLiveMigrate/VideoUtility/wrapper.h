@@ -11,9 +11,8 @@
 #include <d3dx9tex.h>
 #include <DxErr.h>
 #include "pipeline.h"
+#include "../LibCore/TimeTool.h"
 
-//#define USE_RENDER_TARGET    // enable when use logic server to gen video
-#define USE_BACK_BUFFER    // enable when use render proxy to gen video
 
 namespace cg{
 
@@ -73,10 +72,16 @@ namespace cg{
 		static int count;					// record the class construction times
 		static IDirect3D9 * d3d;
 
+		cg::core::PTimer * pTimer;
+
 	public:
 
 		// use source type and window height and width create the D3DWrapper
-		D3DWrapper(HWND h, IDirect3DDevice9 * device, int winWidth, int winHeight, pipeline *_src_pipe):Wrapper(h, winWidth, winHeight, _src_pipe), d3d_device(device), surface(NULL), sysOffscreenSurface(NULL), deviceOffscreenSurface(NULL){}
+		D3DWrapper(HWND h, IDirect3DDevice9 * device, int winWidth, int winHeight, pipeline *_src_pipe):Wrapper(h, winWidth, winHeight, _src_pipe), d3d_device(device), surface(NULL), sysOffscreenSurface(NULL), deviceOffscreenSurface(NULL){
+
+			pTimer = new cg::core::PTimer();
+
+		}
 
 		virtual ~D3DWrapper();
 		virtual bool changeSourceType(SOURCE_TYPE dstType);

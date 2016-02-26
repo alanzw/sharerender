@@ -72,7 +72,7 @@ void ClientVertexBuffer9::UpdateVertexBuffer(CommandClient * cc) {
 
 	int mode = cc->read_int();
 	
-	HRESULT hr = m_vb->Lock(m_LockData.OffsetToLock, m_LockData.SizeToLock, (void**)&vb_ptr, D3DLOCK_NOOVERWRITE);//m_LockData.Flags);
+	HRESULT hr = m_vb->Lock(m_LockData.OffsetToLock, m_LockData.SizeToLock, (void**)&vb_ptr, m_LockData.Flags);
 	//HRESULT hr = m_vb->Lock(0, 0, (void**)&vb_ptr, D3DLOCK_NOOVERWRITE);//m_LockData.Flags);
 
 	if(SUCCEEDED(hr)) {

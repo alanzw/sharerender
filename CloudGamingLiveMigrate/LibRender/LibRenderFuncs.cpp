@@ -507,7 +507,6 @@ HRESULT FakedSetFVF(RenderChannel * rch) {
 	return rch->curDevice->SetFVF(FVF);
 }
 
-#ifdef ENABLE_LOG_SPEC_STRING
 char * PrimitiveTypeToString(D3DPRIMITIVETYPE type){
 	switch(type){
 	case 1:
@@ -526,7 +525,6 @@ char * PrimitiveTypeToString(D3DPRIMITIVETYPE type){
 		return _strdup("D3DPT_FROCE_DWORD");
 	}
 }
-#endif
 
 HRESULT FakedDrawPrimitive(RenderChannel * rch) {
 	//cg::core::infoRecorder->logTrace("FakedDrawPrimitive called\n");
@@ -831,27 +829,27 @@ HRESULT FakedCreateVertexDeclaration(RenderChannel * rch) {
 	D3DVERTEXELEMENT9 dt[100];
 	rch->cc->read_byte_arr((char*)dt, cnt * sizeof(D3DVERTEXELEMENT9));
 
-	cg::core::infoRecorder->logTrace("FakedCreateVertexDeclaration(), id=%d, cnt=%d, ", id, cnt);
+	cg::core::infoRecorder->logError("FakedCreateVertexDeclaration(), id=%d, cnt=%d, ", id, cnt);
 
 	LPDIRECT3DVERTEXDECLARATION9 vd = NULL;
 
 	rch->getDevice(rch->obj_id);
-	HRESULT hr = rch->curDevice->CreateVertexDeclaration(dt, &vd);
+	
 
 	// print the vertex declaration
 	char * strType = NULL;
 	char * strMethod = NULL;
 	char * strUsage = NULL;
-	for(int i = 0; i < cnt-1; i++){
+	for(int i = 0; i < cnt; i++){
 		strType = TypeToString(dt[i].Type);
 		strMethod = MethodToString(dt[i].Method);
 		strUsage = UsageToString(dt[i].Usage);
-		infoRecorder->logTrace("stream:%d offset:%d type:%s method:%s usage:%s usage index:%d\n", dt[i].Stream, dt[i].Offset, strType, strMethod, strUsage, dt[i].UsageIndex);
+		infoRecorder->logError("stream:%d offset:%d type:%s method:%s usage:%s usage index:%d\n", dt[i].Stream, dt[i].Offset, strType, strMethod, strUsage, dt[i].UsageIndex);
 		free(strType);
 		free(strMethod);
 		free(strUsage);
 	}
-
+	HRESULT hr = rch->curDevice->CreateVertexDeclaration(dt, &vd);
 	rch->vd_list[id] = vd;
 
 	if(SUCCEEDED(hr)) {
@@ -868,7 +866,7 @@ HRESULT FakedSetVertexDeclaration(RenderChannel * rch) {
 
 	short id = rch->cc->read_short();
 
-	cg::core::infoRecorder->logTrace("FakedSetVertexDeclaration(), id=%d, ", id);
+	cg::core::infoRecorder->logError("FakedSetVertexDeclaration(), id=%d, ", id);
 
 	if(id == -1) return rch->curDevice->SetVertexDeclaration(NULL);
 
@@ -1066,8 +1064,13 @@ HRESULT FakedDrawPrimitiveUP(RenderChannel * rch) {
 
 	rch->getDevice(rch->obj_id);
 
-	HRESULT hr = rch->curDevice->DrawPrimitiveUP(PrimitiveType, PrimitiveCount, (void*)up_buf, VertexStreamZeroStride);
 
+	char * strType = PrimitiveTypeToString(PrimitiveType);
+	cg::core::infoRecorder->logTrace("FakedDrawPrimitiveUP(%s, %d, %p, %d), data size:%d.\n", strType, PrimitiveCount, up_buf, VertexStreamZeroStride, VertexCount * VertexStreamZeroStride);
+	free(strType);
+
+	HRESULT hr = rch->curDevice->DrawPrimitiveUP(PrimitiveType, PrimitiveCount, (void*)up_buf, VertexStreamZeroStride);
+	
 
 #ifdef ENABLE_LOG_SPEC_STRING
 	char * strType = PrimitiveTypeToString(PrimitiveType);
