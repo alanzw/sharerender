@@ -158,6 +158,29 @@ namespace cg{
 			return true;
 		}
 
+
+
+		bool CmdController::commitRender(){
+			if(frameStep != 0){
+				curRender++;
+				if(curRender == frameStep){
+					enableToRender = true;
+					curRender = 0;	
+				}
+				else{
+					enableToRender = false;
+				}
+			}else{
+				enableToRender = false;
+			
+			}
+			// rate control
+			if(rateControl){
+
+			}
+			return enableToRender;
+		}
+
 		// to string function to print the content
 		string CmdController::toString(){
 			stringstream os;

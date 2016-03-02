@@ -26,13 +26,17 @@ bool StateBlock::sendCreation(ContextAndCache * ctx){
 #endif // ENABLE_STATE_BLOCK_LOG
 	IdentifierBase * obj = NULL;
 	if(!dependencyList.empty()){
-		ctx->flush();
+		ctx->flush();   // flush may not be accurate, cause if no data in buffer, flush will cause failure
 	}
-	while(!dependencyList.empty()){
-		obj = dependencyList.front();
+
+	std::list<IdentifierBase *>::iterator it;
+	for(it = dependencyList.begin(); it != dependencyList.end(); it++){
+		obj = *it;
 		obj->checkCreation(ctx);
-		dependencyList.pop_front();
 	}
+	// flush if any data in buffer
+	ctx->flush();
+
 #ifdef ENABLE_STATE_BLOCK_LOG
 	infoRecorder->logError("[StateBlock]: to send the buffer for %d.\n", id_);
 #endif // ENABLE_STATE_BLOCK_LOG
@@ -71,6 +75,7 @@ StateBlock * StateBlockRecorder::StateBlockEnd(int serialNumber){
 #endif // ENABLE_STATE_BLOCK_LOG
 		ret =  new StateBlock(serialNumber, buf, dependencyList);
 	}
+	serialNumber++;
 	hasDependency = false;
 	dependencyList.clear();
 #ifdef ENABLE_STATE_BLOCK_LOG

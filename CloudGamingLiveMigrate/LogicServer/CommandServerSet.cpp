@@ -252,6 +252,12 @@ int ContextAndCache::flush(){
 #ifdef ENABLE_CTX_LOG
 	infoRecorder->logTrace("[ContextAndCache]: flush, function count:%d.\n", func_count_);
 #endif
+
+	
+	if(func_count_ == 0){
+		return 0;
+	}
+
 	set_count_part(func_count_);
 	int len = this->send_packet(this);
 	func_count_ = 0;

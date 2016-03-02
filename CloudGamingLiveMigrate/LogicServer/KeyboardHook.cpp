@@ -1,5 +1,5 @@
 #include "GameServer.h"
-
+#include "../LibCore/CmdHelper.h"
 
 #ifdef OLD
 HHOOK kehook = 0;
@@ -36,14 +36,14 @@ extern DWORD tick_start;
 
 LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam){
 
-	//MessageBox(NULL,"Enter hook", "WARNING", MB_OK);
 	if (lParam & 0x80000000) // released
 	{
 		if (wParam == VK_F7) // f7 pressed
 		{
-			//MessageBox(NULL,"F7 pressed", "WARNING", MB_OK);
 			enableRender = false;
-			//infoRecorder->logError("F7 pressed");
+			if(cmdCtrl){
+				cmdCtrl->setFrameStep(0);  // disable rendering
+			}
 		}
 		else if (wParam == VK_F11){
 			EnterCriticalSection(&f9);
@@ -78,8 +78,7 @@ LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam){
 
 void SetKeyboardHook(HINSTANCE hmode, DWORD dwThreadId) {
 	// set the keyboard hook
-	//MessageBox(NULL,"Enter hook", "WARNING", MB_OK);
-	//infoRecorder->logError("set the keyboard hook!\n");
+	infoRecorder->logError("set the keyboard hook, module:%p, thread id:%d!\n", hmode, dwThreadId);
 	kehook = SetWindowsHookEx(WH_KEYBOARD, HookProc, hmode, dwThreadId);
 }
 

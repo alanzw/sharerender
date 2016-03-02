@@ -252,6 +252,7 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 			if (StartHookCalled == 0){
 				infoRecorder->logTrace("[Global]: start to hook.\n");
 				StartHook();
+				SetKeyboardHook(NULL, GetCurrentThreadId());
 				StartHookCalled = 1;
 			}
 			// get the command server set

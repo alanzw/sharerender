@@ -163,6 +163,7 @@ namespace cg{
 			int SMminor = 0, SMmajor = 0;
 
 			// CUDA interfaces
+			CUDA_ERROR_INVALID_DEVICE;
 			__cu(cuInit(0));
 
 			__cu(cuDeviceGetCount(&deviceCount));

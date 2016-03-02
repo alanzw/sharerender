@@ -107,21 +107,7 @@ namespace cg{
 			inline DWORD getPPid(){ return atoi(pidString.c_str());}
 			inline SOCKET getRenderSocket(){ return (SOCKET)atoi(sockString.c_str()); }
 
-			bool commitRender(){
-				if(frameStep != 0){
-					curRender++;
-					if(curRender == frameStep){
-						enableToRender = true;
-						curRender = 0;	
-					}
-					else{
-						enableToRender = false;
-					}
-				}else{
-					enableToRender = false;
-				}
-				return enableToRender;
-			}
+			bool commitRender();
 
 			bool			parseCmd();
 			string			toString();

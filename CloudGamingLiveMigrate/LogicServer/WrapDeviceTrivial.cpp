@@ -328,8 +328,8 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 		time_total += frame_time;
 		frame_all_count++;
 	}
-#if 0
-	if (to_sleep > 0) {
+#if 1
+	if (to_sleep > 0 && cmdCtrl->enableRateControl()) {
 		Sleep((DWORD)to_sleep);
 	}
 #endif

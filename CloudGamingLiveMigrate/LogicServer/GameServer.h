@@ -67,6 +67,7 @@ extern HWND (WINAPI *CreateWindowNext)(
 	__in_opt HMENU hMenu,
 	__in_opt HINSTANCE hInstance,
 	__in_opt LPVOID lpParam);
+
 // hook the create window with unicode
 extern HWND (WINAPI *CreateWindowExWNext)(
 	__in DWORD dwExStyle,
