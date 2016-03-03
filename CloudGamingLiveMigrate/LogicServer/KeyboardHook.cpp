@@ -1,86 +1,103 @@
 #include "GameServer.h"
 #include "../LibCore/CmdHelper.h"
+#include "KeyboardHook.h"
 
-#ifdef OLD
-HHOOK kehook = 0;
-extern bool enableRender;
-LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam){
-	
-	//MessageBox(NULL,"Enter hook", "WARNING", MB_OK);
-	if( lParam & 0x80000000) // pressed
-	{
-		if( wParam == VK_F7) // f7 pressed
-		{
-			//MessageBox(NULL,"F7 pressed", "WARNING", MB_OK);
-			enableRender = false;
-			//infoRecorder->logError("F7 pressed");
+namespace cg{
+	namespace core{
+
+		LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam){
+
+			KeyCommandHelper * keyHelper = KeyCommandHelper::GetKeyCmdHelper();
+
+			if (lParam & 0x80000000) // released
+			{
+				infoRecorder->logError("[Global]: key release, WPARAM: %x, LPARAM:%x.\n", wParam, lParam);
+				if (wParam == VK_F7) // f7 pressed
+				{
+					keyHelper->setEnableRender();
+					if(cmdCtrl){
+						cmdCtrl->setFrameStep(cmdCtrl->getFrameStep() == 0 ? 1: 0);  // disable rendering or enable rendering
+					}
+				}
+				else if (wParam == VK_F11){
+					keyHelper->lock();
+					keyHelper->setSynSigin(true);
+					keyHelper->unlock();
+				}
+				else if (wParam == VK_F1) // f10 pressed
+				{
+					keyHelper->lock();
+					keyHelper->setF10Pressed(true);
+					keyHelper->unlock();
+
+					INPUT in;
+					memset(&in, 0, sizeof(INPUT));
+					in.type = INPUT_KEYBOARD;
+					in.ki.wVk = VK_F10;
+
+					in.ki.wScan = MapVirtualKey(in.ki.wVk, MAPVK_VK_TO_VSC);
+					SendInput(1, &in, sizeof(INPUT));
+
+					in.ki.dwFlags |= KEYEVENTF_KEYUP;
+					//in.ki.dwFlags |= KEYEVENTF_KEYDOWN;
+					//SendInput(1, &in, sizeof(INPUT));
+
+				}
+				else if(wParam >= 0x31 && wParam <= 0x34){
+					// 1, 2, 3, 4
+					int renderStep = wParam - 0x30;
+					keyHelper->setEnableRender();
+					keyHelper->setRenderStep(renderStep);
+					if(cmdCtrl){
+						cmdCtrl->setFrameStep(renderStep);
+					}
+				}
+				else if(wParam >= 0x36 && wParam <= 0x39){
+					// 6, 7, 8, 9
+					int sendStep = wParam - 0x35;
+					keyHelper->setSendStep(sendStep);
+				}
+			}
+			else{
+				infoRecorder->logError("[Global]: key pressed, WPARAM: %x, LPARAM:%x.\n", wParam, lParam);
+			}
+			//
+			return CallNextHookEx(kehook, nCode, wParam, lParam);
 		}
-	}
-	//
-	return CallNextHookEx(kehook,nCode,wParam,lParam); 
-}
 
-void SetKeyboardHook(HINSTANCE hmode, DWORD dwThreadId) {
-	// set the keyboard hook
-	//MessageBox(NULL,"Enter hook", "WARNING", MB_OK);
-	//infoRecorder->logError("set the keyboard hook!\n");
-	kehook = SetWindowsHookEx(WH_KEYBOARD, HookProc, hmode, dwThreadId);
-}
-#else
-HHOOK kehook = 0;
-extern bool enableRender;
-extern bool synSign;
-extern bool f10pressed;
-extern CRITICAL_SECTION f9;
-extern DWORD tick_start;
-
-LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam){
-
-	if (lParam & 0x80000000) // released
-	{
-		if (wParam == VK_F7) // f7 pressed
-		{
-			enableRender = false;
-			if(cmdCtrl){
-				cmdCtrl->setFrameStep(0);  // disable rendering
+		bool KeyCommandHelper::installKeyHook(DWORD threadId){
+			// set the keyboard hook
+			infoRecorder->logError("set the keyboard hook, module:%p, thread id:%d!\n", NULL, threadId);
+			keyHookHandle = SetWindowsHookEx(WH_KEYBOARD, HookProc, NULL, threadId);
+			if(!keyHookHandle){
+				infoRecorder->logError("[KeyCommandHelper]: set window hook ex failed with:%d.\n", GetLastError());
+				return false;
+			}
+			return true;
+		}
+		KeyCommandHelper *KeyCommandHelper::keyCmdHelper = NULL;
+		KeyCommandHelper::KeyCommandHelper():enableRender(true), synSign(false), synStart(0), f10pressed(false), HHOOK(NULL), renderStep(1), sendStep(1){
+			InitializeCriticalSection(&section);
+		}
+		KeyCommandHelper::~KeyCommandHelper(){
+			// release the hook and destroy the critical section
+			BOOL ret = TRUE;
+			if(keyHookHandle){
+				ret= UnhookWindowsHookEx(keyHookHandle);
+				if(ret == TRUE)
+				keyHookHandle = NULL;
+				else{
+					infoRecorder->logError("[KeyCommandHelper]: unhook windows hook failed, error code:%d.\n", GetLastError());
+				}
+			}
+			DeleteCriticalSection(&section);
+		}
+		void KeyCommandHelper::setSynSigin(bool val){
+			synSign = val;
+			if(synSign){
+				synStart = GetTickCount();
 			}
 		}
-		else if (wParam == VK_F11){
-			EnterCriticalSection(&f9);
-			synSign = true;
-			LeaveCriticalSection(&f9);
-			tick_start = GetTickCount();
-		}
-		else if (wParam == VK_F1) // f10 pressed
-		{
-			EnterCriticalSection(&f9);
-			f10pressed = true;
-			LeaveCriticalSection(&f9);
 
-			INPUT in;
-			memset(&in, 0, sizeof(INPUT));
-			in.type = INPUT_KEYBOARD;
-			in.ki.wVk = VK_F10;
-
-			in.ki.wScan = MapVirtualKey(in.ki.wVk, MAPVK_VK_TO_VSC);
-			SendInput(1, &in, sizeof(INPUT));
-
-			in.ki.dwFlags |= KEYEVENTF_KEYUP;
-			//in.ki.dwFlags |= KEYEVENTF_KEYDOWN;
-			//SendInput(1, &in, sizeof(INPUT));
-
-
-		}
 	}
-	//
-	return CallNextHookEx(kehook, nCode, wParam, lParam);
 }
-
-void SetKeyboardHook(HINSTANCE hmode, DWORD dwThreadId) {
-	// set the keyboard hook
-	infoRecorder->logError("set the keyboard hook, module:%p, thread id:%d!\n", hmode, dwThreadId);
-	kehook = SetWindowsHookEx(WH_KEYBOARD, HookProc, hmode, dwThreadId);
-}
-
-#endif
-

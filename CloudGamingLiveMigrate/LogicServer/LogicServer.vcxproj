@@ -92,6 +92,7 @@
     <ClInclude Include="GameServer.h" />
     <ClInclude Include="Initializer.h" />
     <ClInclude Include="InputServer.h" />
+    <ClInclude Include="KeyboardHook.h" />
     <ClInclude Include="LogicContext.h" />
     <ClInclude Include="LogicEvent.h" />
     <ClInclude Include="Matrix.h" />

@@ -277,8 +277,6 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 	//if (tm)
 	presented++;
 
-
-	//DebugBreak();
 	static unsigned int tags = 0;
 	// send command
 	csSet->beginCommand(Present_Opcode, id);

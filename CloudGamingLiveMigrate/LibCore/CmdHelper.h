@@ -5,7 +5,7 @@
 #endif
 #include <Windows.h>
 /*
-the cmd controller will handle the cmd, enable limit fps, generate video, 
+the cmd controller will handle the cmd, enable limit fps, generate video,
 monitor statics, enable RTSP service, logic server url£¬ output file path, output file name, frame log option
 
 if spercific the work mode to Listen Mode, we need to check logic url and task id
@@ -63,7 +63,7 @@ namespace cg{
 			string			objName;
 
 			int				curRender;
-			bool			enableToRender;   
+			bool			enableToRender;
 			bool			fullOffload;  // if work in FULL_OFFLOAD_MODE, no render in logic
 			// the context
 			IDirect3DDevice9*	d9Device;
@@ -136,11 +136,11 @@ namespace cg{
 			inline void		setGenVideo(){ generateVideo = true; }
 			inline void		setEncoderOption(int val){ encoderOption = val; }
 			inline void		setFrameStep(int val){ frameStep = val; }
-			inline int		addRenderConnection(){ 
+			inline int		addRenderConnection(){
 				if(frameStep != 0){
-					int ret = frameStep; 
-					frameStep++; 
-					return ret; 
+					int ret = frameStep;
+					frameStep++;
+					return ret;
 				}else{
 					// no render
 					return 0;
@@ -154,5 +154,9 @@ namespace cg{
 		/*
 		cmd parser is used for Loader to construct the cmd
 		*/
+
+
+		
+
 	}
 }

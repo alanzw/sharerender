@@ -83,6 +83,17 @@ HWND (WINAPI *CreateWindowExWNext)(
 	HINSTANCE hInstance,
 	LPVOID lpParam) = CreateWindowExW;
 
+#ifdef ENABLE_BACKGROUND_RUNNING
+// hook the register class function for windows
+ATOM (WINAPI *RegisterClassANext)(_In_ const WNDCLASSA * lpwc) = RegisterClassA;
+ATOM (WINAPI *RegisterClassWNext)(_In_ const WNDCLASSW * lpwc) = RegisterClassW;
+
+ATOM (WINAPI *RegisterClassExANext)(_In_ const WNDCLASSEXA *lpwcx) = RegisterClassExA;
+ATOM (WINAPI *RegisterClassExWNext)(_In_ const WNDCLASSEXW *lpwcx) = RegisterClassExW;
+
+
+#endif  // ENABLE_BACKGROUND_RUNNING
+
 /* hook ExitProcess, release resources when exiting. */
 void (WINAPI* ExitProcessNext)(
 	UINT uExitCode
@@ -101,6 +112,13 @@ void StartHook() {
 	DetourAttach((PVOID*)&CreateWindowExWNext, CreateWindowExWCallback);
 	DetourAttach((PVOID*)&Direct3DCreate9Next, Direct3DCreate9Callback);
 	//DetourAttach((PVOID*)&ShowWindowNext, ShowWindowCallback);
+
+#ifdef ENABLE_BACKGROUND_RUNNING
+	DetourAttach((LPVOID *)&RegisterClassANext, RegisterClassACallback);
+	DetourAttach((LPVOID *)&RegisterClassWNext, RegisterClassWCallback);
+	DetourAttach((LPVOID *)&RegisterClassExANext, RegisterClassExACallback);
+	DetourAttach((LPVOID *)&RegisterClassExWNext, RegisterClassExWCallback);
+#endif // ENABLE_BACKGROUND_RUNNING
 
 	DetourAttach(&(PVOID&)ExitProcessNext, ExitProcessCallback);
 	DetourTransactionCommit();

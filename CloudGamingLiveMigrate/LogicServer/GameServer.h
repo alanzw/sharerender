@@ -30,6 +30,9 @@ using namespace cg::core;
 extern int need_dump_mesh;
 extern bool tex_send[4024];
 
+#define ENABLE_BACKGROUND_RUNNING
+
+
 #ifndef MULTI_CLIENTS
 extern CommandServer cs;
 extern CommonNet dis;
@@ -85,6 +88,24 @@ extern HWND (WINAPI *CreateWindowExWNext)(
 
 extern void (WINAPI* ExitProcessNext)(
 	UINT uExitCode);
+
+
+#ifdef ENABLE_BACKGROUND_RUNNING
+
+extern bool actived;  // indicate whether the app is actived
+
+extern ATOM (WINAPI *RegisterClassANext)(_In_ const WNDCLASSA * lpwc);
+extern ATOM (WINAPI *RegisterClassWNext)(_In_ const WNDCLASSW * lpwc);
+extern ATOM (WINAPI *RegisterClassExANext)(_In_ const WNDCLASSEXA *lpwcx);
+extern ATOM (WINAPI *RegisterClassExWNext)(_In_ const WNDCLASSEXW *lpwcx);
+
+// declaration
+ATOM WINAPI RegisterClassACallback(_In_ const WNDCLASSA *lpwc);
+ATOM WINAPI RegisterClassWCallback(_In_ const WNDCLASSW *lpwc);
+ATOM WINAPI RegisterClassExACallback(_In_ const WNDCLASSEXA *lpwcx);
+ATOM WINAPI RegisterClassExWCallback(_In_ const WNDCLASSEXW *lpwcx);
+
+#endif // ENABLE_BACKGROUND_RUNNING
 
 HWND WINAPI CreateWindowCallback(
 	DWORD dwExStyle,

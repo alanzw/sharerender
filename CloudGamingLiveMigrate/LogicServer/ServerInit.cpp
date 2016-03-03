@@ -64,6 +64,132 @@ BOOL WINAPI
 		return ShowWindowNext(hWnd, nCmdShow);
 }
 
+#ifdef ENABLE_BACKGROUND_RUNNING
+
+bool isWindowValid(int width, int height){
+	if(width >= 50 && width < 10000 && height >= 50 && height < 10000)
+		return true;
+	else
+		return false;
+}
+
+map<string, WNDPROC> procMap;
+map<wstring, WNDPROC> wProcMap;
+map<HWND, WNDPROC> wndMap;
+bool actived = false;
+
+LRESULT CALLBACK NewWndProc(
+	_In_ HWND hwnd,
+	_In_ UINT uMsg,
+	_In_ WPARAM wParam,
+	_In_ LPARAM lParam){
+		LRESULT hr = TRUE;
+
+		infoRecorder->logTrace("[Global]: WndProc, HWND:%p, Msg:%x.\n", hwnd, uMsg);
+
+		switch(uMsg){
+		case WM_ACTIVATE:
+		case WM_NCACTIVATE:
+			if(actived)
+				return FALSE;
+			else
+				actived = true;
+			break;
+
+		case WM_ACTIVATEAPP:
+			return FALSE;
+		case WM_KILLFOCUS:
+		case WM_SETFOCUS:
+		case WM_IME_SETCONTEXT:
+		case WM_IME_NOTIFY:
+			return FALSE;
+		default:
+			break;
+		}
+		WNDPROC proc = NULL;
+		// how to get the right proc ?????
+
+		map<HWND, WNDPROC>::iterator it = wndMap.find(hwnd);
+		if(it != wndMap.end()){
+			proc = it->second;
+		}
+		if(proc){
+			return proc(hwnd, uMsg, wParam, lParam);
+		}
+		else{
+			return DefWindowProc(hwnd, uMsg, wParam, lParam);
+		}
+
+		return hr;
+}
+
+ATOM WINAPI RegisterClassACallback(_In_ const WNDCLASSA *lpwc){
+	infoRecorder->logTrace("[Global]: RegisterClassA, proc:%p.\n", lpwc->lpfnWndProc);
+
+	string name(lpwc->lpszClassName);
+	if(procMap.find(name) == procMap.end()){
+		procMap[name] = lpwc->lpfnWndProc;
+	}
+
+	WNDCLASSA wndClass;
+	memcpy(&wndClass, lpwc, sizeof(WNDCLASSA));
+	wndClass.lpfnWndProc = NewWndProc;
+
+	ATOM atom = RegisterClassANext(&wndClass);
+	
+	return atom;
+}
+
+ATOM WINAPI RegisterClassWCallback(_In_ const WNDCLASSW *lpwc){
+
+	infoRecorder->logTrace("[Global]: RegisterClassW, proc:%p.\n", lpwc->lpfnWndProc);
+
+	wstring classname(lpwc->lpszClassName);
+	if(wProcMap.find(classname) == wProcMap.end()){
+		wProcMap[classname] = lpwc->lpfnWndProc;
+	}
+
+	WNDCLASSW wndClassW;
+	memcpy(&wndClassW, lpwc, sizeof(WNDCLASSW));
+	wndClassW.lpfnWndProc = NewWndProc;
+
+	ATOM atom = RegisterClassWNext(&wndClassW);
+	return atom;
+
+}
+ATOM WINAPI RegisterClassExACallback(_In_ const WNDCLASSEXA *lpwcx){
+	infoRecorder->logTrace("[Global]: RegisterClassExA, proc:%p.\n", lpwcx->lpfnWndProc);
+	string name(lpwcx->lpszClassName);
+	if(procMap.find(name) == procMap.end()){
+		procMap[name] = lpwcx->lpfnWndProc;
+	}
+
+	WNDCLASSEXA wndClassExA;
+	memcpy(&wndClassExA, lpwcx, sizeof(WNDCLASSEXA));
+	wndClassExA.lpfnWndProc = NewWndProc;
+
+	ATOM atom = RegisterClassExANext(&wndClassExA);
+
+}
+ATOM WINAPI RegisterClassExWCallback(_In_ const WNDCLASSEXW *lpwcx){
+	infoRecorder->logTrace("[Global]: RegisterClassExW, proc:%p.\n", lpwcx->lpfnWndProc);
+
+	wstring classname(lpwcx->lpszClassName);
+	if(wProcMap.find(classname) == wProcMap.end()){
+		wProcMap[classname] = lpwcx->lpfnWndProc;
+	}
+
+	WNDCLASSEXW wndClassExW;
+	memcpy(&wndClassExW, lpwcx, sizeof(WNDCLASSEXW));
+	wndClassExW.lpfnWndProc = NewWndProc;
+
+	ATOM atom = RegisterClassExWNext(&wndClassExW);
+	return atom;
+
+}
+
+#endif  // ENABLE_BACKGROUND_RUNNING'
+
 HWND WINAPI CreateWindowCallback(
 	DWORD dwExStyle,
 	LPCSTR lpClassName,
@@ -104,6 +230,20 @@ HWND WINAPI CreateWindowCallback(
 	HWND ret = CreateWindowNext(dwExStyle,lpClassName,lpWindowName,dwStyle,x,y,nWidth,nHeight,hWndParent,hMenu,hInstance,lpParam);
 	infoRecorder->logError("[global]: CreateWindowCallback() called, width:%d, height:%d, window:%p\n", nWidth, nHeight, ret);
 	windowMap.addMap(ret, win);
+
+#ifdef ENABLE_BACKGROUND_RUNNING
+
+	WNDPROC proc = NULL;
+	if(isWindowValid(nWidth, nHeight)){
+		string classname(lpClassName);
+		map<string, WNDPROC>::iterator it = procMap.find(classname);
+		if(it != procMap.end()){
+			proc = it->second;
+			wndMap[ret] = proc;
+		}
+	}
+#endif
+
 	return ret;
 }
 
@@ -147,6 +287,18 @@ HWND WINAPI CreateWindowExWCallback(
 	win->width = nWidth;
 	win->height = nHeight;
 	windowMap.addMap(ret, win);
+
+#ifdef ENABLE_BACKGROUND_RUNNING
+	WNDPROC proc = NULL;
+	if(isWindowValid(nWidth, nHeight)){
+		wstring classname(lpClassName);
+		map<wstring, WNDPROC>::iterator it = wProcMap.find(classname);
+		if(it != wProcMap.end()){
+			proc = it->second;
+			wndMap[ret] = proc;
+		}
+	}
+#endif
 
 	return ret;
 }
