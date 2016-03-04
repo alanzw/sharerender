@@ -315,6 +315,9 @@ STDMETHODIMP WrapperDirect3D9::CreateDevice(THIS_ UINT Adapter,D3DDEVTYPE Device
 	wdd->pPresentParameters = (D3DPRESENT_PARAMETERS *)malloc(sizeof(D3DPRESENT_PARAMETERS));
 	memcpy(wdd->pPresentParameters, pPresentationParameters, sizeof(D3DPRESENT_PARAMETERS));
 
+	Initializer::PushObj(dynamic_cast<IdentifierBase *>(wdd));
+
+
 #endif
 #ifdef ENABLE_DIRECT3D_LOG
 	infoRecorder->logTrace("Create Device End. With Device :%d ADDR:%d\n",WrapperDirect3DDevice9::ins_count,base_device);
@@ -352,25 +355,6 @@ STDMETHODIMP WrapperDirect3D9::CreateDevice(THIS_ UINT Adapter,D3DDEVTYPE Device
 	cmdCtrl->setDevice(base_device);
 	cmdCtrl->setHwnd(hd);
 
-#ifndef NO_VIDEO_GEN
-
-
-#if 0
-	if(cmdCtrl->enableRTSPService() || cmdCtrl->enableGenerateVideo()){
-		if(gGenerator == NULL){
-			infoRecorder->logError("[Direct3D9]: create generator.\n");
-#ifndef USE_TEST
-			gGenerator = new VideoGen(hd, (void *)base_device, DX9);
-#else  // USE_TEST
-			gGenerator = new VideoGen(hd, (void *)base_device, DX9, true, cmdCtrl->enableGenerateVideo(), cmdCtrl->enableRTSPService());
-#endif  // ISE_TEST
-			VideoGen::addMap(id, gGenerator);
-		}
-	}
-#endif
-
-
-#endif  // NO_VIDEO_GEN
 #endif 
 
 	return hr;

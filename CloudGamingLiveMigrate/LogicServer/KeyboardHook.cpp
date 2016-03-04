@@ -5,6 +5,9 @@
 namespace cg{
 	namespace core{
 
+		KeyCommandHelper * keyCmdHelper = NULL;
+
+
 		LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam){
 
 			KeyCommandHelper * keyHelper = KeyCommandHelper::GetKeyCmdHelper();
@@ -62,7 +65,7 @@ namespace cg{
 				infoRecorder->logError("[Global]: key pressed, WPARAM: %x, LPARAM:%x.\n", wParam, lParam);
 			}
 			//
-			return CallNextHookEx(keyHookHandle, nCode, wParam, lParam);
+			return CallNextHookEx(keyHelper->getHookHandle(), nCode, wParam, lParam);
 		}
 
 		bool KeyCommandHelper::installKeyHook(DWORD threadId){
@@ -76,7 +79,7 @@ namespace cg{
 			return true;
 		}
 		KeyCommandHelper *KeyCommandHelper::keyCmdHelper = NULL;
-		KeyCommandHelper::KeyCommandHelper():enableRender(true), synSign(false), synStart(0), f10pressed(false), HHOOK(NULL), renderStep(1), sendStep(1){
+		KeyCommandHelper::KeyCommandHelper():enableRender(true), synSign(false), synStart(0), f10pressed(false), keyHookHandle(NULL), renderStep(1), sendStep(1), renderStepChanged(false){
 			InitializeCriticalSection(&section);
 		}
 		KeyCommandHelper::~KeyCommandHelper(){
@@ -97,6 +100,31 @@ namespace cg{
 			if(synSign){
 				synStart = GetTickCount();
 			}
+		}
+
+
+		bool KeyCommandHelper::commit(){
+			// commit at the end of each frame, to change the sending status
+			if(sendStep != 0){
+				currentSending ++;
+				if(currentSending == sendStep){
+					enableSending = true;
+					currentSending = 0;
+				}
+				else
+					enableSending = false;
+			}
+			else
+				currentSending = false;
+
+			return currentSending;
+		}
+		bool KeyCommandHelper::commit(CmdController * _cmdCtrl){
+			// set the render step for CmdController
+			if(renderStepChanged)
+				_cmdCtrl->setFrameStep(renderStep);
+
+			return commit();
 		}
 
 	}

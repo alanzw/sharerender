@@ -17,6 +17,7 @@
 #include "../libCore/CmdHelper.h"
 #include "../libCore/InfoRecorder.h"
 #include "../VideoGen/generator.h"
+#include "KeyboardHook.h"
 
 #include <MMSystem.h>
 
@@ -237,7 +238,7 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 	infoRecorder->logError("WrapperDirect3DDevice9::Present(), source %d, dst %d, wind %d, rgbdata %d\n", pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
 	bool tm = false, tm1 = false;
 
-	KeyCommandHelper * keyCmdHelper = KeyCommandHelper::GetKeyCmdHelper();
+	cg::core::KeyCommandHelper * keyCmdHelper = cg::core::KeyCommandHelper::GetKeyCmdHelper();
 
 	keyCmdHelper->lock();
 	tm = keyCmdHelper->isSynSigned();
@@ -276,26 +277,31 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 
 	static unsigned int tags = 0;
 	// send command
-	csSet->beginCommand(Present_Opcode, id);
-	csSet->writeInt(0);
-	csSet->writeInt(0);
-	csSet->writeInt(0);
-	csSet->writeInt(0);
-	csSet->writeUInt(tags++);
-	csSet->endCommand();    // here may change the context
-
-	// context switch is done, set device's creation
-	csSet->checkObj(dynamic_cast<IdentifierBase *>(this));
+	if(keyCmdHelper->isSending()){
+		csSet->beginCommand(Present_Opcode, id);
+		csSet->writeInt(0);
+		csSet->writeInt(0);
+		csSet->writeInt(0);
+		csSet->writeInt(0);
+		csSet->writeUInt(tags++);
+		csSet->endCommand();    
+	}
+	// here may change the context
+	csSet->commit();
+	
 	// deal with the initializer
 
 	Initializer * initializer = Initializer::GetInitializer();
+	// initializer contains the check for Device
 	if(initializer){
 #ifdef ENBALE_DEVICE_LOG
 		infoRecorder->logError("[Present]: push initializer, should only show ONCE.\n");
 #endif // ENABLE_DEVICE_LOG
 		csSet->checkObj(dynamic_cast<IdentifierBase *>(initializer));
+	}else{
+	// context switch is done, set device's creation
+		csSet->checkObj(dynamic_cast<IdentifierBase *>(this));
 	}
-
 	/////////////////////////////////////////////////////////////////////
 	//limit it to max_fps
 #if 1
@@ -337,7 +343,7 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 	infoRecorder->onFrameEnd();
 
 	HRESULT hh = D3D_OK;
-
+	keyCmdHelper->commit(cmdCtrl);  // deal the control from keyboard
 	cmdCtrl->commitRender();
 
 #ifdef ENBALE_DEVICE_LOG
@@ -480,13 +486,15 @@ STDMETHODIMP_(void) WrapperDirect3DDevice9::SetGammaRamp(THIS_ UINT iSwapChain,D
 #ifdef ENBALE_DEVICE_LOG
 	infoRecorder->logTrace("WrapperDirect3DDevice9::SetGammaRamp() called\n");
 #endif
-
+	cg::core::KeyCommandHelper * keyHelper = cg::core::KeyCommandHelper::GetKeyCmdHelper();
 	// send command
-	csSet->beginCommand(SetGammaRamp_Opcode, id);
-	csSet->writeUInt(iSwapChain);
-	csSet->writeUInt(Flags);
-	csSet->writeByteArr((char *)pRamp, sizeof(D3DGAMMARAMP));
-	csSet->endCommand();
+	if(keyHelper->isSending()){
+		csSet->beginCommand(SetGammaRamp_Opcode, id);
+		csSet->writeUInt(iSwapChain);
+		csSet->writeUInt(Flags);
+		csSet->writeByteArr((char *)pRamp, sizeof(D3DGAMMARAMP));
+		csSet->endCommand();
+	}
 
 	return m_device->SetGammaRamp(iSwapChain, Flags, pRamp);
 }
@@ -550,7 +558,6 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateTexture(THIS_ UINT Width,UINT Height,
 #endif
 	}
 	else {
-
 		infoRecorder->logError("WrapperDirect3DDevice9::CreateTexture() failed for %d ", WrapperDirect3DTexture9::ins_count);
 		switch(hr){
 		case D3DERR_INVALIDCALL:
@@ -677,14 +684,12 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateVertexBuffer(THIS_ UINT Length,DWORD 
 		wvb->Usage = Usage;
 		wvb->FVF = FVF;
 		wvb->Length = Length;
-		//infoRecorder->logTrace("vb id:%d, FVF:%d\n", wvb->GetId(), wvb->FVF);
 		wvb->Pool = Pool;
 		if(wvb){
 			*ppVertexBuffer = dynamic_cast<IDirect3DVertexBuffer9*>(wvb);
 #ifdef ENBALE_DEVICE_LOG
 			infoRecorder->logTrace("vb id:%d, size:%d, ", wvb->getId(), wvb->GetLength());
 #endif
-
 		}
 		else{
 #ifdef ENBALE_DEVICE_LOG
@@ -711,7 +716,6 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateVertexBuffer(THIS_ UINT Length,DWORD 
 #ifdef ENBALE_DEVICE_LOG
 		infoRecorder->logTrace(" end,id:%d\n",wvb->getId());
 #endif
-
 	}
 	else {
 #ifdef ENBALE_DEVICE_LOG
@@ -935,15 +939,19 @@ STDMETHODIMP WrapperDirect3DDevice9::SetRenderTarget(THIS_ DWORD RenderTargetInd
 	infoRecorder->logTrace("WrapperDirect3DDevice9::SetRenderTarget(), ");
 #endif
 	WrapperDirect3DSurface9 * sur = (WrapperDirect3DSurface9*)pRenderTarget;
+	cg::core::KeyCommandHelper * keyHelper = cg::core::KeyCommandHelper::GetKeyCmdHelper();
 	if(pRenderTarget == NULL) {
 
 		// send command
-		csSet->beginCommand(SetRenderTarget_Opcode, id);
-		csSet->writeUInt(RenderTargetIndex);
-		csSet->writeInt(-1);
-		csSet->writeInt(-1);
-		csSet->writeInt(-1);
-		csSet->endCommand();
+		if(keyHelper->isSending()){
+
+			csSet->beginCommand(SetRenderTarget_Opcode, id);
+			csSet->writeUInt(RenderTargetIndex);
+			csSet->writeInt(-1);
+			csSet->writeInt(-1);
+			csSet->writeInt(-1);
+			csSet->endCommand();
+		}
 
 		HRESULT hh = m_device->SetRenderTarget(RenderTargetIndex, pRenderTarget);
 #ifdef ENBALE_DEVICE_LOG
@@ -957,13 +965,14 @@ STDMETHODIMP WrapperDirect3DDevice9::SetRenderTarget(THIS_ DWORD RenderTargetInd
 	WrapperDirect3DSurface9 * ws = (WrapperDirect3DSurface9 *)pRenderTarget;
 	//ws->checkCreation(this->GetID());
 	csSet->checkObj(dynamic_cast<IdentifierBase *>(ws));
-
-	csSet->beginCommand(SetRenderTarget_Opcode, id);
-	csSet->writeUInt(RenderTargetIndex);
-	csSet->writeInt(ws->getId());
-	csSet->writeInt(sur->GetTexId());
-	csSet->writeInt(sur->GetLevel());
-	csSet->endCommand();
+	if(keyHelper->isSending()){
+		csSet->beginCommand(SetRenderTarget_Opcode, id);
+		csSet->writeUInt(RenderTargetIndex);
+		csSet->writeInt(ws->getId());
+		csSet->writeInt(sur->GetTexId());
+		csSet->writeInt(sur->GetLevel());
+		csSet->endCommand();
+	}
 	
 #ifdef ENBALE_DEVICE_LOG
 	infoRecorder->logTrace("[WrapperDirect3DDevice9]:SetRenderTarget, surface id:%d, parent texture id: %d, level: %d. (parent tex:%p, id:%d)\n",((WrapperDirect3DSurface9*)pRenderTarget)->getId(),sur->GetTexId(), sur->GetLevel(), ws->getParentTexture(), ws->getParentTexture() ? ws->getParentTexture()->getId(): -1);
@@ -1026,13 +1035,16 @@ STDMETHODIMP WrapperDirect3DDevice9::SetDepthStencilSurface(THIS_ IDirect3DSurfa
 #ifdef ENBALE_DEVICE_LOG
 	infoRecorder->logTrace("WrapperDirect3DDevice9::SetDepthStencilSurface(), ");
 #endif
-	HRESULT hh;
+	HRESULT hh = D3D_OK;
+	cg::core::KeyCommandHelper * keyHelper = cg::core::KeyCommandHelper::GetKeyCmdHelper();
 	if(pNewZStencil == NULL) {
 
-		// send command
-		csSet->beginCommand(SetDepthStencilSurface_Opcode, id);
-		csSet->writeInt(-1);
-		csSet->endCommand();
+		if(keyHelper->isSending()){
+			// send command
+			csSet->beginCommand(SetDepthStencilSurface_Opcode, id);
+			csSet->writeInt(-1);
+			csSet->endCommand();
+		}
 
 		hh = m_device->SetDepthStencilSurface(NULL);
 #ifdef ENBALE_DEVICE_LOG
@@ -1042,11 +1054,14 @@ STDMETHODIMP WrapperDirect3DDevice9::SetDepthStencilSurface(THIS_ IDirect3DSurfa
 	}
 
 	WrapperDirect3DSurface9 * ws = (WrapperDirect3DSurface9 *)pNewZStencil;
-	csSet->checkObj(dynamic_cast<IdentifierBase *>(ws));
-	// send command
-	csSet->beginCommand(SetDepthStencilSurface_Opcode, id);
-	csSet->writeInt(ws->getId());
-	csSet->endCommand();
+	
+	if(keyHelper->isSending()){
+		csSet->checkObj(dynamic_cast<IdentifierBase *>(ws));
+		// send command
+		csSet->beginCommand(SetDepthStencilSurface_Opcode, id);
+		csSet->writeInt(ws->getId());
+		csSet->endCommand();
+	}
 	// add the flag to all
 #ifdef ENBALE_DEVICE_LOG
 	infoRecorder->logTrace("with id:%d.\n", ws->getId());
@@ -1092,8 +1107,11 @@ STDMETHODIMP WrapperDirect3DDevice9::BeginScene(THIS) {
 
 	Initializer::EndInitialize();
 	// send command
+	cg::core::KeyCommandHelper * keyHelper = cg::core::KeyCommandHelper::GetKeyCmdHelper();
+	if(keyHelper->isSending()){
 	csSet->beginCommand(BeginScene_Opcode, id);
 	csSet->endCommand();
+	}
 	HRESULT h = m_device->BeginScene();
 
 	return h;
@@ -1105,9 +1123,11 @@ STDMETHODIMP WrapperDirect3DDevice9::EndScene(THIS) {
 
 	sceneBegin = false;
 
+	if(keyCmdHelper->isSending()){
 	// send command
 	csSet->beginCommand(EndScene_Opcode, id);
 	csSet->endCommand();
+	}
 	HRESULT hh = m_device->EndScene();
 
 	return hh; 
@@ -1117,6 +1137,7 @@ STDMETHODIMP WrapperDirect3DDevice9::Clear(THIS_ DWORD Count,CONST D3DRECT* pRec
 	infoRecorder->logTrace("[WrapperDirect3DDevice9]::Clear()\n");
 #endif
 	// send command
+	if(keyCmdHelper->isSending()){
 	csSet->beginCommand(Clear_Opcode, id);
 	csSet->writeUInt(Count);
 	if(pRects == NULL){
@@ -1132,6 +1153,7 @@ STDMETHODIMP WrapperDirect3DDevice9::Clear(THIS_ DWORD Count,CONST D3DRECT* pRec
 	csSet->writeFloat(Z);
 	csSet->writeUInt(Stencil);
 	csSet->endCommand();
+	}
 
 	HRESULT hh = D3D_OK;
 	if(cmdCtrl->isRender())
@@ -1147,45 +1169,51 @@ STDMETHODIMP WrapperDirect3DDevice9::SetTransform(THIS_ D3DTRANSFORMSTATETYPE St
 	}
 #endif
 	//send the command
+	unsigned short *mask = NULL, sMask = NULL;
+	// prepare the data to send if needed.
+	if(keyCmdHelper->isSending()){
+		csSet->beginCommand(SetTransform_Opcode, id);
+		csSet->writeShort(State);
 
-	csSet->beginCommand(SetTransform_Opcode, id);
-	csSet->writeShort(State);
+		mask = (unsigned short *)(csSet->getCurPtr(sizeof(unsigned short)));
+		if(mask){
+			*mask = 0;
+			for(int i = 0; i < 4; i++){
+				for(int j = 0; j < 4; j++){
+					if(fabs(pMatrix->m[i][j]) > eps){
+						(*mask) ^= (1 << (i *4 + j));
+						csSet->writeFloat(pMatrix->m[i][j]);
+					}
+				}
+			}
+		}
+		csSet->endCommand();
+	}
 
-	unsigned short *mask = (unsigned short *)(csSet->getCurPtr(sizeof(unsigned short)));
 	if(stateRecorder){
 		stateRecorder->BeginCommand(SetTransform_Opcode, id);
 		stateRecorder->WriteShort(State);
-	}
-	unsigned short * sMask = NULL;
-	if(stateRecorder){
+	
 		sMask = (unsigned short *)(stateRecorder->GetCurPtr(sizeof(unsigned short)));
-		*sMask = 0;
-	}
-	if(mask){
-		*mask = 0;
-
-		for(int i = 0; i < 4; i++){
-			for(int j = 0; j < 4; j++){
-				if(fabs(pMatrix->m[i][j]) > eps){
-					(*mask) ^= (1 << (i * 4 + j));
-					csSet->writeFloat(pMatrix->m[i][j]);
-					if(stateRecorder){
+		if(sMask){
+			*sMask = 0;
+			for(int i = 0; i < 4; i++){
+				for(int j = 0; j < 4; j++){
+					if(fabs(pMatrix->m[i][j]) > eps){
 						(*sMask) ^= (1 << (i * 4 + j));
 						stateRecorder->WriteFloat(pMatrix->m[i][j]);
 					}
 				}
 			}
 		}
-	}
-	csSet->endCommand();
-	if(stateRecorder){
 		stateRecorder->EndCommand();
 	}
+	
 	HRESULT hh = m_device->SetTransform(State, pMatrix);
 
 	return hh;
-
 }
+
 STDMETHODIMP WrapperDirect3DDevice9::GetTransform(THIS_ D3DTRANSFORMSTATETYPE State,D3DMATRIX* pMatrix) {return m_device->GetTransform(State, pMatrix);}
 STDMETHODIMP WrapperDirect3DDevice9::MultiplyTransform(THIS_ D3DTRANSFORMSTATETYPE Type,CONST D3DMATRIX* pD3DMatrix) {
 #ifdef ENBALE_DEVICE_LOG
@@ -1204,9 +1232,11 @@ STDMETHODIMP WrapperDirect3DDevice9::SetViewport(THIS_ CONST D3DVIEWPORT9* pView
 #endif
 
 	// send command
-	csSet->beginCommand(SetViewport_Opcode, id);
-	csSet->writeByteArr((char *)pViewport, sizeof(*pViewport));
-	csSet->endCommand();
+	if(keyCmdHelper->isSending()){
+		csSet->beginCommand(SetViewport_Opcode, id);
+		csSet->writeByteArr((char *)pViewport, sizeof(*pViewport));
+		csSet->endCommand();
+	}
 	if(stateRecorder){
 		stateRecorder->BeginCommand(SetViewport_Opcode, id);
 		stateRecorder->WriteByteArr((char *)pViewport, sizeof(*pViewport));
@@ -1230,9 +1260,11 @@ STDMETHODIMP WrapperDirect3DDevice9::SetMaterial(THIS_ CONST D3DMATERIAL9* pMate
 #endif
 
 	// send command
+	if(keyCmdHelper->isSending()){
 	csSet->beginCommand(SetMaterial_Opcode, id);
 	csSet->writeByteArr((char *)pMaterial, sizeof(D3DMATERIAL9));
 	csSet->endCommand();
+	}
 
 	if(stateRecorder){
 		stateRecorder->BeginCommand(SetMaterial_Opcode, id);
@@ -1251,10 +1283,12 @@ STDMETHODIMP WrapperDirect3DDevice9::SetLight(THIS_ DWORD Index,CONST D3DLIGHT9*
 #endif
 
 	// send command
+	if(keyCmdHelper->isSending()){
 	csSet->beginCommand(SetLight_Opcode, id);
 	csSet->writeUInt(Index);
 	csSet->writeByteArr((char*)pD3DLight9, sizeof(D3DLIGHT9));
 	csSet->endCommand();
+	}
 
 	if(stateRecorder){
 		stateRecorder->BeginCommand(SetLight_Opcode, id);
@@ -1274,10 +1308,12 @@ STDMETHODIMP WrapperDirect3DDevice9::LightEnable(THIS_ DWORD Index,BOOL Enable) 
 #endif
 
 	// send command
+	if(keyCmdHelper->isSending()){
 	csSet->beginCommand(LightEnable_Opcode, id);
 	csSet->writeUInt(Index);
 	csSet->writeInt(Enable);
 	csSet->endCommand();
+	}
 
 	if(stateRecorder){
 		stateRecorder->BeginCommand(LightEnable_Opcode, id);
@@ -1308,10 +1344,12 @@ STDMETHODIMP WrapperDirect3DDevice9::SetRenderState(THIS_ D3DRENDERSTATETYPE Sta
 #endif
 
 	// send command
+	if(keyCmdHelper->isSending()){
 	csSet->beginCommand(SetRenderState_Opcode, id);
 	csSet->writeUInt(State);
 	csSet->writeUInt(Value);
 	csSet->endCommand();
+	}
 
 	if(stateRecorder){
 		stateRecorder->BeginCommand(SetRenderState_Opcode, id);
@@ -1367,8 +1405,11 @@ STDMETHODIMP WrapperDirect3DDevice9::BeginStateBlock(THIS) {
 #endif
 
 	// send command
+	if(keyCmdHelper->isSending()){
 	csSet->beginCommand(BeginStateBlock_Opcode, id);
 	csSet->endCommand();
+
+	}
 
 	StateBlockRecorder * recoder = StateBlockRecorder::GetRecorder();
 	recoder->StateBlockBegin();
@@ -1409,9 +1450,11 @@ STDMETHODIMP WrapperDirect3DDevice9::EndStateBlock(THIS_ IDirect3DStateBlock9** 
 		return hr;
 	}
 	// send commands
+	if(keyCmdHelper->isSending()){
 	csSet->beginCommand(EndStateBlock_Opcode, id);
 	csSet->writeInt(wsb->getId());
 	csSet->endCommand();
+	}
 	// set state block's creation flag to all
 	csSet->setCreation(wsb->creationFlag);
 	StateBlock * block = NULL;
@@ -1460,10 +1503,12 @@ STDMETHODIMP WrapperDirect3DDevice9::SetTexture(THIS_ DWORD Stage,IDirect3DBaseT
 
 	if(pTexture == NULL) {
 		// send command
+		if(keyCmdHelper->isSending()){
 		csSet->beginCommand(SetTexture_Opcode, this->id);
 		csSet->writeUInt(Stage);
 		csSet->writeInt(-1);
 		csSet->endCommand();
+		}
 		if(stateRecorder){
 			stateRecorder->BeginCommand(SetTexture_Opcode, id);
 			stateRecorder->WriteUInt(Stage);
@@ -1487,12 +1532,15 @@ STDMETHODIMP WrapperDirect3DDevice9::SetTexture(THIS_ DWORD Stage,IDirect3DBaseT
 		//TODO
 		// check the texture data is sent or not
 
+		if(keyCmdHelper->isSending()){
 		csSet->checkObj(dynamic_cast<IdentifierBase *>(wt));
 		// send the command
 		csSet->beginCommand(SetTexture_Opcode, this->id);
 		csSet->writeUInt(Stage);
 		csSet->writeInt(wt->getId());
+
 		csSet->endCommand();
+		}
 		if(stateRecorder){
 			stateRecorder->pushDependency(wt);
 			stateRecorder->BeginCommand(SetTexture_Opcode, id);
@@ -1511,12 +1559,14 @@ STDMETHODIMP WrapperDirect3DDevice9::SetTexture(THIS_ DWORD Stage,IDirect3DBaseT
 #endif
 
 		// check texture's creation and update
+		if(keyCmdHelper->isSending()){
 		csSet->checkObj(dynamic_cast<IdentifierBase *>(wct));
 		// send command
 		csSet->beginCommand(SetCubeTexture_Opcode, id);
 		csSet->writeUInt(Stage);
 		csSet->writeInt(wct->getId());
 		csSet->endCommand();
+		}
 		if(stateRecorder){
 			stateRecorder->pushDependency(wct);
 			stateRecorder->BeginCommand(SetTexture_Opcode, id);
@@ -1563,11 +1613,13 @@ STDMETHODIMP WrapperDirect3DDevice9::SetTextureStageState(THIS_ DWORD Stage,D3DT
 	infoRecorder->logTrace("[WrapperDirect3DDevice9]::SetTextureStageState()\n");
 #endif
 	// send command
+	if(keyCmdHelper->isSending()){
 	csSet->beginCommand(SetTextureStageState_Opcode, id);
 	csSet->writeUInt(Stage);
 	csSet->writeUInt(Type);
 	csSet->writeUInt(Value);
 	csSet->endCommand();
+	}
 	if(stateRecorder){
 		stateRecorder->BeginCommand(SetTextureStageState_Opcode, id);
 		stateRecorder->WriteUInt(Stage);
@@ -1588,11 +1640,13 @@ STDMETHODIMP WrapperDirect3DDevice9::SetSamplerState(THIS_ DWORD Sampler,D3DSAMP
 #endif
 
 	// send command
+	if(keyCmdHelper->isSending()){
 	csSet->beginCommand(SetSamplerState_Opcode, id);
 	csSet->writeUInt(Sampler);
 	csSet->writeUChar(Type);
 	csSet->writeUInt(Value);
 	csSet->endCommand();
+	}
 	if(stateRecorder){
 		stateRecorder->BeginCommand(SetSamplerState_Opcode, id);
 		stateRecorder->WriteUInt(Sampler);
@@ -1640,12 +1694,14 @@ STDMETHODIMP WrapperDirect3DDevice9::SetScissorRect(THIS_ CONST RECT* pRect) {
 #endif
 
 	// send command
+	if(keyCmdHelper->isSending()){
 	csSet->beginCommand(D3DDSetScissorRect_Opcode, id);
 	csSet->writeInt(pRect->left);
 	csSet->writeInt(pRect->right);
 	csSet->writeInt(pRect->top);
 	csSet->writeInt(pRect->bottom);
 	csSet->endCommand();
+	}
 
 	if(stateRecorder){
 		stateRecorder->BeginCommand(D3DDSetScissorRect_Opcode, id);
@@ -1666,9 +1722,11 @@ STDMETHODIMP WrapperDirect3DDevice9::SetSoftwareVertexProcessing(THIS_ BOOL bSof
 #endif
 
 	// send command
+	if(keyCmdHelper->isSending()){
 	csSet->beginCommand(SetSoftwareVertexProcessing_Opcode, id);
 	csSet->writeInt(bSoftware);
 	csSet->endCommand();
+	}
 	HRESULT hh = m_device->SetSoftwareVertexProcessing(bSoftware);
 	return hh;
 }
@@ -1681,9 +1739,11 @@ STDMETHODIMP WrapperDirect3DDevice9::SetNPatchMode(THIS_ float nSegments) {
 #endif
 
 	// send command
+	if(keyCmdHelper->isSending()){
 	csSet->beginCommand(SetNPatchMode_Opcode, id);
 	csSet->writeFloat(nSegments);
 	csSet->endCommand();
+	}
 
 	if(stateRecorder){
 		stateRecorder->BeginCommand(SetNPatchMode_Opcode, id);

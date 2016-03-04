@@ -7,6 +7,7 @@
 #include "../LibCore/CmdHelper.h"
 #include "../VideoGen/generator.h"
 #include "../LibInput/Controller.h"
+#include "KeyboardHook.h"
 
 #ifndef EVENT_NETWORK
 //#undef EVENT_NETWORK
@@ -27,18 +28,11 @@ cg::core::PTimer * pTimer = NULL;
 bool sceneBegin = false;
 #endif // MULTI_CLIENTS
 
-int need_dump_mesh = 0;
-bool enableRender = true;
-bool F9Pressed = false;
-bool synSign = false;
-bool f10pressed = false;
 
 /// temp variables for GameServer
 static int StartHookCalled = 0;
 int g_frame_index = 0;
 char tempbuffer[7500000] = { '1' };
-
-CRITICAL_SECTION f9;
 
  /* hook D3D create */
 IDirect3D9* (WINAPI* Direct3DCreate9Next)(
@@ -267,10 +261,15 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 
 
 			}
+			if(keyCmdHelper == NULL){
+				// intall keyboard hook
+				keyCmdHelper = cg::core::KeyCommandHelper::GetKeyCmdHelper();
+				keyCmdHelper->installKeyHook(GetCurrentThreadId());
+			}
 			if (StartHookCalled == 0){
 				infoRecorder->logTrace("[Global]: start to hook.\n");
 				StartHook();
-				SetKeyboardHook(NULL, GetCurrentThreadId());
+				//SetKeyboardHook(NULL, GetCurrentThreadId());
 				StartHookCalled = 1;
 			}
 			// get the command server set

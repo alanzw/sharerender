@@ -6,7 +6,6 @@
 #endif
 #include <Windows.h>
 
-
 namespace cg{
 	namespace core{
 		/*hook the key, get the keyboard command, 
@@ -23,9 +22,13 @@ namespace cg{
 			bool				f10pressed;
 			HHOOK				keyHookHandle;
 
-			bool			enableRender;
+			bool				enableRender;
+			bool				enableSending;
 			int					renderStep;
+			bool				renderStepChanged;
 			int					sendStep;
+
+			int					currentSending;   // current sending counter
 
 			CRITICAL_SECTION	section;
 
@@ -43,6 +46,12 @@ namespace cg{
 			// install keyboard hook for given thread
 			bool installKeyHook(DWORD threadId);
 
+			// commit each frame
+			bool commit();
+			bool commit(CmdController * cmdCtrl);
+			inline bool isSending(){ return enableSending; }
+
+			inline HHOOK getHookHandle(){ return keyHookHandle; }
 			inline int getRenderStep(){ return renderStep; }
 			inline int getSendStep(){ return sendStep; }
 			inline bool isF10Pressed(){ return f10pressed; }
@@ -54,7 +63,7 @@ namespace cg{
 				bool val = enableRender;
 				enableRender = !val; 
 			}
-			inline void setRenderStep(int val){ renderStep = val; }
+			inline void setRenderStep(int val){ renderStepChanged = true; renderStep = val; }
 			inline void setSendStep(int val){ sendStep = val; }
 			inline void setF10Pressed(bool val){ f10pressed = val; }
 			void setSynSigin(bool val);
@@ -64,6 +73,9 @@ namespace cg{
 
 		};
 		LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam);
+
+
+		extern KeyCommandHelper *keyCmdHelper;
 	}
 }
 

@@ -767,6 +767,7 @@ public:
 		// the begin command and the end command
 	void			beginCommand(int op_code, int id);
 	void			endCommand(int force_flush = 0);
+	void			commit();   // commit at present
 	void			cancelCommand();
 	void			printRecord();
 

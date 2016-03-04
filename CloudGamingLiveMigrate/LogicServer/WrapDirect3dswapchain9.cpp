@@ -122,8 +122,20 @@ STDMETHODIMP WrapperDirect3DSwapChain9::Present(THIS_ CONST RECT* pSourceRect,CO
 	cs.begin_command(SwapChainPresent_Opcode, id);
 	cs.end_command();
 #else
-	csSet->beginCommand(SwapChainPresent_Opcode, id);
-	csSet->endCommand();
+	cg::core::KeyCommandHelper * keyHelper = cg::core::KeyCommandHelper::GetKeyCmdHelper();
+	if(keyHelper->isSending()){
+		csSet->beginCommand(SwapChainPresent_Opcode, id);
+		csSet->endCommand();
+	}
+	csSet->commit();
+	Initializer * initializer = Initializer::GetInitializer();
+	if(initializer){
+		csSet->checkObj(dynamic_cast<IdentifierBase *>(initializer));
+	}
+
+	infoRecorder->onFrameEnd();
+	keyHelper->commit(cmdCtrl);
+	cmdCtrl->commitRender();
 
 #endif
 
@@ -150,8 +162,11 @@ STDMETHODIMP WrapperDirect3DSwapChain9::Present(THIS_ CONST RECT* pSourceRect,CO
 
 #endif
 	/////////////////////////////////////////////////////////////////////
-
-	return m_chain->Present(pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, dwFlags);
+	HRESULT hr = D3D_OK;
+	if(cmdCtrl->isRender()){
+		hr = m_chain->Present(pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, dwFlags);
+	}
+	return hr;
 }
 
 STDMETHODIMP WrapperDirect3DSwapChain9::GetFrontBufferData(THIS_ IDirect3DSurface9* pDestSurface) {

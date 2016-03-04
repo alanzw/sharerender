@@ -462,6 +462,7 @@ bool ContextManager::switchCtx(){
 	infoRecorder->logTrace("[ContextManager]: switch context.\n");
 #endif
 	bool ret = false;
+	// move all buffered ctx to init pool, in the next, these ctx will begin to start reconstruction
 	ContextAndCache * cur_ctx = NULL;
 	while(ctx_buff.getCtxCount()){
 		cur_ctx = ctx_buff.getCtx(0);
@@ -755,6 +756,9 @@ void CommandServerSet::endCommand(int force_flush){
 		ctx_mgr_->shutDownAll();
 	}
 	ctx_mgr_->endCommand(force_flush);
+
+
+#if 0
 	// switch the context
 	if(op_code == Present_Opcode){
 		infoRecorder->logTrace("[CommandServerSet]: switch context.\n");
@@ -773,6 +777,19 @@ void CommandServerSet::endCommand(int force_flush){
 		else{
 			infoRecorder->logTrace("[CommandServerSet]: switch the context failed. no change to current context.\n");
 		};
+	}
+#endif
+}
+/*
+commit the server set at the end of each frame, because the sending step will cause the cs set send the in N frames
+*/
+void CommandServerSet::commit(){
+	infoRecorder->logTrace("[CommandServerSet]: commit.\n");
+	if(ctx_mgr_->switchCtx()){
+		infoRecorder->logTrace("[CommandServerSet]: switch the context succeeded.\n");
+	}
+	else{
+		infoRecorder->logTrace("[CommandServerSet]: switch the cntext failed. no change to current context.\n");
 	}
 }
 
