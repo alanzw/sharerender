@@ -62,7 +62,7 @@ namespace cg{
 				infoRecorder->logError("[Global]: key pressed, WPARAM: %x, LPARAM:%x.\n", wParam, lParam);
 			}
 			//
-			return CallNextHookEx(kehook, nCode, wParam, lParam);
+			return CallNextHookEx(keyHookHandle, nCode, wParam, lParam);
 		}
 
 		bool KeyCommandHelper::installKeyHook(DWORD threadId){

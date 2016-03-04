@@ -84,9 +84,6 @@
     <ClInclude Include="TaskQueue.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="LogicEvent.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="GameClient.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -111,9 +108,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="KeyboardHook.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="LogicContext.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Quadrics.cpp">
@@ -168,9 +162,6 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="TaskQueue.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="LogicEvent.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="GameClient.cpp">

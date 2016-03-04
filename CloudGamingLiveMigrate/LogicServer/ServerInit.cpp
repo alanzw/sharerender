@@ -328,177 +328,19 @@ IDirect3D9* WINAPI Direct3DCreate9Callback(UINT SDKVersion) {
 	return pv;
 }
 
-void GetSocketsFromSharedFileMap(){
-	infoRecorder->logTrace("GetSocketsFromSharedFileMap.\n");
-	char * cmdLine;
-	cmdLine = GetCommandLine();
-	int len = strlen(cmdLine);
-
-	if (len >= 100){
-		infoRecorder->logTrace("cmdline is too long.\n");
-		return;
-	}
-	else{
-		infoRecorder->logTrace("GetSocketsFromCmd(), cmdLine=%s\n", cmdLine);
-		string str = cmdLine;
-		istringstream in(str);
-		DWORD command_socket_handle, input_socket_handle, loader_process_id;
-		string appname;
-
-		//string local, port;
-		in >> appname >> need_dump_mesh >> command_socket_handle >> input_socket_handle >> loader_process_id;
-
-		if (loader_process_id){
-
-		}
-	}
-
-}
-DWORD GetParentProcessid(){
-	DWORD ret = 0;
-	char * cmdLine;
-	cmdLine = GetCommandLine();
-	int len = strlen(cmdLine);
-
-	if (len < 100) {
-		infoRecorder->logTrace("[global]: GetSocketsFromCmd(), cmdLine=%s\n", cmdLine);
-		string str = cmdLine;
-		istringstream in(str);
-		DWORD command_socket_handle, input_socket_handle, loader_process_id, frame_index;
-		string appname;
-
-		//string local, port;
-		in >> appname >> need_dump_mesh >> command_socket_handle >> input_socket_handle >> loader_process_id >> frame_index;
-
-		ret = loader_process_id;
-	}
-	else {
-		infoRecorder->logTrace("GetSocketsFromCmd(), cmd len >= 100\n");
-	}
-	return ret;
-}
-
-#ifndef MULTI_CLIENTS
-void GetSocketsFromCmd() {
-	infoRecorder->logTrace("GetSocketsFromCmd() called\n");
-
-	char * cmdLine;
-	cmdLine = GetCommandLine();
-	int len = strlen(cmdLine);
-
-	if(len < 100) {
-		infoRecorder->logTrace("GetSocketsFromCmd(), cmdLine=%s\n", cmdLine);
-		string str = cmdLine;
-		istringstream in(str);
-		DWORD command_socket_handle, input_socket_handle, loader_process_id, frame_index;
-		string appname;
-
-		//string local, port;
-		in >> appname >> need_dump_mesh >> command_socket_handle >> input_socket_handle >> loader_process_id >> frame_index;
-
-		g_frame_index = frame_index;
-		if(command_socket_handle == -1) {
-			cs.set_connect_socket(-1);
-			infoRecorder->logError("[server init]: error command socket handle.\n");
-			//dis.set_connect_socket(-1);
-		}
-		else {
-			cs.set_connect_socket(GetProcessSocket(command_socket_handle, loader_process_id));
-			//dis.set_connect_socket(GetProcessSocket(input_socket_handle, loader_process_id));
-			infoRecorder->logTrace("[server init]: new command socket handle:%d.\n", cs.get_connect_socket());
-		}
-
-	}
-	else {
-		infoRecorder->logTrace("GetSocketsFromCmd(), cmd len >= 100\n");
-	}
-}
-#endif
 SOCKET GetProcessSocket(SOCKET oldsocket, DWORD source_pid) {
 	RaiseToDebugP();
 	HANDLE source_handle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, source_pid);
 	HANDLE new_handle = 0;
 	if(source_handle == NULL) {
 		infoRecorder->logTrace("[Global]: GetProcessSocket(), error happen\n");
+		return NULL;
 	}
 	DuplicateHandle(source_handle, (HANDLE)oldsocket, GetCurrentProcess(), &new_handle, 0, FALSE, DUPLICATE_SAME_ACCESS);
 	CloseHandle(source_handle);
 	infoRecorder->logTrace("[Global]: GetProcessSocket(), pid: %d,old sock: %d, socket: %d\n",source_pid,oldsocket,new_handle);
 	return (SOCKET)new_handle;
 }
-
-#if 0
-bool WINAPI ClearCtxFlag(ContextAndCache * ctx){
-	infoRecorder->logError("[Global]: Clear context flags.\n");
-	int index = ctx->getIndex();    // the context index
-
-	HashSet::iterator it;
-	IdentifierBase * obj = NULL;
-	for(it = WrapperDirect3D9::m_list.begin(); it != WrapperDirect3D9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
-		ctx->resetCreation(obj->creationFlag);
-		ctx->resetChanged(obj->updateFlag);
-	}
-	for(it = WrapperDirect3DCubeTexture9::m_list.begin(); it != WrapperDirect3DCubeTexture9.m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
-		ctx->resetCreation(obj->creationFlag);
-		ctx->resetChanged(obj->updateFlag);
-	}
-	for(it = WrapperDirect3DDevice9::m_list.begin(); it != WrapperDirect3DDevice9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
-		ctx->resetCreation(obj->creationFlag);
-		ctx->resetChanged(obj->updateFlag);
-	}
-	for(it = WrapperDirect3DIndexBuffer9::m_list.begin(); it != WrapperDirect3DIndexBuffer9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
-		ctx->resetCreation(obj->creationFlag);
-		ctx->resetChanged(obj->updateFlag);
-	}
-	for(it = WrapperDirect3DPixelShader9::m_list.begin(); it != WrapperDirect3DPixelShader9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
-		ctx->resetCreation(obj->creationFlag);
-		ctx->resetChanged(obj->updateFlag);
-	}
-	for(it = WrapperDirect3DStateBlock9::m_list.begin(); it != WrapperDirect3DStateBlock9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
-		ctx->resetCreation(obj->creationFlag);
-		ctx->resetChanged(obj->updateFlag);
-	}
-	for(it = WrapperDirect3DSurface9::m_list.begin(); it != WrapperDirect3DSurface9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
-		ctx->resetCreation(obj->creationFlag);
-		ctx->resetChanged(obj->updateFlag);
-	}
-	for(it = WrapperDirect3DSwapChain9::m_list.begin(); it != WrapperDirect3DSwapChain9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
-		ctx->resetCreation(obj->creationFlag);
-		ctx->resetChanged(obj->updateFlag);
-	}
-	for(it = WrapperDirect3DTexture9::m_list.begin(); it != WrapperDirect3DTexture9::m_list.end(); it ++){
-		obj = (IdentifierBase *)it->pData;
-		ctx->resetCreation(obj->creationFlag);
-		ctx->resetChanged(obj->updateFlag);
-	}
-	for(it = WrapperDirect3DVertexBuffer9::m_list.begin(); it != WrapperDirect3DVertexBuffer9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
-		ctx->resetCreation(obj->creationFlag);
-		ctx->resetChanged(obj->updateFlag);
-	}
-	for(it = WrapperDirect3DVertexDeclaration9::m_list.begin(); it != WrapperDirect3DVertexDeclaration9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
-		ctx->resetCreation(obj->creationFlag);
-		ctx->resetChanged(obj->updateFlag);
-	}
-	for(it = WrapperDirect3DVertexShader9::m_list.begin(); it != WrapperDirect3DVertexShader9::m_list.end(); it++){
-		obj = (IdentifierBase *)it->pData;
-		ctx->resetCreation(obj->creationFlag);
-		ctx->resetChanged(obj->updateFlag);
-	}
-	// done
-
-	return true;
-}
-#else
 
 int IdentifierBase::getId(){ return id; }
 void IdentifierBase::setId(int _id){ id = _id; }
@@ -639,7 +481,6 @@ void ContextAndCache::checkFlags(){
 	counter = 0;
 }
 
-
 void ContextAndCache::eraseFlag(){
 	infoRecorder->logError("[ContextAndCache]: Clear context flags.\n");
 	Initializer * initializer = Initializer::GetInitializer();
@@ -709,7 +550,6 @@ void ContextAndCache::eraseFlag(){
 	}
 	// done
 }
-#endif
 
 void WINAPI ExitProcessCallback(UINT uExitCode) {
 	infoRecorder->logError("[Global]: Exit process called\n");

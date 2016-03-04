@@ -94,7 +94,6 @@
     <ClInclude Include="InputServer.h" />
     <ClInclude Include="KeyboardHook.h" />
     <ClInclude Include="LogicContext.h" />
-    <ClInclude Include="LogicEvent.h" />
     <ClInclude Include="Matrix.h" />
     <ClInclude Include="Quadrics.h" />
     <ClInclude Include="TaskQueue.h" />
@@ -121,8 +120,6 @@
     <ClCompile Include="Initializer.cpp" />
     <ClCompile Include="InputServer.cpp" />
     <ClCompile Include="KeyboardHook.cpp" />
-    <ClCompile Include="LogicContext.cpp" />
-    <ClCompile Include="LogicEvent.cpp" />
     <ClCompile Include="Quadrics.cpp" />
     <ClCompile Include="ServerInit.cpp" />
     <ClCompile Include="TaskQueue.cpp" />

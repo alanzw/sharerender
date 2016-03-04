@@ -228,11 +228,7 @@ STDMETHODIMP WrapperDirect3DDevice9::Reset(THIS_ D3DPRESENT_PARAMETERS* pPresent
 	return m_device->Reset(pPresentationParameter);
 }
 
-int presented = 0;
-extern CRITICAL_SECTION f9;
 extern int serverInputArrive;
-DWORD tick_start = 0, tick_end = 0;
-
 
 STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONST RECT* pDestRect, HWND hDestWindowOverride, CONST RGNDATA* pDirtyRegion) {
 #ifdef ENBALE_DEVICE_LOG
@@ -240,32 +236,35 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 #endif
 	infoRecorder->logError("WrapperDirect3DDevice9::Present(), source %d, dst %d, wind %d, rgbdata %d\n", pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
 	bool tm = false, tm1 = false;
-	EnterCriticalSection(&f9);
-	tm = synSign;
-	tm1 = f10pressed;
-	LeaveCriticalSection(&f9);
+
+	KeyCommandHelper * keyCmdHelper = KeyCommandHelper::GetKeyCmdHelper();
+
+	keyCmdHelper->lock();
+	tm = keyCmdHelper->isSynSigned();
+	tm1 = keyCmdHelper->isF10Pressed();
+	keyCmdHelper->unlock();
 
 	char flag = 0;
 
 	if(tm){
 		//if (tm && presented > 1){
-		tick_end = GetTickCount();
+		DWORD tick_end = GetTickCount();
+		
 #ifdef ENBALE_DEVICE_LOG
+		DWORD tick_start = keyCmdHelper->getSynSignedTime();
 		infoRecorder->logTrace("deal input total use:%d \tqueue time:%d \tsystem to now:%d\n", tick_end - serverInputArrive, tick_start - serverInputArrive, tick_end - tick_start);
 #endif
-		EnterCriticalSection(&f9);
-		synSign = false;
-		LeaveCriticalSection(&f9);
+		keyCmdHelper->lock();
+		keyCmdHelper->setSynSigin(false);
+		keyCmdHelper->unlock();
 
 		flag |= 1;
-		presented = 0;
 		tm = 0;
 	}
 	if (tm1){
-		EnterCriticalSection(&f9);
-		f10pressed = false;
-
-		LeaveCriticalSection(&f9);
+		keyCmdHelper->lock();
+		keyCmdHelper->setF10Pressed(false);
+		keyCmdHelper->unlock();
 		flag |= 2;
 	}
 	if (flag){
@@ -274,8 +273,6 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 		csSet->writeChar(flag);
 		csSet->endCommand();
 	}
-	//if (tm)
-	presented++;
 
 	static unsigned int tags = 0;
 	// send command
@@ -322,10 +319,7 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 	double to_sleep = 1000.0 / cmdCtrl->getMaxFps() * frame_cnt - elapse_time;
 #endif  // MULTI_CLIENTS
 
-	if (frame_time > 0 && frame_time < 100){
-		time_total += frame_time;
-		frame_all_count++;
-	}
+	
 #if 1
 	if (to_sleep > 0 && cmdCtrl->enableRateControl()) {
 		Sleep((DWORD)to_sleep);
@@ -336,12 +330,9 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 		fps = frame_cnt * 1000.0 / elapse_time;
 		frame_cnt = 0;
 		elapse_time = 0;
-		//infoRecorder->logError("WrapperDirect3DDevice9::Present(), exp=%d fps=%.3f latency average:%.3f \n",/*csSet->getFps() */ 30,  fps, time_total / frame_all_count);
 	}
 #endif
-	/////////////////////////////////////////////////////////////////////
 
-	is_even_frame_ ^= 1;
 	//infoRecorder->onFrameEnd(cmdCtrl->getMode() ? false : true);
 	infoRecorder->onFrameEnd();
 
@@ -447,7 +438,6 @@ STDMETHODIMP WrapperDirect3DDevice9::GetBackBuffer(THIS_ UINT iSwapChain,UINT iB
 		WrapperDirect3DSurface9* ret = new WrapperDirect3DSurface9(base_surface, WrapperDirect3DSurface9::ins_count++);
 		// return the surface
 		*ppBackBuffer = dynamic_cast<IDirect3DSurface9*>(ret);
-
 
 		// send command
 		csSet->beginCommand(D3DDeviceGetBackBuffer_Opcode, id);

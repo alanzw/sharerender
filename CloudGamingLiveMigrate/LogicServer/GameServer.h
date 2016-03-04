@@ -27,19 +27,10 @@ using namespace cg::core;
 #define COM_METHOD(TYPE, METHOD) TYPE STDMETHODCALLTYPE METHOD
 #define STREAM_SERVER_CONFIG "config/server.controller.conf"
 
-extern int need_dump_mesh;
 extern bool tex_send[4024];
 
 #define ENABLE_BACKGROUND_RUNNING
 
-
-#ifndef MULTI_CLIENTS
-extern CommandServer cs;
-extern CommonNet dis;
-#else // MULTI_CLIENTS 
-
-
-#endif // MULTI_CLIENTS
 
 //要截取的三个全局函数
 extern IDirect3D9* (WINAPI* Direct3DCreate9Next)(
@@ -153,26 +144,11 @@ void WINAPI ExitProcessCallback(
 	UINT uExitCode);
 
 //从loader传进来的cmd那里获得CmmandStream，InputStream的socket句柄
-void GetSocketsFromCmd();
-DWORD GetParentProcessid();
 SOCKET GetProcessSocket(
 	SOCKET oldsocket, 
 	DWORD source_pid);
 
 void RaiseToDebugP();
-
-void SetKeyboardHook(
-	HINSTANCE hmode, 
-	DWORD dwThreadId);
-
-extern bool			enableRender;
-extern bool			F9Pressed;
-extern bool			f10pressed;			// capture screen
-extern bool			synSign;			// test the latency
-
-extern double		time_total;
-extern int			frame_all_count;
-extern int			g_frame_index;		// the frame index in a group of frames
 
 #ifdef MULTI_CLIENTS
 // for supporting multiple clients
@@ -227,6 +203,13 @@ public:
 struct BufferStatus{
 	bool			isFirst;
 	bool			isChanged;
+};
+
+struct GlobalVariable{
+	bool sceneBegin;
+	double timeTotal;
+	int frameAllCount;
+	int gFrameIndex;
 };
 
 extern bool			sceneBegin;
