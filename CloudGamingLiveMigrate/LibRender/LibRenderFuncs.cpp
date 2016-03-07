@@ -2102,15 +2102,15 @@ HRESULT FakedD3DCreateRenderTarget(RenderChannel * rch){
 	UINT sid = rch->cc->read_uint();
 	UINT width = rch->cc->read_uint();
 	UINT height = rch->cc->read_uint();
-	D3DFORMAT fmt = rch->cc->read_uint();
-	D3DMULTISAMPLE_TYPE sampleType = rch->cc->read_uint();
+	D3DFORMAT fmt = (D3DFORMAT)rch->cc->read_uint();
+	D3DMULTISAMPLE_TYPE sampleType = (D3DMULTISAMPLE_TYPE)rch->cc->read_uint();
 	DWORD quality = rch->cc->read_uint();
 	BOOL lockable = rch->cc->read_uint();
 
 	rch->getDevice(rch->obj_id);
 
 	IDirect3DSurface9 * surface = NULL;
-	HRESULT hr = rch->curDevice->CreateRenderTarget(width, height, fmt, sampleType, quality, lockable, &surface, NULL);
+	hr = rch->curDevice->CreateRenderTarget(width, height, fmt, sampleType, quality, lockable, &surface, NULL);
 	if(SUCCEEDED(hr)){
 		rch->surface_list[sid] = new ClientSurface9(surface);
 	}

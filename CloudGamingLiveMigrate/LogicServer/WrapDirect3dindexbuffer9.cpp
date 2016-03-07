@@ -4,7 +4,6 @@
 #include "../LibCore/Opcode.h"
 static int max_ib = 0;
 
-
 #ifdef MULTI_CLIENTS
 
 
@@ -151,7 +150,7 @@ STDMETHODIMP WrapperDirect3DIndexBuffer9::QueryInterface(THIS_ REFIID riid, void
 	return hr;
 }
 STDMETHODIMP_(ULONG) WrapperDirect3DIndexBuffer9::AddRef(THIS) { refCount++; return m_ib->AddRef(); }
-STDMETHODIMP_(ULONG) WrapperDirect3DIndexBuffer9::Release(THIS) { 
+STDMETHODIMP_(ULONG) WrapperDirect3DIndexBuffer9::Release(THIS) {
 	ULONG hr = m_ib->Release();
 #ifdef LOG_REF_COUNT
 #ifdef ENABLE_INDEX_LOG
@@ -163,11 +162,11 @@ STDMETHODIMP_(ULONG) WrapperDirect3DIndexBuffer9::Release(THIS) {
 		infoRecorder->logError("[WrapperDirect3DIndexBuffer9]: m_ib id:%d ref:%d, ref count:%d.\n",id, refCount, hr);
 		//m_list.DeleteMember(m_ib);
 	}
-	return hr; 
+	return hr;
 }
 
 /*** IDirect3DResource9 methods ***/
-STDMETHODIMP WrapperDirect3DIndexBuffer9::GetDevice(THIS_ IDirect3DDevice9** ppDevice) { 
+STDMETHODIMP WrapperDirect3DIndexBuffer9::GetDevice(THIS_ IDirect3DDevice9** ppDevice) {
 #ifdef ENABLE_INDEX_LOG
 	infoRecorder->logTrace("WrapperDirect3DIndexBuffer9::GetDevice called!\n");
 #endif
@@ -215,7 +214,7 @@ STDMETHODIMP WrapperDirect3DIndexBuffer9::Lock(THIS_ UINT OffsetToLock,UINT Size
 #ifdef ENABLE_INDEX_LOG
 	infoRecorder->logTrace("WrapperDirect3DIndexBuffer9::Lock(),id:%d, OffestToLock=%d, SizeToLock=%d, Flags=%d, size:%d\n",this->id, OffsetToLock, SizeToLock, Flags,this->length);
 #endif
-	
+
 #ifndef BUFFER_UNLOCK_UPDATE
 	void * tmp = NULL;
 	HRESULT hr = m_ib->Lock(OffsetToLock, SizeToLock, &tmp, Flags);
@@ -223,7 +222,7 @@ STDMETHODIMP WrapperDirect3DIndexBuffer9::Lock(THIS_ UINT OffsetToLock,UINT Size
 	m_LockData.OffsetToLock = OffsetToLock;
 	m_LockData.SizeToLock = SizeToLock;
 	m_LockData.Flags = Flags;
-	if(SizeToLock == 0) 
+	if(SizeToLock == 0)
 		m_LockData.SizeToLock = length - OffsetToLock;
 
 	m_LockData.pRAMBuffer = tmp;
@@ -253,14 +252,13 @@ STDMETHODIMP WrapperDirect3DIndexBuffer9::Lock(THIS_ UINT OffsetToLock,UINT Size
 #endif // MULTI_CLIENTS
 
 #else  // USE_MEM_INDEX_BUFFER
-	
+
 	// store the lock information
-	m_LockData.OffsetToLock = OffsetToLock;
-	m_LockData.SizeToLock = SizeToLock;
-	m_LockData.Flags = Flags;
+	UINT sizeToLock = SizeToLock;
 	if(0 == SizeToLock){
-		m_LockData.SizeToLock = length - OffsetToLock;
+		sizeToLock = length - OffsetToLock;
 	}
+	m_LockData.updateLock(OffsetToLock, sizeToLock, Flags);
 	*ppbData = (void*)(((char *)ram_buffer) + OffsetToLock);
 
 	// lock the video mem as well
@@ -292,11 +290,15 @@ STDMETHODIMP WrapperDirect3DIndexBuffer9::Unlock(THIS) {
 	memcpy(ram_buffer, (char *)m_LockData.pVideoBuffer + m_LockData.OffsetToLock, m_LockData.SizeToLock);
 #else  // USE_MEM_INDEX_BUFFER
 	memcpy(m_LockData.pVideoBuffer, (char *)m_LockData.pRAMBuffer + m_LockData.OffsetToLock, m_LockData.SizeToLock);
-#endif  // USE_MEM_INDEX_BUFFER
 
-	base = m_LockData.OffsetToLock;
 	updateFlag = 0x8fffffff;
 	csSet->checkObj(this);
+#endif  // USE_MEM_INDEX_BUFFER
+
+
+
+#ifndef BUFFER_AND_DELAY_UPDATE
+	base = m_LockData.OffsetToLock;
 	
 
 	csSet->beginCommand(IndexBufferUnlock_Opcode, id);
@@ -354,6 +356,8 @@ STDMETHODIMP WrapperDirect3DIndexBuffer9::Unlock(THIS) {
 		unsigned int interval = pTimer->Stop();
 		infoRecorder->logError("[WrapperDirect3DIndexBuffer9]: %d unlock use time:%f ms.\n", id, interval * 1000.0 / pTimer->getFreq());
 	}
+#endif  // BUFFER_AND_DELAY_UPDATE
+
 #endif  // BUFFER_UNLOCK_UPDATE
 
 	return m_ib->Unlock();
@@ -390,6 +394,137 @@ int WrapperDirect3DIndexBuffer9::PrepareIndexBuffer(ContextAndCache *ctx){
 	ctx->endCommand();
 	return length;
 }
+
+#ifdef BUFFER_AND_DELAY_UPDATE
+
+// called when to create an index buffer
+int WrapperDirect3DIndexBuffer9::UpdateIndexBuffer(ContextAndCache * ctx) {
+	if(isFirst) {
+		infoRecorder->logError("[WrapperDirect3DIndexBuffer9]: is first is true ? ERROR.\n");
+	}
+
+	int last = 0, cnt = 0, c_len = 0, d = 0;
+	UINT base = m_LockData.updatedOffset;
+	UINT size = m_LockData.updatedSizeToLock;
+	DWORD flag = m_LockData.Flags;
+
+	ctx->beginCommand(IndexBufferUnlock_Opcode, getId());
+	ctx->write_uint(base);
+	ctx->write_uint(size);
+	ctx->write_uint(flag);
+	ctx->write_int(CACHE_MODE_DIFF);
+
+	int stride = (Format == D3DFMT_INDEX16) ? 2 : 4;
+
+	ctx->write_char(stride);
+
+	UINT count_limit = 0, count = 0;
+	bool cancel = false;
+	int compressSize = 0;
+
+#if defined(USE_CHAR_COMPRESS)
+	count_limit = size / 5;
+	count = size;
+	compressSize = 1;
+	for(int i=0; i<size; ++i) {
+		if( cache_buffer[base + i] ^ *((char*)(m_LockData.pRAMBuffer) + base + i) ) {
+			d = i - last;
+			last = i;
+
+			ctx->write_int(d);
+			ctx->write_char(*((char *)(m_LockData.pRAMBuffer) + base + i));
+
+			cnt++;
+			cache_buffer[base + i] = *((char*)(m_LockData.pRAMBuffer) + base + i);
+			if(cnt >= count_limit){
+				cancel = true;
+				break;
+			}
+		}
+	}
+#elif defined(USE_SHORT_COMPRESS)
+	count_limit = size / 6;
+	count = size / 2;
+	compressSize = 2;
+	USHORT * src = (USHORT *)(cache_buffer + base);
+	USHORT * dst = (USHORT *)(((char *)m_LockData.pRAMBuffer) + base);
+	for(int i = 0; i < count; i++){
+		if((*src) ^ (*dst)){
+			d = i - last;
+			last = i;
+			ctx->write_int(d);
+			ctx->write_ushort(*dst);
+			cnt++;
+			(*src) = (*dst);
+			if(cnt >= count_limit){
+				cancel = true;
+				break;
+			}
+			src++;
+			dst++;
+		}
+	}
+#elif defined(USE_INT_COMPRESS)
+	count_limit = size / 8;
+	count = size / 4;
+	compressSize = 4;
+	UINT * src = (UINT *)(cache_buffer + base);
+	UINT * dst = (UINT *)(((char *)m_LockData.pRAMBuffer) + base);
+	for(int i = 0; i < count; i++){
+		if((*src)^(*dst)){
+			d = i - last;
+			last = i;
+			ctx->write_int(d);
+			ctx->write_uint(*dst);
+			cnt++;
+			(*src) = (*dst);
+			if(cnt >= count_limit){
+				cancel = true;
+				break;
+			}
+			src++;
+			dst++;
+		}
+
+	}
+#endif
+
+
+	int neg = (1<<28)-1;
+	ctx->write_int(neg);
+	//c_len = ctx->getCommandLength();
+
+	if(cancel) {
+		//c_len = size;
+
+		ctx->cancelCommand();
+		ctx->beginCommand(IndexBufferUnlock_Opcode, getId());
+		ctx->write_uint(base);
+		ctx->write_uint(size);
+		ctx->write_uint(flag);
+
+		ctx->write_int(CACHE_MODE_COPY);
+		ctx->write_char(stride);
+		ctx->write_byte_arr((char *)m_LockData.pRAMBuffer + base, size);
+		ctx->endCommand();
+		if(c_len > max_ib){
+			max_ib = size;
+		}
+	}
+	else {
+		
+		if(cnt > 0) {
+			ctx->endCommand();
+		}
+		else{
+			ctx->cancelCommand();
+		}
+	}
+	infoRecorder->logError("[WrapperDirect3DIndexBuffer]: update index buffer, compress size:%d, update count:%d, len:%d (update len:%d), operation:%s.\n", compressSize, cnt, compressSize * cnt, size, cancel ? "COPY_MODE" : "DIFF_MODE");
+	return (cnt > 0);
+}
+
+#else // BUFFER_AND_DELAY_UPDATE
 
 // called when to create an index buffer
 int WrapperDirect3DIndexBuffer9::UpdateIndexBuffer(ContextAndCache * ctx) {
@@ -457,3 +592,5 @@ int WrapperDirect3DIndexBuffer9::UpdateIndexBuffer(ContextAndCache * ctx) {
 	}
 	return (cnt > 0);
 }
+
+#endif  // BUFFER_AND_DELAY_UPDATE

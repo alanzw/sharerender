@@ -51,7 +51,7 @@ using namespace std;
 #define ENABLE_NETWORK_COMPRESS
 #define ENABLE_SERVER_RENDERING
 
-// this definition will use SaveTextureToFileInMemory in stead 
+// this definition will use SaveTextureToFileInMemory in stead
 //#define SEND_FULL_TEXTURE
 #define UPDATE_ALL
 
@@ -59,6 +59,17 @@ using namespace std;
 
 // this define will enable printing the first 256 bytes for each packet in each side
 //#define ENABLE_NET_VALIDATION
+
+
+#define BUFFER_AND_DELAY_UPDATE	// this will enable delay update of buffers
+
+#define USE_CHAR_COMPRESS		// compare each char when update
+
+//#define USE_SHORT_COMPRESS		// compare each short when update
+
+//#define USE_INT_COMPRESS		// compare each int when update
+
+
 
 ////////////////±‡“Î—°œÓΩ· ¯//////////////////////////////
 
@@ -122,6 +133,30 @@ struct BufferLockData
 	VOID* pRAMBuffer;
 	VOID* pVideoBuffer;
 	bool Create;
+
+	bool updated;   // indicate whether it is the first time to lock since last updating
+	UINT updatedSize;
+	UINT updatedOffset;
+	UINT updatedSizeToLock;
+
+	inline void updateClear(){
+		OffsetToLock = 0;
+		SizeToLock = 0;
+		updatedSize = 0;
+
+		updatedOffset = 0;
+		updatedSizeToLock = 0;
+
+		updated = true;
+	}
+	inline bool isCopy(UINT totalLen, short indexSizeForEach = 3){
+		if(totalLen < updatedSize * indexSizeForEach)
+			return false;
+		else
+			return true;
+	}
+	void updateLock(UINT offset, UINT size, DWORD flags);
+
 };
 
 

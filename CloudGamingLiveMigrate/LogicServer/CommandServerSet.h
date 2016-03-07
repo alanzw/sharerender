@@ -26,7 +26,7 @@ using namespace cg::core;
 // context lock will lock the context when needed.
 //#define _CONTEXT_LOCK_
 
-#define BUFFER_UNLOCK_UPDATE
+#define BUFFER_UNLOCK_UPDATE   // this definition will enable system memory to buffer the udpate of VB and IB
 
 #ifndef MULTI_CLIENTS
 #define MULTI_CLIENTS
@@ -56,10 +56,6 @@ using namespace cg::core;
 
 #define ENABLE_TEXTURE_LOG
 
-#define RENDER_STEP 2
-
-extern bool isEnableRender();
-extern bool renderCommit();
 
 enum CtxStatus{
 	CTX_INIT,   // the initial status

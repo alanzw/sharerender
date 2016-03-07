@@ -93,17 +93,33 @@ void ClientIndexBuffer9::UpdateIndexBuffer(cg::core::CommandClient * cc) {
 	}
 
 	int last = 0;
+	int d = 0, size = 0;
 	cg::core::infoRecorder->logTrace("index buffer, cache diff.\n");
+
+#if defined(USE_CHAR_COMPRESS)
 	while(true) {
-		int d, size;
-		//Compressor::decode1(cur_ptr, size, d);
-		//cur_ptr += size;
 		d = cc->read_int();
-		//cg::core::infoRecorder->logTrace("ClientVertexBuffer9::UpdateVertexBuffer, last=%d, d=%d size=%d bytes\n", last, d, size);
 		if(d == (1<<28)-1) break;
 		last += d;
 		*((char*)(ib_ptr) + last) = cc->read_char();
 	}
+	
+#elif defined(USE_SHORT_COMPRESS)
+	while(true) {
+		d = cc->read_int();
+		if(d == (1<<28)-1) break;
+		last += d;
+		*((SHORT *)(ib_ptr) + last) = cc->read_ushort();
+	}
+
+#elif defined(USE_INT_COMPRESS)
+	while(true) {
+		d = cc->read_int();
+		if(d == (1<<28)-1) break;
+		last += d;
+		*((UINT*)(ib_ptr) + last) = cc->read_uint();
+	}
+#endif
 
 	HRESULT hr = m_ib->Unlock();
 }

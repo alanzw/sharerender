@@ -1,6 +1,7 @@
 #include "WrapDirect3dswapchain9.h"
 #include "WrapDirect3dsurface9.h"
 #include "CommandServerSet.h"
+#include "KeyboardHook.h"
 #ifdef MULTI_CLIENTS
 
 
@@ -122,8 +123,7 @@ STDMETHODIMP WrapperDirect3DSwapChain9::Present(THIS_ CONST RECT* pSourceRect,CO
 	cs.begin_command(SwapChainPresent_Opcode, id);
 	cs.end_command();
 #else
-	cg::core::KeyCommandHelper * keyHelper = cg::core::KeyCommandHelper::GetKeyCmdHelper();
-	if(keyHelper->isSending()){
+	if(keyCmdHelper->isSending()){
 		csSet->beginCommand(SwapChainPresent_Opcode, id);
 		csSet->endCommand();
 	}
@@ -134,7 +134,7 @@ STDMETHODIMP WrapperDirect3DSwapChain9::Present(THIS_ CONST RECT* pSourceRect,CO
 	}
 
 	infoRecorder->onFrameEnd();
-	keyHelper->commit(cmdCtrl);
+	keyCmdHelper->commit(cmdCtrl);
 	cmdCtrl->commitRender();
 
 #endif

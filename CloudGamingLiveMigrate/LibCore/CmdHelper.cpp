@@ -18,6 +18,7 @@ namespace cg{
 			logicPort = -1;
 			maxFps = 60;
 			frameStep = 1;
+			sendingStep = 1;
 			curRender = 0;
 			enableToRender = false;
 
@@ -154,16 +155,17 @@ namespace cg{
 					// the parent process id
 					pidString = string(vt[i + 1]);
 				}
+				else if(vt[i] == string("-n") || vt[i] == string("-N")){
+					sendingStep = atoi(vt[i+1].c_str());
+				}
 			}
 			return true;
 		}
 
-
-
 		bool CmdController::commitRender(){
 			if(frameStep != 0){
 				curRender++;
-				if(curRender == frameStep){
+				if(curRender >= frameStep){
 					enableToRender = true;
 					curRender = 0;	
 				}

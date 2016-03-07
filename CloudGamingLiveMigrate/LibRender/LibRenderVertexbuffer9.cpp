@@ -91,14 +91,31 @@ void ClientVertexBuffer9::UpdateVertexBuffer(CommandClient * cc) {
 	}
 	cg::core::infoRecorder->logTrace("vertexbuffer, cache diff.\n");
 	// diff
-	int last = 0;
+	int last = 0, d = 0, size = 0;
+#if defined(USE_CHAR_COMPRESS)
 	while(true){
-		int d, size;
 		d = cc->read_int();
 		if(d == (1 << 28) -1) break;
 		last+=d;
 		*((char*)(vb_ptr) + last) = cc->read_char();
 	}
+#elif defined(USE_SHORT_COMPRESS)
+	while(true){
+		d = cc->read_int();
+		if(d == (1 << 28) -1) break;
+		last+=d;
+		*((USHORT*)(vb_ptr) + last) = cc->read_ushort();
+	}
+
+#elif defined(USE_INT_COMPRESS)
+	while(true){
+		d = cc->read_int();
+		if(d == (1 << 28) -1) break;
+		last+=d;
+		*((UINT*)(vb_ptr) + last) = cc->read_uint();
+	}
+
+#endif
 	m_vb->Unlock();
 }
 

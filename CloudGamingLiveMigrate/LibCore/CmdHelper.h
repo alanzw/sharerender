@@ -1,3 +1,5 @@
+#ifndef __CMDHELPER_H__
+#define __CMDHELPER_H__
 #include "StringTool.h"
 #include <d3d9.h>
 #ifndef WIN32_LEAN_AND_MEAN
@@ -46,6 +48,7 @@ namespace cg{
 			int				mode;			// the listen mode: 1 for listen distributor, 2 for listen render proxy
 
 			int				frameStep;		// enable render every [frameStep], if full render, set this to 1, set 2 when need render half, 0 for no render
+			int				sendingStep;
 
 			int				encoderOption;	// type of encoder to use
 			string			identifier;
@@ -130,16 +133,23 @@ namespace cg{
 
 			inline int		getMaxFps(){ return maxFps; }
 			inline int		getFrameStep(){ return frameStep; }
+			inline int		getSendStep(){ return sendingStep; }
 			inline int		getEncoderOption(){ return encoderOption; }
 			inline int		getMode(){ return mode; }
 
 			inline void		setGenVideo(){ generateVideo = true; }
 			inline void		setEncoderOption(int val){ encoderOption = val; }
-			inline void		setFrameStep(int val){ frameStep = val; }
+			inline void		setFrameStep(int val){ 
+				frameStep = val; 
+				if(curRender >= frameStep)
+					curRender=0;
+			}
 			inline int		addRenderConnection(){
 				if(frameStep != 0){
 					int ret = frameStep;
 					frameStep++;
+					if(curRender >= frameStep)
+						curRender=0;
 					return ret;
 				}else{
 					// no render
@@ -160,3 +170,4 @@ namespace cg{
 
 	}
 }
+#endif // __CMDHELPER_H__

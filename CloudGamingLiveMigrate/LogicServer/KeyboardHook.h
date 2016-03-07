@@ -5,7 +5,7 @@
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <Windows.h>
-
+#include "..\LibCore\CmdHelper.h"
 namespace cg{
 	namespace core{
 		/*hook the key, get the keyboard command, 
@@ -26,6 +26,8 @@ namespace cg{
 			bool				enableSending;
 			int					renderStep;
 			bool				renderStepChanged;
+			bool				sendingStepChanged;
+			int					bufSendingStep;
 			int					sendStep;
 
 			int					currentSending;   // current sending counter
@@ -62,9 +64,17 @@ namespace cg{
 			inline void setEnableRender(){ 
 				bool val = enableRender;
 				enableRender = !val; 
+				renderStepChanged = true;
 			}
 			inline void setRenderStep(int val){ renderStepChanged = true; renderStep = val; }
-			inline void setSendStep(int val){ sendStep = val; }
+			inline void setSendStep(int val){ 
+				sendStep = val; 
+				if(currentSending >= sendStep){
+					currentSending = 0;
+				}
+			}
+			inline void changeSendStep(int val){ bufSendingStep = val; sendingStepChanged = true; }
+
 			inline void setF10Pressed(bool val){ f10pressed = val; }
 			void setSynSigin(bool val);
 

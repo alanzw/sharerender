@@ -42,3 +42,41 @@ SOCKET DuplicateSocketFormProcess(DWORD processId, SOCKET old){
 	}
 	return ret;
 }
+
+
+
+
+void BufferLockData::updateLock(UINT offset, UINT size, DWORD flags){
+	UINT org_off = updatedOffset;
+	UINT org_size = updatedSizeToLock;
+	UINT org_end = updatedOffset + updatedSizeToLock;
+	UINT end = offset + size;
+
+	OffsetToLock = offset;
+	SizeToLock = size;
+	Flags = flags;
+
+	if(updated){
+		updatedOffset = offset;
+		updatedSizeToLock = size;
+		Flags = flags;
+		updatedSize = size;
+	}
+	else{
+		updatedOffset = org_off < offset ? org_off : offset;
+		updatedSizeToLock = (end > org_end ? end: org_end) - OffsetToLock;
+		// get the real updated size
+		// if overlap, size = SizeToLock
+		// if no overlap, size = org_size + size
+		if(end < org_off || offset > org_end){
+			// on overlap
+			updatedSize = org_size + size;
+		}
+		else{
+			updatedSize = updatedSizeToLock;
+
+		}
+	}
+
+	updated = false;
+}

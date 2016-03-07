@@ -237,7 +237,7 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 			infoRecorder->logTrace(GetCommandLine());
 			infoRecorder->logTrace("\n");
 
-			enableRender = true;
+			//enableRender = true;
 #if 1  // no clients
 			// get the task ID, the second argv, add a new parameter to command line, to identify the start mode for game
 			char * cmdLine = GetCommandLine();
@@ -255,21 +255,18 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 				string exeName = cmdCtrl->getExeName();
 
 				infoRecorder->initMapping(exeName);
-
-				
 				// set the logger
-
 
 			}
 			if(keyCmdHelper == NULL){
-				// intall keyboard hook
+				// install keyboard hook
 				keyCmdHelper = cg::core::KeyCommandHelper::GetKeyCmdHelper();
+				keyCmdHelper->setSendStep(cmdCtrl->getSendStep());
 				keyCmdHelper->installKeyHook(GetCurrentThreadId());
 			}
 			if (StartHookCalled == 0){
 				infoRecorder->logTrace("[Global]: start to hook.\n");
 				StartHook();
-				//SetKeyboardHook(NULL, GetCurrentThreadId());
 				StartHookCalled = 1;
 			}
 			// get the command server set
@@ -355,7 +352,7 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 			//SetKeyboardHook(NULL, GetCurrentThreadId());
 			
 			// create the input server thread
-			InitializeCriticalSection(&f9);
+			//InitializeCriticalSection(&f9);
 
 #ifdef ENABLE_CLIENT_CONTROL
 			cg::input::CtrlConfig * conf = NULL;

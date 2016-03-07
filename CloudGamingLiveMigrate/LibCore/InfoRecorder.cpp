@@ -198,7 +198,7 @@ namespace cg{
 			QueryPerformanceCounter(&frameEnd);
 
 			if (frameStarted){
-#if 1
+#if 0
 				cpuUsage = frameCpuWatcher->GetProcessCpuUtilization(processHandle);
 				gpuUsage = gpuWatcher->GetGpuUsage();
 				curFps =  this->freq.QuadPart / ((frameEnd.QuadPart - frameStart.QuadPart));

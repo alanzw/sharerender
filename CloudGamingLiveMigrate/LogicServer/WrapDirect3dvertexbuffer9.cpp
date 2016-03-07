@@ -1,6 +1,8 @@
 #include "CommandServerSet.h"
 #include "WrapDirect3dvertexbuffer9.h"
 #include "../LibCore/Opcode.h"
+#include "KeyboardHook.h"
+
 //#define FLOAT_COMPRESS
 #define INT_COMPRESS
 #define COMPRESS_TO_DWORD
@@ -252,17 +254,21 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Lock(THIS_ UINT OffsetToLock,UINT Siz
 #else  // USE_MEM_VERTEX_BUFFER
 	
 	// store the lock information
-	m_LockData.OffsetToLock = OffsetToLock;
-	m_LockData.SizeToLock = SizeToLock;
-	m_LockData.Flags = Flags;
 
+	UINT sizeToLock = SizeToLock;
 	if(SizeToLock == 0) 
-		m_LockData.SizeToLock = Length - OffsetToLock;
+		sizeToLock = Length - OffsetToLock;
+
+
+	m_LockData.updateLock(OffsetToLock, sizeToLock, Flags);
 
 	*ppbData = (void*)(((char *)ram_buffer)+OffsetToLock);
 
 	// lock the video mem as well
 	HRESULT hr = m_vb->Lock(OffsetToLock, SizeToLock, &(m_LockData.pVideoBuffer), Flags);
+
+
+
 #ifdef MULTI_CLIENTS
 	
 	//updateFlag = 0x8fffffff;
@@ -299,6 +305,11 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Unlock(THIS) {
 	csSet->checkObj(this);
 
 #endif  // USE_MEM_VERTEX_BUFFER
+
+
+
+#ifndef BUFFER_AND_DELAY_UPDATE
+
 	base = m_LockData.OffsetToLock;
 
 	csSet->beginCommand(VertexBufferUnlock_Opcode, id);
@@ -366,6 +377,13 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Unlock(THIS) {
 		unsigned int interval = pTimer->Stop();
 		infoRecorder->logError("[WrapperDirect3DVertexBuffer]: %d unlock use time: %f.\n", id, interval * 1000.0 / pTimer->getFreq());
 	}
+
+#else  // BUFFER_AND_DELAY_UPDATE
+	
+
+#endif // BUFFER_AND_DELAY_UPDATE
+
+
 #endif   // BUFFER_UNLOCK_UPDATE
 	return m_vb->Unlock();
 }
@@ -398,7 +416,128 @@ int WrapperDirect3DVertexBuffer9::PrepareVertexBuffer(ContextAndCache *ctx){
 	return Length;
 }
 
-// update the vertex buffer with byte comparasion
+// update the vertex buffer with byte comparison
+#ifdef BUFFER_AND_DELAY_UPDATE
+int WrapperDirect3DVertexBuffer9::UpdateVertexBuffer(ContextAndCache * ctx){
+#ifdef ENABLE_VERTEX_BUFFER_LOG
+	//infoRecorder->logError("[WrapperDirect3DVertexBuffer9]: update the vertex buffer %d, that means data changed after creation but unlock did not happen.\n", id);
+#endif
+
+	int last = 0, cnt = 0, c_len = 0, d = 0;
+	UINT base = m_LockData.updatedOffset;
+	UINT size = m_LockData.updatedSizeToLock;
+	DWORD flag = m_LockData.Flags;
+
+	ctx->beginCommand(VertexBufferUnlock_Opcode, getId());
+	ctx->write_uint(base);
+	ctx->write_uint(size);
+	ctx->write_uint(flag);
+	ctx->write_int(CACHE_MODE_DIFF);
+
+	bool cancel = false;
+	UINT count_limit = 0, count = 0;
+	int compressSize = 0;
+	
+#if defined(USE_CHAR_COMPRESS)
+	count_limit = size / 5;
+	count = size;
+	compressSize = 1;
+	for(int i = 0; i< size; ++i){
+		if(cache_buffer[base + i] ^ *((char *)(m_LockData.pRAMBuffer) + base + i) ){
+			int d = i - last;
+			last = i;
+			ctx->write_int(d);
+			ctx->write_char(*((char *)(m_LockData.pRAMBuffer)+ base + i));
+			cnt++;
+			cache_buffer[base + i] = *((char *)(m_LockData.pRAMBuffer)+base + i);
+			if(cnt >= count_limit){
+				cancel = true;
+				break;
+			}
+		}
+	}
+#elif defined(USE_SHORT_COMPRESS)
+	count_limit = size / 6;
+	count = size / 2 ;
+	compressSize = 2;
+	USHORT * src = (USHORT *)(cache_buffer + base);
+	USHORT * dst = (USHORT *)(((char *)m_LockData.pRAMBuffer) + base);
+	for(int i = 0; i < count; i++){
+		if((*src) ^ (*dst)){
+			d = i - last;
+			last = i;
+			ctx->write_int(d);
+			ctx->write_ushort(*dst);
+			cnt++;
+			(*src) = (*dst);
+			if(cnt >= count_limit){
+				cancel = true;
+				break;
+			}
+			src++;
+			dst++;
+		}
+	}
+
+#elif defined(USE_INT_COMPRESS)
+	count_limit = size / 8;
+	count = size / 4;
+	compressSize = 4;
+	UINT * src = (UINT *)(cache_buffer + base);
+	UINT * dst = (UINT *)(((char *)m_LockData.pRAMBuffer) + base);
+	for(int i = 0; i < count; i++){
+		if((*src)^(*dst)){
+			d = i - last;
+			last = i;
+			ctx->write_int(d);
+			ctx->write_uint(*dst);
+			cnt++;
+			(*src) = (*dst);
+			if(cnt >= count_limit){
+				cancel = true;
+				break;
+			}
+			src++;
+			dst++;
+		}
+
+	}
+
+#endif
+	int neg = ( 1 << 28 ) - 1;
+
+	ctx->write_int(neg);
+
+	// get current command length
+
+	if(cancel){
+		ctx->cancelCommand();
+		ctx->beginCommand(VertexBufferUnlock_Opcode, getId());
+		ctx->write_uint(base);
+		ctx->write_uint(size);
+		ctx->write_uint(flag);
+
+		ctx->write_int(CACHE_MODE_COPY);
+		ctx->write_byte_arr(((char *)m_LockData.pRAMBuffer) + base, size);
+		ctx->endCommand();
+
+		if(c_len > max_vb){
+			max_vb = size;
+		}
+	}
+	else{
+		if(cnt > 0){
+			ctx->endCommand();
+		}
+		else{
+			ctx->cancelCommand();
+		}
+	}
+	infoRecorder->logError("[WrapperDirect3DIndexBuffer]: update vertex buffer, compress size:%d, update count:%d, len:%d (update len:%d), operation:%s.\n", compressSize, cnt, compressSize * cnt, size, cancel ? "COPY_MODE" : "DIFF_MODE");
+	return cnt > 0;
+}
+
+#else // BUFFER_AND_DELAY_UPDATE
 
 int WrapperDirect3DVertexBuffer9::UpdateVertexBuffer(ContextAndCache * ctx){
 #ifdef ENABLE_VERTEX_BUFFER_LOG
@@ -459,3 +598,5 @@ int WrapperDirect3DVertexBuffer9::UpdateVertexBuffer(ContextAndCache * ctx){
 
 	return cnt > 0;
 }
+
+#endif // BUFFER_AND_DELAY_UPDATE

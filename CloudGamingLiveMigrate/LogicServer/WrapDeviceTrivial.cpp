@@ -326,8 +326,10 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 
 
 #if 1
+	int sleepTime = (int)to_sleep;
 	if (to_sleep > 0 && cmdCtrl->enableRateControl()) {
-		Sleep((DWORD)to_sleep);
+
+		Sleep((DWORD)sleepTime);
 	}
 #endif
 
@@ -1161,7 +1163,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetTransform(THIS_ D3DTRANSFORMSTATETYPE St
 	}
 #endif
 	//send the command
-	unsigned short *mask = NULL, sMask = NULL;
+	unsigned short *mask = NULL, *sMask = NULL;
 	// prepare the data to send if needed.
 	if(keyCmdHelper->isSending()){
 		csSet->beginCommand(SetTransform_Opcode, id);
@@ -1916,13 +1918,13 @@ STDMETHODIMP WrapperDirect3DDevice9::SetVertexShaderConstantF(THIS_ UINT StartRe
 
 	memcpy((char*)vs_data, (char*)pConstantData, Vector4fCount * 16);
 
+	int i = 0;
 	// send command
 	if(keyCmdHelper->isSending()){
 		csSet->beginCommand(SetVertexShaderConstantF_Opcode, id);
 		csSet->writeUShort(StartRegister);
 		csSet->writeUShort(Vector4fCount);
 
-		int i = 0;
 		for(i = 0; i< Vector4fCount /2; ++i){
 			csSet->writeVec(SetVertexShaderConstantF_Opcode, vs_data + ( i * 8), 32);
 		}

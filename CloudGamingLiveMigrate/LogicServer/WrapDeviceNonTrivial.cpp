@@ -14,6 +14,7 @@
 #include "WrapDirect3dvolumetexture9.h"
 #include "../LibCore/Opcode.h"
 #include "../LibCore/CmdHelper.h"
+#include "KeyboardHook.h"
 
 #define DELAY_TO_DRAW
 #ifdef MULTI_CLIENTS

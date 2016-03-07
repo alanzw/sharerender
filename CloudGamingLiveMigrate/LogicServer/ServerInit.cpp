@@ -169,7 +169,7 @@ ATOM WINAPI RegisterClassExACallback(_In_ const WNDCLASSEXA *lpwcx){
 	wndClassExA.lpfnWndProc = NewWndProc;
 
 	ATOM atom = RegisterClassExANext(&wndClassExA);
-
+	return atom;
 }
 ATOM WINAPI RegisterClassExWCallback(_In_ const WNDCLASSEXW *lpwcx){
 	infoRecorder->logTrace("[Global]: RegisterClassExW, proc:%p.\n", lpwcx->lpfnWndProc);
