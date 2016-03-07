@@ -132,6 +132,7 @@ struct fptype {
 	HRESULT(*SetGammaRamp)(RenderChannel * rch);
 	HRESULT(*NullInstruct)(RenderChannel * rch);
 	HRESULT(*D3DCreateRenderTarget)(RenderChannel * rch);
+	HRESULT(*D3DDSetStreamSourceFreq)(RenderChannel *rch);
 };
 
 extern fptype fptable;
@@ -261,5 +262,7 @@ HRESULT FakedSetDecimateResult(RenderChannel * rch);
 HRESULT FakedSetGammaRamp(RenderChannel * rch);
 HRESULT FakeNullInstruct(RenderChannel * rch);
 HRESULT FakedD3DCreateRenderTarget(RenderChannel * rch);
+
+HRESULT FakedD3DDSetStreamSourceFreq(RenderChannel * rch);
 
 #endif

@@ -133,7 +133,9 @@
 #define NULLINSTRUCT_Opcode					97
 #define D3DCreateRenderTarget_Opcode		98
 
-#define MaxSizeUntilNow_Opcode				99
+#define D3DDSetStreamSourceFreq_Opcode		99
+
+#define MaxSizeUntilNow_Opcode				100
 
 
 #endif

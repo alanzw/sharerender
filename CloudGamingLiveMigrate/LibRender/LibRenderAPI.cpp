@@ -125,6 +125,8 @@ FuncJumpTable funcs[] = {
 	X(SetGammaRamp),
 	X(NullInstruct),
 	X(D3DCreateRenderTarget),
+	
+	X(D3DDSetStreamSourceFreq),
 
 	{NULL, NULL}
 };
@@ -257,6 +259,8 @@ void init_fptable() {
 	fptable.SetGammaRamp = FakedSetGammaRamp;
 	fptable.NullInstruct = FakeNullInstruct;
 	fptable.D3DCreateRenderTarget = FakedD3DCreateRenderTarget;
+
+	fptable.D3DDSetStreamSourceFreq = FakedD3DDSetStreamSourceFreq;
 }
 #endif
 

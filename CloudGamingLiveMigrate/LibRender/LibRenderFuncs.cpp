@@ -2099,8 +2099,37 @@ HRESULT FakeNullInstruct(RenderChannel * rch){
 HRESULT FakedD3DCreateRenderTarget(RenderChannel * rch){
 	HRESULT hr = D3D_OK;
 	infoRecorder->logError("FakedD3DCreateRenderTarget(), TODO!\n");
+	UINT sid = rch->cc->read_uint();
+	UINT width = rch->cc->read_uint();
+	UINT height = rch->cc->read_uint();
+	D3DFORMAT fmt = rch->cc->read_uint();
+	D3DMULTISAMPLE_TYPE sampleType = rch->cc->read_uint();
+	DWORD quality = rch->cc->read_uint();
+	BOOL lockable = rch->cc->read_uint();
+
+	rch->getDevice(rch->obj_id);
+
+	IDirect3DSurface9 * surface = NULL;
+	HRESULT hr = rch->curDevice->CreateRenderTarget(width, height, fmt, sampleType, quality, lockable, &surface, NULL);
+	if(SUCCEEDED(hr)){
+		rch->surface_list[sid] = new ClientSurface9(surface);
+	}
+	else{
+		infoRecorder->logError("FakedD3DCreateRenderTarget() failed with:%d.\n", hr);
+	}
 
 
+	return hr;
+}
+
+HRESULT FakedD3DDSetStreamSourceFreq(RenderChannel * rch){
+	HRESULT hr = D3D_OK;
+	UINT StreamNumber = rch->cc->read_uint();
+	UINT Setting = rch->cc->read_uint();
+
+	rch->getDevice(rch->obj_id);
+	cg::core::infoRecorder->logTrace("FakedD3DDSetStreamSourceFreq(%d, %d)\n", StreamNumber, Setting);
+	hr = rch->curDevice->SetStreamSourceFreq(StreamNumber, Setting);
 
 	return hr;
 }

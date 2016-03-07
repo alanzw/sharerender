@@ -15,7 +15,6 @@
 #include "../LibCore/Opcode.h"
 #include "../LibCore/CmdHelper.h"
 
-
 #define DELAY_TO_DRAW
 #ifdef MULTI_CLIENTS
 
@@ -83,13 +82,14 @@ STDMETHODIMP WrapperDirect3DDevice9::DrawPrimitive(THIS_ D3DPRIMITIVETYPE Primit
 	SynEntity * sync = new SynEntity();
 	csSet->pushSync(sync);
 #endif
-
-	// send command to all clients
-	csSet->beginCommand(DrawPrimitive_Opcode, id);
-	csSet->writeChar(PrimitiveType);
-	csSet->writeUInt(StartVertex);
-	csSet->writeUInt(PrimitiveCount);
-	csSet->endCommand();
+	if(keyCmdHelper->isSending()){
+		// send command to all clients
+		csSet->beginCommand(DrawPrimitive_Opcode, id);
+		csSet->writeChar(PrimitiveType);
+		csSet->writeUInt(StartVertex);
+		csSet->writeUInt(PrimitiveCount);
+		csSet->endCommand();
+	}
 
 	HRESULT hr = D3D_OK;
 	if(cmdCtrl->isRender()) {
@@ -110,15 +110,17 @@ STDMETHODIMP WrapperDirect3DDevice9::DrawIndexedPrimitive(THIS_ D3DPRIMITIVETYPE
 	csSet->pushSync(sync);
 #endif  // USE_HELPER_SYNC
 
-	// call draw
-	csSet->beginCommand(DrawIndexedPrimitive_Opcode, id);
-	csSet->writeChar(Type);
-	csSet->writeInt(BaseVertexIndex);
-	csSet->writeInt(MinVertexIndex);
-	csSet->writeUInt(NumVertices);
-	csSet->writeUInt(startIndex);
-	csSet->writeUInt(primCount);
-	csSet->endCommand();
+	if(keyCmdHelper->isSending()){
+		// call draw
+		csSet->beginCommand(DrawIndexedPrimitive_Opcode, id);
+		csSet->writeChar(Type);
+		csSet->writeInt(BaseVertexIndex);
+		csSet->writeInt(MinVertexIndex);
+		csSet->writeUInt(NumVertices);
+		csSet->writeUInt(startIndex);
+		csSet->writeUInt(primCount);
+		csSet->endCommand();
+	}
 
 	HRESULT hr = D3D_OK;
 	if(cmdCtrl->isRender()){
@@ -178,10 +180,12 @@ STDMETHODIMP WrapperDirect3DDevice9::DrawPrimitiveUP(THIS_ D3DPRIMITIVETYPE Prim
 	arr[2] = VertexCount;
 	arr[3] = VertexStreamZeroStride;
 
-	csSet->beginCommand(DrawPrimitiveUP_Opcode, id);
-	csSet->writeVec(DrawPrimitiveUP_Opcode, (float *)&arr);
-	csSet->writeVec(DrawPrimitiveUP_Opcode, (float *)pVertexStreamZeroData, VertexCount * VertexStreamZeroStride);
-	csSet->endCommand();
+	if(keyCmdHelper->isSending()){
+		csSet->beginCommand(DrawPrimitiveUP_Opcode, id);
+		csSet->writeVec(DrawPrimitiveUP_Opcode, (float *)&arr);
+		csSet->writeVec(DrawPrimitiveUP_Opcode, (float *)pVertexStreamZeroData, VertexCount * VertexStreamZeroStride);
+		csSet->endCommand();
+	}
 
 	HRESULT hr = D3D_OK;
 	if(cmdCtrl->isRender()){
@@ -204,38 +208,40 @@ STDMETHODIMP WrapperDirect3DDevice9::DrawIndexedPrimitiveUP(
 	D3DFORMAT IndexDataFormat,
 	CONST void* pVertexStreamZeroData,UINT VertexStreamZeroStride) {
 #ifdef ENABLE_DEVICE_LOG
-	infoRecorder->logTrace("WrapperDirect3DDevice9::DrawIndexedPrimitiveUP(), type=%d, count=%d\n", PrimitiveType, PrimitiveCount);
+		infoRecorder->logTrace("WrapperDirect3DDevice9::DrawIndexedPrimitiveUP(), type=%d, count=%d\n", PrimitiveType, PrimitiveCount);
 #endif
-	int IndexSize = 2;
-	if(IndexDataFormat == D3DFMT_INDEX32) IndexSize = 4;
+		int IndexSize = 2;
+		if(IndexDataFormat == D3DFMT_INDEX32) IndexSize = 4;
 #ifdef USE_HELPER_SYNC
-	SynEntity * sync = new SynEntity();
-	csSet->pushSync(sync);
+		SynEntity * sync = new SynEntity();
+		csSet->pushSync(sync);
 #endif
 
-	csSet->beginCommand(DrawIndexedPrimitiveUP_Opcode, id);
-	csSet->writeUInt(PrimitiveType);
-	csSet->writeUInt(MinVertexIndex);
-	csSet->writeUInt(NumVertices);
-	csSet->writeUInt(PrimitiveCount);
-	csSet->writeUInt(IndexDataFormat);
-	csSet->writeUInt(VertexStreamZeroStride);
-	csSet->writeByteArr((char *)pIndexData, NumVertices * IndexSize);
-	csSet->writeByteArr((char *)pVertexStreamZeroData, NumVertices * VertexStreamZeroStride);
-	csSet->endCommand();
-
-	HRESULT hr = D3D_OK;
-	if(cmdCtrl->isRender()){
-		hr = m_device->DrawIndexedPrimitiveUP(PrimitiveType, MinVertexIndex, NumVertices, PrimitiveCount, pIndexData, IndexDataFormat, pVertexStreamZeroData, VertexStreamZeroStride);
-#ifdef ENABLE_DEVICE_LOG
-		if(FAILED(hr)){
-			infoRecorder->logError("WrapperDirect3DDevice9::DrawIndexedPrimitiveUP failed with:%d.\n", hr);
+		if(keyCmdHelper->isSending()){
+			csSet->beginCommand(DrawIndexedPrimitiveUP_Opcode, id);
+			csSet->writeUInt(PrimitiveType);
+			csSet->writeUInt(MinVertexIndex);
+			csSet->writeUInt(NumVertices);
+			csSet->writeUInt(PrimitiveCount);
+			csSet->writeUInt(IndexDataFormat);
+			csSet->writeUInt(VertexStreamZeroStride);
+			csSet->writeByteArr((char *)pIndexData, NumVertices * IndexSize);
+			csSet->writeByteArr((char *)pVertexStreamZeroData, NumVertices * VertexStreamZeroStride);
+			csSet->endCommand();
 		}
+
+		HRESULT hr = D3D_OK;
+		if(cmdCtrl->isRender()){
+			hr = m_device->DrawIndexedPrimitiveUP(PrimitiveType, MinVertexIndex, NumVertices, PrimitiveCount, pIndexData, IndexDataFormat, pVertexStreamZeroData, VertexStreamZeroStride);
+#ifdef ENABLE_DEVICE_LOG
+			if(FAILED(hr)){
+				infoRecorder->logError("WrapperDirect3DDevice9::DrawIndexedPrimitiveUP failed with:%d.\n", hr);
+			}
 #endif
-		return hr;
-	}
-	else
-		return D3D_OK;
+			return hr;
+		}
+		else
+			return D3D_OK;
 
 }
 
@@ -289,7 +295,6 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateVertexDeclaration(
 		csSet->writeByteArr((char *)pVertexElements, sizeof(D3DVERTEXELEMENT9) * (ve_cnt + 1));
 		csSet->endCommand();
 		csSet->setCreation(vd->creationFlag);
-
 		infoRecorder->addCreation();
 
 		if(vd){
@@ -319,9 +324,11 @@ STDMETHODIMP WrapperDirect3DDevice9::SetVertexDeclaration(THIS_ IDirect3DVertexD
 		infoRecorder->logTrace("pDecl is NULL\n");
 #endif
 
-		csSet->beginCommand(SetVertexDeclaration_Opcode, id);
-		csSet->writeShort(-1);
-		csSet->endCommand();
+		if(keyCmdHelper->isSending()){
+			csSet->beginCommand(SetVertexDeclaration_Opcode, id);
+			csSet->writeShort(-1);
+			csSet->endCommand();
+		}
 		if(stateRecorder){
 			stateRecorder->BeginCommand(SetVertexDeclaration_Opcode, id);
 			stateRecorder->WriteShort(-1);
@@ -335,9 +342,11 @@ STDMETHODIMP WrapperDirect3DDevice9::SetVertexDeclaration(THIS_ IDirect3DVertexD
 	// call the VertexDeclaration's check creation
 	csSet->checkObj(dynamic_cast<IdentifierBase *>(decl));
 	// send the set command to all clients
-	csSet->beginCommand(SetVertexDeclaration_Opcode, id);
-	csSet->writeShort(((WrapperDirect3DVertexDeclaration9 *)pDecl)->getId());
-	csSet->endCommand();
+	if(keyCmdHelper->isSending()){
+		csSet->beginCommand(SetVertexDeclaration_Opcode, id);
+		csSet->writeShort(((WrapperDirect3DVertexDeclaration9 *)pDecl)->getId());
+		csSet->endCommand();
+	}
 	if(stateRecorder){
 		stateRecorder->pushDependency(dynamic_cast<IdentifierBase *>(decl));
 		stateRecorder->BeginCommand(SetVertexDeclaration_Opcode, id);
@@ -355,59 +364,63 @@ STDMETHODIMP WrapperDirect3DDevice9::SetStreamSource(
 	IDirect3DVertexBuffer9* pStreamData,
 	UINT OffsetInBytes,UINT Stride) {
 #ifdef ENABLE_DEVICE_LOG
-	infoRecorder->logTrace("WrapperDirect3DDevice9::SetStreamSource(), StreamNumber:%d, OffsetInBytes:%d, stride:%d, ", StreamNumber, OffsetInBytes, Stride);
+		infoRecorder->logTrace("WrapperDirect3DDevice9::SetStreamSource(), StreamNumber:%d, OffsetInBytes:%d, stride:%d, ", StreamNumber, OffsetInBytes, Stride);
 #endif
-	if(pStreamData == NULL) {
+		if(pStreamData == NULL) {
 
-		csSet->beginCommand(SetStreamSource_Opcode, id);
-		csSet->writeUInt(StreamNumber);
-		csSet->writeInt(-1);
-		csSet->writeUInt(0);
-		csSet->writeUInt(0);
-		csSet->endCommand();
+			if(keyCmdHelper->isSending()){
+				csSet->beginCommand(SetStreamSource_Opcode, id);
+				csSet->writeUInt(StreamNumber);
+				csSet->writeInt(-1);
+				csSet->writeUInt(0);
+				csSet->writeUInt(0);
+				csSet->endCommand();
+			}
+			if(stateRecorder){
+				stateRecorder->BeginCommand(SetStreamSource_Opcode, id);
+				stateRecorder->WriteUInt(StreamNumber);
+				stateRecorder->WriteInt(-1);
+				stateRecorder->WriteUInt(0);
+				stateRecorder->WriteUInt(0);
+				stateRecorder->EndCommand();
+			}
+#ifdef ENABLE_DEVICE_LOG
+			infoRecorder->logTrace("WrapperDirect3DDevice9::SetStreamSource(), StreamNumber:%d, OffsetInBytes:%d, stride:%d, pStreamData is NULL\n", StreamNumber, OffsetInBytes, Stride);
+#endif
+			return m_device->SetStreamSource(StreamNumber, pStreamData, OffsetInBytes, Stride);
+		}
+		WrapperDirect3DVertexBuffer9* wvb = (WrapperDirect3DVertexBuffer9*)pStreamData;
+#ifdef ENABLE_DEVICE_LOG
+		infoRecorder->logTrace("WrapperDirect3DDevice9::SetStreamSource(), StreamNumber:%d, OffsetInBytes:%d, stride:%d, v_ib:%d.\n", StreamNumber, OffsetInBytes, Stride, wvb->getId());
+#endif
+
+		// TODO, not check creation directly????
+		csSet->checkObj(dynamic_cast<IdentifierBase *>(wvb));
+		// send the command
+		if(keyCmdHelper->isSending()){
+			csSet->beginCommand(SetStreamSource_Opcode, id);
+			csSet->writeUInt(StreamNumber);
+			csSet->writeInt(wvb->getId());
+			csSet->writeUInt(OffsetInBytes);
+			csSet->writeUInt(Stride);
+			csSet->endCommand();
+		}
 		if(stateRecorder){
+			stateRecorder->pushDependency(wvb);
 			stateRecorder->BeginCommand(SetStreamSource_Opcode, id);
 			stateRecorder->WriteUInt(StreamNumber);
-			stateRecorder->WriteInt(-1);
-			stateRecorder->WriteUInt(0);
-			stateRecorder->WriteUInt(0);
+			stateRecorder->WriteInt(wvb->getId());
+			stateRecorder->WriteUInt(OffsetInBytes);
+			stateRecorder->WriteUInt(Stride);
 			stateRecorder->EndCommand();
 		}
-#ifdef ENABLE_DEVICE_LOG
-		infoRecorder->logTrace("WrapperDirect3DDevice9::SetStreamSource(), StreamNumber:%d, OffsetInBytes:%d, stride:%d, pStreamData is NULL\n", StreamNumber, OffsetInBytes, Stride);
-#endif
-		return m_device->SetStreamSource(StreamNumber, pStreamData, OffsetInBytes, Stride);
-	}
-	WrapperDirect3DVertexBuffer9* wvb = (WrapperDirect3DVertexBuffer9*)pStreamData;
-#ifdef ENABLE_DEVICE_LOG
-	infoRecorder->logTrace("WrapperDirect3DDevice9::SetStreamSource(), StreamNumber:%d, OffsetInBytes:%d, stride:%d, v_ib:%d.\n", StreamNumber, OffsetInBytes, Stride, wvb->getId());
-#endif
 
-	// TODO, not check creation directly????
-	csSet->checkObj(dynamic_cast<IdentifierBase *>(wvb));
-	// send the command
-	csSet->beginCommand(SetStreamSource_Opcode, id);
-	csSet->writeUInt(StreamNumber);
-	csSet->writeInt(wvb->getId());
-	csSet->writeUInt(OffsetInBytes);
-	csSet->writeUInt(Stride);
-	csSet->endCommand();
-	if(stateRecorder){
-		stateRecorder->pushDependency(wvb);
-		stateRecorder->BeginCommand(SetStreamSource_Opcode, id);
-		stateRecorder->WriteUInt(StreamNumber);
-		stateRecorder->WriteInt(wvb->getId());
-		stateRecorder->WriteUInt(OffsetInBytes);
-		stateRecorder->WriteUInt(Stride);
-		stateRecorder->EndCommand();
-	}
+		wvb->streamNumber = StreamNumber;
+		//wvb->stride =Stride;
+		wvb->offsetInBytes = OffsetInBytes;
 
-	wvb->streamNumber = StreamNumber;
-	//wvb->stride =Stride;
-	wvb->offsetInBytes = OffsetInBytes;
-
-	HRESULT hh = m_device->SetStreamSource(StreamNumber, ((WrapperDirect3DVertexBuffer9*)pStreamData)->GetVB9(), OffsetInBytes, Stride);
-	return hh;
+		HRESULT hh = m_device->SetStreamSource(StreamNumber, ((WrapperDirect3DVertexBuffer9*)pStreamData)->GetVB9(), OffsetInBytes, Stride);
+		return hh;
 }
 
 STDMETHODIMP WrapperDirect3DDevice9::SetIndices(THIS_ IDirect3DIndexBuffer9* pIndexData) {
@@ -420,11 +433,12 @@ STDMETHODIMP WrapperDirect3DDevice9::SetIndices(THIS_ IDirect3DIndexBuffer9* pIn
 
 		infoRecorder->logError("WrapperDirect3DDevice9::SetIndices(), pIndexData is NULL\n");
 #endif
-		cur_ib_ = NULL;
 
-		csSet->beginCommand(SetIndices_Opcode, id);
-		csSet->writeShort(-1);
-		csSet->endCommand();
+		if(keyCmdHelper->isSending()){
+			csSet->beginCommand(SetIndices_Opcode, id);
+			csSet->writeShort(-1);
+			csSet->endCommand();
+		}
 
 		if(stateRecorder){
 			stateRecorder->BeginCommand(SetIndices_Opcode, id);
@@ -441,9 +455,11 @@ STDMETHODIMP WrapperDirect3DDevice9::SetIndices(THIS_ IDirect3DIndexBuffer9* pIn
 	// send the index
 #ifndef USE_MESH
 	csSet->checkObj(dynamic_cast<IdentifierBase *>(wib));
-	csSet->beginCommand(SetIndices_Opcode, id);
-	csSet->writeShort(wib->getId());
-	csSet->endCommand();
+	if(keyCmdHelper->isSending()){
+		csSet->beginCommand(SetIndices_Opcode, id);
+		csSet->writeShort(wib->getId());
+		csSet->endCommand();
+	}
 
 	if(stateRecorder){
 		stateRecorder->pushDependency(wib);
