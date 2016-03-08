@@ -53,11 +53,7 @@ namespace cg{
 					int renderStep = wParam - 0x30;
 					keyHelper->setEnableRender();
 					keyHelper->setRenderStep(renderStep);
-#if 0
-					if(cmdCtrl){
-						cmdCtrl->setFrameStep(renderStep);
-					}
-#endif
+
 				}
 				else if(wParam >= 0x36 && wParam <= 0x39){
 					// 6, 7, 8, 9
@@ -86,7 +82,7 @@ namespace cg{
 			return true;
 		}
 		KeyCommandHelper *KeyCommandHelper::keyCmdHelper = NULL;
-		KeyCommandHelper::KeyCommandHelper():enableRender(true), synSign(false), synStart(0), f10pressed(false), keyHookHandle(NULL), renderStep(1), sendStep(1), renderStepChanged(false), bufSendingStep(1), sendingStepChanged(false){
+		KeyCommandHelper::KeyCommandHelper():enableRender(true), synSign(false), synStart(0), f10pressed(false), keyHookHandle(NULL), renderStep(1), sendStep(1), renderStepChanged(false), bufSendingStep(1), sendingStepChanged(false), currentSending(0){
 			InitializeCriticalSection(&section);
 		}
 		KeyCommandHelper::~KeyCommandHelper(){
@@ -130,7 +126,7 @@ namespace cg{
 			else
 				currentSending = false;
 
-			return currentSending;
+			return enableSending;
 		}
 		bool KeyCommandHelper::commit(CmdController * _cmdCtrl){
 			// set the render step for CmdController

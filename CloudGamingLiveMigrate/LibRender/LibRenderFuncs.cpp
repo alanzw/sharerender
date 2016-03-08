@@ -866,7 +866,7 @@ HRESULT FakedSetVertexDeclaration(RenderChannel * rch) {
 
 	short id = rch->cc->read_short();
 
-	cg::core::infoRecorder->logError("FakedSetVertexDeclaration(), id=%d, ", id);
+	cg::core::infoRecorder->logTrace("FakedSetVertexDeclaration(), id=%d, ", id);
 
 	if(id == -1) return rch->curDevice->SetVertexDeclaration(NULL);
 

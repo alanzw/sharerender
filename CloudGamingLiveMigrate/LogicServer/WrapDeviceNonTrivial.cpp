@@ -304,7 +304,6 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateVertexDeclaration(
 #endif
 			//set the VERTEXELEMENT and numElemts
 			vd->numElements = ve_cnt + 1;
-			//vd->pDecl = pVertexElements; // check when use, the pointer may be NULL
 			vd->pDecl = (D3DVERTEXELEMENT9 *)malloc(sizeof(D3DVERTEXELEMENT9) * (ve_cnt + 1));
 			memcpy(vd->pDecl, (const void *)pVertexElements, sizeof(D3DVERTEXELEMENT9) * (ve_cnt + 1));
 			vd->print();

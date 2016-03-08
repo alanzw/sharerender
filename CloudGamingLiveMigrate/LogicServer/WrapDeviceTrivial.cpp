@@ -41,10 +41,6 @@ WrapperDirect3DDevice9::WrapperDirect3DDevice9(IDirect3DDevice9* device, int _id
 	cur_ib_ = NULL;
 	is_even_frame_ = 1;
 
-	for(int i=0; i<Source_Count; ++i) {
-		cur_vbs_[i] = NULL;
-	}
-
 	creationFlag = 0;
 	updateFlag = 0;
 	stable = true;
@@ -344,7 +340,13 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 	infoRecorder->onFrameEnd();
 
 	HRESULT hh = D3D_OK;
+
+	//infoRecorder->logError("[WrapperDirect3dDeivce9]:Present(), key cmd helper before commit, is sending:%s, sending step:%d.\n", keyCmdHelper->isSending() ? "true" : "false", keyCmdHelper->getSendStep());
+
 	keyCmdHelper->commit(cmdCtrl);  // deal the control from keyboard
+
+	//infoRecorder->logError("[WrapperDirect3dDeivce9]:Present(), key cmd helper commit, is sending:%s, sending step:%d.\n", keyCmdHelper->isSending() ? "true" : "false", keyCmdHelper->getSendStep());
+
 	cmdCtrl->commitRender();
 
 #ifdef ENBALE_DEVICE_LOG
@@ -1189,7 +1191,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetTransform(THIS_ D3DTRANSFORMSTATETYPE St
 		stateRecorder->WriteShort(State);
 
 		sMask = (unsigned short *)(stateRecorder->GetCurPtr(sizeof(unsigned short)));
-		if(sMask){
+		//if(sMask){
 			*sMask = 0;
 			for(int i = 0; i < 4; i++){
 				for(int j = 0; j < 4; j++){
@@ -1199,7 +1201,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetTransform(THIS_ D3DTRANSFORMSTATETYPE St
 					}
 				}
 			}
-		}
+		//}
 		stateRecorder->EndCommand();
 	}
 

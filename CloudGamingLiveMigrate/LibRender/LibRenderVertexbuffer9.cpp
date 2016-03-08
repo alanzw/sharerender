@@ -104,7 +104,7 @@ void ClientVertexBuffer9::UpdateVertexBuffer(CommandClient * cc) {
 		d = cc->read_int();
 		if(d == (1 << 28) -1) break;
 		last+=d;
-		*((USHORT*)(vb_ptr) + last) = cc->read_ushort();
+		*((unsigned short*)(vb_ptr) + last) = cc->read_ushort();
 	}
 
 #elif defined(USE_INT_COMPRESS)

@@ -169,50 +169,47 @@ void ContextAndCache::pushUpdate(IdentifierBase * obj){
 
 void ContextAndCache::write_packed_byte_arr(char * src, int length){
 	// flush the existing commands
-	int prefix_size = 5; // D + IDX + EOF + len(2)
+	//   +++++++++++++++++++++++++++
+	//   |cnt |idx |size| data ... | 
+	//   +++++++++++++++++++++++++++
+	int prefixSize = 10; // 3 * sizeof(USHORT) + sizeof(int)
+	int maxDataLen = 1460;
 
-	//if(get_size() + 5 + length >= size_limit_){
 		if(func_count_ && flush() <= 0){
-			infoRecorder->logError("[ContextAndCache]: before write packed byte arr, len <= 0.\n");
+			infoRecorder->logError("[ContextAndCache]: before write packed byte arr, len <= 0, error:%d.\n", WSAGetLastError());
 		}
-	//}
 	// packet the array data
-	int to_send = 0, remain = length;
-	short len = 0;
-	unsigned char D = 'D';
-	unsigned short idx = 0;
-	unsigned char endFlag = '0';
-	int send_count = 0;
 	clear();
+	USHORT packetCount = 0, index = 0, sizeToSend = 0, defaultSizeToSend = maxDataLen;
+	int remainLen = length, totalSend = 0;
+	// calculate the packet count
+	packetCount = (length + maxDataLen - 1) / (maxDataLen);
 
-	//unsigned char package_count = (length + size_limit_ - 1) / size_limit_;
-	while(remain > 0){
-		if(remain <= size_limit_){
-			to_send = remain;
-			endFlag = '1';
+	sizeToSend = maxDataLen;
+	int ret = 0;
+
+	for(index = 0; index < packetCount; index++){
+		write_ushort(packetCount);
+		write_ushort(index);
+		sizeToSend = remainLen > defaultSizeToSend ? defaultSizeToSend : remainLen;
+		write_ushort(sizeToSend);
+		write_byte_arr(src, sizeToSend);
+		src += sizeToSend;
+
+		remainLen -= sizeToSend;
+		totalSend += sizeToSend;
+		ret = send_packet(this);
+
+		if(ret == -1){
+			infoRecorder->logError("[ContextAndCache]: socket error:%d.\n", WSAGetLastError());
 		}
-		else{
-			to_send = size_limit_;
-			endFlag = '0';
-		}
-		//to_send = remain > size_limit_ ? size_limit_ : remain;
 
-		write_uchar(D);
-		write_uchar(endFlag);
-		write_ushort(idx++);
-		write_short(to_send);
-		write_byte_arr(src, to_send);
-
-		infoRecorder->logError("[ContextAndCache]: wite_packed_byte_arr, D:%c, end flag:%c, idx:%d, data len:%d.\n", D, endFlag, idx, to_send);
-		send_packet(this);
-
-		//flush();
-		clear();   // reset the pointer to begin
-		src += to_send;
-		send_count+= to_send;
-		remain -= size_limit_;
+		clear();
+		infoRecorder->logError("[ContextAndCache]: send packed byte arr, idx:%d, total count: %d, data len:%d, succ send:%d.\n", index, packetCount, sizeToSend, ret);
 	}
-	infoRecorder->logError("[ContextAndCache]: write_packed_byte_arr, total send:%d.\n", send_count);
+
+	
+	infoRecorder->logError("[ContextAndCache]: write_packed_byte_arr, total packet:%d, total send:%d.\n",packetCount, totalSend);
 	// unlock the context
 	get_cur_ptr(2);
 	unlock();

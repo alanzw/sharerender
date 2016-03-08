@@ -207,7 +207,26 @@ namespace cg{
 
 #ifndef ENABLE_NETWORK_COMPRESS
 			buffer->set_length_part();
-			int len = send(connect_socket, buffer->get_buffer(), buffer->get_size(), 0);
+			int len  = 0;
+			do{
+				len = send(connect_socket, buffer->get_buffer(), buffer->get_size(), 0);
+				if(len == SOCKET_ERROR){
+					fd_set writeSet;
+					int nRec = 0;
+					if(WSAGetLastError() == WSAEWOULDBLOCK){
+
+						FD_ZERO(&writeSet);
+						FD_SET(connect_socket, &writeSet);
+
+						nRec = select(0, NULL, &writeSet, NULL, NULL);
+						if(nRec > 0){
+							continue;  // ready to send
+						}
+					}
+				}else{
+					break;
+				}
+			}while(true);
 			//printf("Network::send_packet(), %d bytes sent.\n", len);
 			return len;
 #else

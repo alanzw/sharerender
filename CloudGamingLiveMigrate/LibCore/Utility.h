@@ -48,7 +48,8 @@ using namespace std;
 //#define USE_CLIENT_INPUT
 
 //#define ENABLE_LOG
-#define ENABLE_NETWORK_COMPRESS
+
+//#define ENABLE_NETWORK_COMPRESS
 #define ENABLE_SERVER_RENDERING
 
 // this definition will use SaveTextureToFileInMemory in stead
@@ -93,7 +94,6 @@ using namespace std;
 #define Max_Func_Count 200
 #define Max_Buf_Size 2600
 
-#define Source_Count 4
 #define MAX_SOURCE_COUNT 8
 
 #define Cache_Use	0

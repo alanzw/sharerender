@@ -82,32 +82,36 @@ void CommandClient::record_last_command() {
 }
 
 void CommandClient::recv_packed_byte_arr(char * dst, int length){
-	unsigned char D = '0';
-	unsigned char endFlag = '0';
-	unsigned short idx = 0;
-	short data_len = 0;
-	int total_len = 0;
+	
+	unsigned short idx = 0, packetCount = 1, count = 0;
+	short dataLen = 0;
+	int totalLen = 0;
+	int recvLen = 0;
 	
 	do{
-		int len = recv_packet(this);
-		if(len <= 0){
+		recvLen = recv_packet(this);
+		if(recvLen <= 0){
 			// recv failed
+			infoRecorder->logError("[CommandClient]: recv_packet failed, len:%d.\n", recvLen);
 			return;
 		}
-		D = read_uchar();
-		endFlag = read_uchar();
+		infoRecorder->logError("[CommandClient]: recv_packet get data len:%d.\n", recvLen);
+		
+		packetCount = read_ushort();
+		count = packetCount;
 		idx = read_ushort();
-		data_len = read_short();
-		//infoRecorder->logError("[CommandClient]: recv_packed_byte_arr, D:%c, end flag:%c, idx:%d, data len:%d.\n", D, endFlag, idx, data_len);
-		read_byte_arr(dst, data_len);
-		total_len += data_len;
-		dst += data_len;
-	}while(endFlag != '1');
-	if(total_len != length){
+		dataLen = read_ushort();
+
+		read_byte_arr(dst, dataLen);
+		totalLen += dataLen;
+		dst += dataLen;
+		infoRecorder->logError("[CommandClient]: recv packed byte arr, idx:%d, total count:%d, data len:%d.\n", idx, packetCount, dataLen);
+
+	}while(idx != (packetCount - 1));
+	if(totalLen != length){
 		// error
-		infoRecorder->logError("[CommandClient]: recv_packed_byte_arr, total len:%d != data len:%d, cur function count:%d.\n", total_len, length, func_count);
+		infoRecorder->logError("[CommandClient]: recv_packed_byte_arr, total len:%d != data len:%d, cur function count:%d.\n", totalLen, length, func_count);
 	}
-	infoRecorder->logError("[CommandClient]: after recv_packed_byte_arr, cur function count:%d.\n", func_count);
 }
 
 void CommandClient::take_command(int& op_code, int& obj_id) {

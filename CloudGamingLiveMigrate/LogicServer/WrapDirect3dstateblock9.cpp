@@ -33,6 +33,7 @@ bool StateBlock::sendCreation(ContextAndCache * ctx){
 	for(it = dependencyList.begin(); it != dependencyList.end(); it++){
 		obj = *it;
 		obj->checkCreation(ctx);
+		obj->checkUpdate(ctx);
 	}
 	// flush if any data in buffer
 	ctx->flush();

@@ -267,8 +267,6 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Lock(THIS_ UINT OffsetToLock,UINT Siz
 	// lock the video mem as well
 	HRESULT hr = m_vb->Lock(OffsetToLock, SizeToLock, &(m_LockData.pVideoBuffer), Flags);
 
-
-
 #ifdef MULTI_CLIENTS
 	
 	//updateFlag = 0x8fffffff;
@@ -422,11 +420,26 @@ int WrapperDirect3DVertexBuffer9::UpdateVertexBuffer(ContextAndCache * ctx){
 #ifdef ENABLE_VERTEX_BUFFER_LOG
 	//infoRecorder->logError("[WrapperDirect3DVertexBuffer9]: update the vertex buffer %d, that means data changed after creation but unlock did not happen.\n", id);
 #endif
+	
+	
+
 
 	int last = 0, cnt = 0, c_len = 0, d = 0;
 	UINT base = m_LockData.updatedOffset;
 	UINT size = m_LockData.updatedSizeToLock;
 	DWORD flag = m_LockData.Flags;
+
+
+	ctx->beginCommand(VertexBufferUnlock_Opcode, getId());
+	ctx->write_uint(base);
+	ctx->write_uint(size);
+	ctx->write_uint(flag);
+
+	ctx->write_int(CACHE_MODE_COPY);
+	ctx->write_byte_arr(((char *)m_LockData.pRAMBuffer) + base, size);
+	ctx->endCommand();
+	return 1;
+
 
 	ctx->beginCommand(VertexBufferUnlock_Opcode, getId());
 	ctx->write_uint(base);
@@ -442,19 +455,23 @@ int WrapperDirect3DVertexBuffer9::UpdateVertexBuffer(ContextAndCache * ctx){
 	count_limit = size / 5;
 	count = size;
 	compressSize = 1;
+	UCHAR * src = (UCHAR *)(cache_buffer + base);
+	UCHAR * dst = (UCHAR *)((UCHAR *)(m_LockData.pRAMBuffer) + base);
 	for(int i = 0; i< size; ++i){
-		if(cache_buffer[base + i] ^ *((char *)(m_LockData.pRAMBuffer) + base + i) ){
-			int d = i - last;
+		if((*src) ^ (*dst)){
+			d = i - last;
 			last = i;
 			ctx->write_int(d);
-			ctx->write_char(*((char *)(m_LockData.pRAMBuffer)+ base + i));
+			ctx->write_char(*dst);
 			cnt++;
-			cache_buffer[base + i] = *((char *)(m_LockData.pRAMBuffer)+base + i);
+			*src = *dst;
 			if(cnt >= count_limit){
 				cancel = true;
 				break;
 			}
 		}
+		src++;
+		dst++;
 	}
 #elif defined(USE_SHORT_COMPRESS)
 	count_limit = size / 6;
@@ -474,9 +491,10 @@ int WrapperDirect3DVertexBuffer9::UpdateVertexBuffer(ContextAndCache * ctx){
 				cancel = true;
 				break;
 			}
-			src++;
-			dst++;
+			
 		}
+		src++;
+		dst++;
 	}
 
 #elif defined(USE_INT_COMPRESS)
@@ -497,10 +515,10 @@ int WrapperDirect3DVertexBuffer9::UpdateVertexBuffer(ContextAndCache * ctx){
 				cancel = true;
 				break;
 			}
-			src++;
-			dst++;
+			
 		}
-
+		src++;
+		dst++;
 	}
 
 #endif
@@ -533,7 +551,7 @@ int WrapperDirect3DVertexBuffer9::UpdateVertexBuffer(ContextAndCache * ctx){
 			ctx->cancelCommand();
 		}
 	}
-	infoRecorder->logError("[WrapperDirect3DIndexBuffer]: update vertex buffer, compress size:%d, update count:%d, len:%d (update len:%d), operation:%s.\n", compressSize, cnt, compressSize * cnt, size, cancel ? "COPY_MODE" : "DIFF_MODE");
+	infoRecorder->logError("[WrapperDirect3DVertexBuffer]: update vertex buffer, compress size:%d, update count:%d, len:%d (base:%d, update len:%d), operation:%s.\n", compressSize, cnt, compressSize * cnt, base, size, cancel ? "COPY_MODE" : "DIFF_MODE");
 	return cnt > 0;
 }
 

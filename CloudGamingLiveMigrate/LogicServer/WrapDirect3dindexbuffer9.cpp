@@ -426,21 +426,26 @@ int WrapperDirect3DIndexBuffer9::UpdateIndexBuffer(ContextAndCache * ctx) {
 	count_limit = size / 5;
 	count = size;
 	compressSize = 1;
+	UCHAR * src = (UCHAR *)(cache_buffer + base);
+	UCHAR * dst = (UCHAR *)((UCHAR *)(m_LockData.pRAMBuffer) + base);
+
 	for(int i=0; i<size; ++i) {
-		if( cache_buffer[base + i] ^ *((char*)(m_LockData.pRAMBuffer) + base + i) ) {
+		if((*src) ^(*dst)) {
 			d = i - last;
 			last = i;
 
 			ctx->write_int(d);
-			ctx->write_char(*((char *)(m_LockData.pRAMBuffer) + base + i));
+			ctx->write_char(*dst);
 
 			cnt++;
-			cache_buffer[base + i] = *((char*)(m_LockData.pRAMBuffer) + base + i);
+			*src = *dst;
 			if(cnt >= count_limit){
 				cancel = true;
 				break;
 			}
 		}
+		src++;
+		dst++;
 	}
 #elif defined(USE_SHORT_COMPRESS)
 	count_limit = size / 6;
@@ -460,9 +465,10 @@ int WrapperDirect3DIndexBuffer9::UpdateIndexBuffer(ContextAndCache * ctx) {
 				cancel = true;
 				break;
 			}
-			src++;
-			dst++;
+			
 		}
+		src++;
+		dst++;
 	}
 #elif defined(USE_INT_COMPRESS)
 	count_limit = size / 8;
@@ -482,9 +488,10 @@ int WrapperDirect3DIndexBuffer9::UpdateIndexBuffer(ContextAndCache * ctx) {
 				cancel = true;
 				break;
 			}
-			src++;
-			dst++;
+			
 		}
+		src++;
+		dst++;
 
 	}
 #endif

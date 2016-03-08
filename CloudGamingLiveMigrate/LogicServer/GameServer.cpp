@@ -98,7 +98,7 @@ BOOL (WINAPI  *ShowWindowNext)(
 	__in int nCmdShow
 	) = ShowWindow;
 
-void StartHook() {
+void StartHook(bool enableBackRunning) {
 	DetourTransactionBegin();
 	DetourUpdateThread(GetCurrentThread());
 
@@ -108,10 +108,15 @@ void StartHook() {
 	//DetourAttach((PVOID*)&ShowWindowNext, ShowWindowCallback);
 
 #ifdef ENABLE_BACKGROUND_RUNNING
-	DetourAttach((LPVOID *)&RegisterClassANext, RegisterClassACallback);
-	DetourAttach((LPVOID *)&RegisterClassWNext, RegisterClassWCallback);
-	DetourAttach((LPVOID *)&RegisterClassExANext, RegisterClassExACallback);
-	DetourAttach((LPVOID *)&RegisterClassExWNext, RegisterClassExWCallback);
+
+	// if the game is CastleStorm, no need to replace wnd proc
+	if(enableBackRunning){
+
+		DetourAttach((LPVOID *)&RegisterClassANext, RegisterClassACallback);
+		DetourAttach((LPVOID *)&RegisterClassWNext, RegisterClassWCallback);
+		DetourAttach((LPVOID *)&RegisterClassExANext, RegisterClassExACallback);
+		DetourAttach((LPVOID *)&RegisterClassExWNext, RegisterClassExWCallback);
+	}
 #endif // ENABLE_BACKGROUND_RUNNING
 
 	DetourAttach(&(PVOID&)ExitProcessNext, ExitProcessCallback);
@@ -241,22 +246,20 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 #if 1  // no clients
 			// get the task ID, the second argv, add a new parameter to command line, to identify the start mode for game
 			char * cmdLine = GetCommandLine();
+			string exeName;
+			bool enableBackRunning = true;
 			infoRecorder->logTrace("[DllMain]: cmd line :%s.\n", cmdLine);
 
 			if(cmdCtrl == NULL){
 				infoRecorder->logTrace("[DllMain]: to create the cmd controller with:%s.\n", cmdLine);
 				cmdCtrl = CmdController::GetCmdCtroller(cmdLine);
 				cmdCtrl->parseCmd();
-				//cmdCtrl->setGenVideo();
-				//cmdCtrl->setEncoderOption(3);
 
 				infoRecorder->logError("[DllMain]: cmd ctrl: %s.\n", cmdCtrl->toString().c_str());
 				// open the mapping and the mutex
-				string exeName = cmdCtrl->getExeName();
-
+				exeName = cmdCtrl->getExeName();
 				infoRecorder->initMapping(exeName);
 				// set the logger
-
 			}
 			if(keyCmdHelper == NULL){
 				// install keyboard hook
@@ -266,7 +269,10 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 			}
 			if (StartHookCalled == 0){
 				infoRecorder->logTrace("[Global]: start to hook.\n");
-				StartHook();
+				if(exeName == string("CastleStorm.exe") || exeName == string("castlestorm.exe") || exeName == string("castlestorm") || exeName == string("CastleStorm")){
+					enableBackRunning = false;
+				}
+				StartHook(enableBackRunning);
 				StartHookCalled = 1;
 			}
 			// get the command server set

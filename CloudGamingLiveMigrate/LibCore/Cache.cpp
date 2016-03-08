@@ -51,7 +51,7 @@ namespace cg{
 
 				}
 				else{
-					Sleep(1);
+					Sleep(10);
 				}
 			}
 			return 0;
