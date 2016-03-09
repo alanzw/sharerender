@@ -162,8 +162,9 @@ HRESULT FakedPresent(RenderChannel * rch) {
 	HRESULT hr = rch->curDevice->Present(NULL, NULL, NULL, NULL);
 	rch->onPresent(tags);
 
-	float t2 = timeGetTime();
+	
 #ifdef ENABLE_LOG_SPEC_STRING
+	float t2 = timeGetTime();
 	cg::core::infoRecorder->logTrace("FakedPresent(%p, %p, %p, %p), del_time=%.4f\n",pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion, t2 - t1);
 #endif
 #if 0

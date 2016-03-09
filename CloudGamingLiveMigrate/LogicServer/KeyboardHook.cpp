@@ -62,6 +62,15 @@ namespace cg{
 				}
 				else if(wParam == 0x30){
 					keyHelper->changeSendStep(0);
+				}else if(wParam == 0x5a){
+					// key Z, for x264 encoder
+
+				}else if(wParam == 0x58){
+					// key X, for CUDA encoder
+
+				}else if(wParam == 0x43){
+					// key C, for nvenc encoder
+
 				}
 			}
 			else{

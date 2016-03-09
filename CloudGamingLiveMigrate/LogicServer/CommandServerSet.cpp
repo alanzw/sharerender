@@ -175,9 +175,9 @@ void ContextAndCache::write_packed_byte_arr(char * src, int length){
 	int prefixSize = 10; // 3 * sizeof(USHORT) + sizeof(int)
 	int maxDataLen = 1460;
 
-		if(func_count_ && flush() <= 0){
-			infoRecorder->logError("[ContextAndCache]: before write packed byte arr, len <= 0, error:%d.\n", WSAGetLastError());
-		}
+	if(func_count_ && flush() <= 0){
+		infoRecorder->logError("[ContextAndCache]: before write packed byte arr, len <= 0, error:%d.\n", WSAGetLastError());
+	}
 	// packet the array data
 	clear();
 	USHORT packetCount = 0, index = 0, sizeToSend = 0, defaultSizeToSend = maxDataLen;

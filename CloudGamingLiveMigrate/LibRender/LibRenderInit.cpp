@@ -32,12 +32,13 @@ LRESULT WINAPI MsgProc(HWND hWnd, UINT msg, WPARAM wp, LPARAM lp) {
 	switch(msg) {
 	case WM_DESTROY:
 		PostQuitMessage(0);
-		return 0;
 		break;
 
 	case WM_KEYUP:
+		printf("keyup in MsgProc.\n");
 		if(wp == VK_ESCAPE) PostQuitMessage(0);
 		break;
+	
 	}
 	return DefWindowProc(hWnd, msg, wp, lp);
 }

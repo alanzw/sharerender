@@ -55,6 +55,13 @@ RenderChannel::RenderChannel(){
 
 	// init the temp
 	gap = 1.0f;
+	videoInitMutex = NULL;
+	presentEvent = NULL;
+	DeviceHandle = NULL;
+	hWnd = NULL;
+	videoThread = NULL;
+	channelThreadHandle = NULL;
+	rtspObject = NULL;
 	if (presentMutex == NULL){
 		presentMutex = CreateMutex(NULL, FALSE, NULL);
 	}
@@ -66,6 +73,8 @@ RenderChannel::RenderChannel(){
 
 	windowCreated = false;
 	generator = NULL;
+	encoderOption = 1;
+	isEncoding = false;
 }
 
 RenderChannel::~RenderChannel(){
@@ -89,6 +98,11 @@ bool RenderChannel::initRenderChannel(IDENTIFIER tid, string name, SOCKET s){
 	//send(s, gameName.c_str(), gameName.size(),0);
 
 	return true;
+}
+
+void RenderChannel::dealControlCmd(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam){
+	printf("WM_INPUT message.\n");
+	//DefWindowProc(hwnd, uMsg, wParam, lParam);
 }
 
 char tempbuffer[7500000] = { '0' };
@@ -163,6 +177,9 @@ DWORD WINAPI RenderChannel::ChannelThreadProc(LPVOID param){
 	// create the video part
 	// loop run
 	MSG xmsg = {0};
+
+
+#if 0
 	while (xmsg.message != WM_QUIT){
 
 		if(PeekMessage(&xmsg, NULL, 0U, 0U, PM_REMOVE)){
@@ -190,17 +207,110 @@ DWORD WINAPI RenderChannel::ChannelThreadProc(LPVOID param){
 			}
 		}
 	}
+#else
+
+	 int callCount = 0;
+	 int flag = 0, sleepCount = 0;
+
+	while(true){
+		if(PeekMessage(&xmsg, NULL, 0, 0, PM_REMOVE)){
+#if 0
+			TranslateMessage(&xmsg);
+			DispatchMessage(&xmsg);
+
+#else
+			TranslateMessage(&xmsg);
+			switch(xmsg.message){
+				printf("mssage;%d.\n", xmsg.message);
+			case WM_QUIT:
+				if(rch){
+					rch->cleanUp();
+					return 0;
+				}
+				break;
+			case WM_KEYUP:
+				printf("keyup.\n");
+				if(xmsg.wParam == VK_ESCAPE)
+					PostQuitMessage(0);
+				else if(xmsg.wParam == VK_ADD){
+					// disable video generate
+					rch->setEnableEncoding(false);
+				}
+				else if(xmsg.wParam == 0x5a){
+					// key Z, for x264 encoder
+					if(rch->generator){
+						rch->generator->setEncoderType(X264_ENCODER);
+					}
+				}
+				else if(xmsg.wParam == 0x58){
+					// key X, for cuda encoder
+					if(rch->generator){
+						rch->generator->setEncoderType(CUDA_ENCODER);
+					}
+
+				}else if(xmsg.wParam == 0x43){
+					// key C, for nvenc encoder
+					if(rch->generator){
+						rch->generator->setEncoderType(NVENC_ENCODER);
+					}
+				}
+				
+				break;
+			
+			default:
+				DispatchMessage(&xmsg);
+				break;
+			}
+#endif
+		}
+		// after dealing the message, to the rendering
+
+		int func_remain = 0;
+
+		//func_remain = rch->cc->fetch_stream_buffer();
+		
+		do{
+			func_remain = rch->cc->take_command(rch->op_code, rch->obj_id);
+			if (rch->op_code >= 0 && rch->op_code < MaxSizeUntilNow_Opcode){
+				if (rch->client_render){
+					cg::core::infoRecorder->logTrace("[RenderChannel]: opcode:%d, cmd :%s.\n", rch->op_code, (funcs[rch->op_code].name));
+					(*(funcs[rch->op_code].func))(rch);
+				}
+				if(rch->op_code == Present_Opcode){
+					flag = 1;
+				}
+			}
+			else{
+				if (rch->op_code == MaxSizeUntilNow_Opcode){
+					cg::core::infoRecorder->logError("[RenderChannel]: render proxy exit normally.\n");
+				}
+				else{
+					cg::core::infoRecorder->logError("[RenderChannel]: render proxy exit, unexpected op_code:%d.\n", rch->op_code);
+				}
+				rch->cleanUp();
+				delete rch;
+				break;
+			}
+		}while(func_remain);
+		// do the sleep to avoid waste
+
+		callCount++;
+#if 1
+		if(callCount >= 100){
+			callCount = 0;
+			sleepCount++;
+			Sleep(1);
+		}
+#endif
+		
+	}
+
+
+#endif
 
 	// on quit
-	cg::core::infoRecorder->logTrace("[RenderChannel]: render channel thread quit.\n");
-	if (rch->cc){
-		delete rch->cc;
-		rch->cc = NULL;
-	}
-	if (rch->presentEvent){
-		CloseHandle(rch->presentEvent);
-		rch->presentEvent = NULL;
-	}
+	
+	
 	return 0;
 }
 
@@ -233,7 +343,9 @@ void RenderChannel::onPresent(unsigned int tags){
 	// on present, check the generator, init the generator if not inited
 #ifndef NO_VIDEO_GEN
 	HRESULT hr = D3D_OK;
-	
+	if(!isEncoding)
+		return;
+
 	// generate video
 	if(generator == NULL){
 		generator= new cg::VideoGen(hWnd, curDevice, DX9, true,false, true);
@@ -302,6 +414,10 @@ void RenderChannel::onPresent(unsigned int tags){
 		SetEvent(generator->getPresentEvent());
 		generator->run();
 	}
+
+
+	// rate control
+
 	cg::core::infoRecorder->onFrameEnd();
 #endif
 }

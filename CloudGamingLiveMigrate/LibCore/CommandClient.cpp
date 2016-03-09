@@ -114,7 +114,25 @@ void CommandClient::recv_packed_byte_arr(char * dst, int length){
 	}
 }
 
-void CommandClient::take_command(int& op_code, int& obj_id) {
+// return how many operations is newly added
+int CommandClient::fetch_stream_buffer(){
+	if(func_count){
+		return func_count;
+	}
+	// no command is present, recv from the network
+	int len = recv_packet(this);
+	if(len <= 0){
+		op_code_ = obj_id_ = -1;
+		return 0;
+	}
+	func_count = get_count_part();
+	move_over(2);
+	return func_count;
+}
+
+
+// return how many operations left in buffer
+int CommandClient::take_command(int& op_code, int& obj_id) {
 	if (sv_ptr){
 		infoRecorder->logTrace("[CommandClinet]: set sv_ptr to %p.\n", sv_ptr);
 		cur_ptr = sv_ptr;
@@ -123,27 +141,25 @@ void CommandClient::take_command(int& op_code, int& obj_id) {
 #ifdef Enable_Command_Validate
 	if(!validate_last_command()) {
 		op_code = obj_id = -1;
-		return;
+		return 0;
 	}
 #endif
 
 	infoRecorder->logTrace("[CommandClient]: take_command, func count:%d.\n", func_count);
 	
+#if 1
 	if(func_count == 0) {
 		int len = recv_packet(this);
 
 		if(len <= 0) {
 			op_code = obj_id = -1;
-			return;
+			return 0;
 		}
 
-		//cout << "len part: " << get_length_part() << endl;
-
 		func_count = get_count_part();
-		//infoRecorder->logTrace("[CommandClient]: read func count:%d.\n", func_count);
-		//cout << "count: " << func_count << endl;
 		move_over(2);
 	}
+#endif
 
 	--func_count;
 
@@ -187,6 +203,7 @@ void CommandClient::take_command(int& op_code, int& obj_id) {
 	last_command_->op_code_ = op_code;
 
 	//infoRecorder->logTrace("[CommandClient]: opcode:%d, obj_id:%d.\n", op_code, obj_id);
+	return func_count;
 
 }
 

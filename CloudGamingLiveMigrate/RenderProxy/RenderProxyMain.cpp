@@ -145,6 +145,7 @@ bool dealCmd(int argc, char ** argv){
 	bool enableRtsp = false;
 	int rtspPort = 0;
 	RENDERMODE mode = DIS_MODE;
+	bool enableEncoding = false;
 	
 	for(int i = 0; i < argc; i++){
 		if(!strcmp(argv[i], "-v") || ! strcmp(argv[1], "-V")){
@@ -157,6 +158,7 @@ bool dealCmd(int argc, char ** argv){
 		}else if(!strcmp(argv[i], "-e") || !strcmp(argv[i], "-E")){
 			// encoder option
 			encoderOption = atoi(argv[i+1]);
+			enableEncoding = true;
 		}else if(!strcmp(argv[i], "-p") || !strcmp(argv[i], "-P")){
 			// the port to request
 			requestPort = atoi(argv[i+1]);

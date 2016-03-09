@@ -208,12 +208,14 @@ namespace cg{
 #ifndef ENABLE_NETWORK_COMPRESS
 			buffer->set_length_part();
 			int len  = 0;
+			int err = -1;
 			do{
 				len = send(connect_socket, buffer->get_buffer(), buffer->get_size(), 0);
 				if(len == SOCKET_ERROR){
 					fd_set writeSet;
 					int nRec = 0;
-					if(WSAGetLastError() == WSAEWOULDBLOCK){
+					err = WSAGetLastError();
+					if(err == WSAEWOULDBLOCK){
 
 						FD_ZERO(&writeSet);
 						FD_SET(connect_socket, &writeSet);
@@ -222,6 +224,8 @@ namespace cg{
 						if(nRec > 0){
 							continue;  // ready to send
 						}
+					}else if(err == WSAENOTSOCK){
+						return buffer->get_size();
 					}
 				}else{
 					break;
@@ -438,7 +442,7 @@ namespace cg{
 				int t = recv(connect_socket, buffer + recvlen, nbytes - recvlen, 0);
 				//cg::core::infoRecorder->logTrace("[Network]: recv_n_byte, recved %d byte.\n", t);
 				if (t <= 0) {
-					cg::core::infoRecorder->logTrace("[Netowrk]: recv error, error code:%d.\n", WSAGetLastError());
+					cg::core::infoRecorder->logError("[Netowrk]: recv error, error code:%d.\n", WSAGetLastError());
 					return t;
 				}
 

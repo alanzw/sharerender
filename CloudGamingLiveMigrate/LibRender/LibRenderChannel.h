@@ -85,7 +85,7 @@ public:
 	inline IDirect3DDevice9 * getDevice(int id){ curDevice = (LPDIRECT3DDEVICE9)(device_list[id]); return curDevice; }
 	DWORD				startChannelThread();
 	int					totalFunc;  // total functions in function array
-
+	bool				isEncoding;
 	// constructor and destructor
 	RenderChannel();
 	~RenderChannel();
@@ -105,9 +105,11 @@ public:
 	inline bool			enableGenerateVideo(){ return enableWriteToFile; }
 	void				onPresent(unsigned int tags);
 	void				cleanUp();
-	inline void			setEncoderOption(int option){ encoderOption = option; }
+	inline void			setEncoderOption(int option){ isEncoding = true; encoderOption = option; }
 	inline int			getEncoderOption(){ return encoderOption; }
-
+	inline bool			enableEncoding(){return isEncoding; }
+	inline void			setEnableEncoding(bool val){ isEncoding = val; }
+	void				dealControlCmd(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 	int					imageWidth, imageHeight;
 	int					encoderOption;   // 1 for x264, 2 for CUDA, 3 for NVENC, 4 for ADAPTIVE encoder

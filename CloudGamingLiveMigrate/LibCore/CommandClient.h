@@ -35,7 +35,10 @@ namespace cg{
 
 			void record_last_command();
 			bool validate_last_command();
-			void take_command(int& op_code, int& obj_id);
+
+
+			int fetch_stream_buffer();
+			int take_command(int& op_code, int& obj_id);
 			void recv_packed_byte_arr(char * dst, int length);
 
 		private:
