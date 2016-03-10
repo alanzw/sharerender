@@ -159,7 +159,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DIndexBuffer9::Release(THIS) {
 #endif
 	refCount--;
 	if(refCount <= 0){
-		infoRecorder->logError("[WrapperDirect3DIndexBuffer9]: m_ib id:%d ref:%d, ref count:%d.\n",id, refCount, hr);
+		infoRecorder->logTrace("[WrapperDirect3DIndexBuffer9]: m_ib id:%d ref:%d, ref count:%d.\n",id, refCount, hr);
 		//m_list.DeleteMember(m_ib);
 	}
 	return hr;

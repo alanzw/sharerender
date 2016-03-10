@@ -213,7 +213,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DVertexDeclaration9::Release(THIS) {
 #endif
 	refCount--;
 	if(refCount <= 0){
-		infoRecorder->logError("[WrapperDirect3DVertexDeclaration9]: m_vd ref:%d, ref count:%d.\n", refCount, hr);
+		infoRecorder->logTrace("[WrapperDirect3DVertexDeclaration9]: m_vd ref:%d, ref count:%d.\n", refCount, hr);
 	}
 	return hr;
 }

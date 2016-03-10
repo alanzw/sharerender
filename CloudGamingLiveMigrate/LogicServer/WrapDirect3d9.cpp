@@ -142,9 +142,11 @@ STDMETHODIMP_(ULONG) WrapperDirect3D9::Release(THIS) {
 #endif
 	refCount--;
 	ULONG hr = m_d3d->Release();
+#ifdef ENABLE_DIRECT3D_LOG
 	if(refCount <= 0){
 		infoRecorder->logError("[WrapperDirect3D]: m_device ref:%d, ref count:%d.\n", refCount, hr);
 	}
+#endif
 	return hr;
 }
 
@@ -327,9 +329,8 @@ STDMETHODIMP WrapperDirect3D9::CreateDevice(THIS_ UINT Adapter,D3DDEVTYPE Device
 	HWND hd = pPresentationParameters->hDeviceWindow;
 	RECT winRect;
 	BOOL ret = GetWindowRect(hd, &winRect);
-//#ifdef ENABLE_DIRECT3D_LOG
-#if 1
 
+#ifdef ENABLE_DIRECT3D_LOG
 	if (ret == TRUE){
 		infoRecorder->logError("CreateDevice: window %p rect:(%d, %d) - (%d, %d)\n", hd, winRect.left, winRect.top, winRect.right, winRect.bottom);
 

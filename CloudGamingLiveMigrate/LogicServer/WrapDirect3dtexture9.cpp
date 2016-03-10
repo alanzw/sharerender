@@ -606,7 +606,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DTexture9::Release(THIS) {
 
 #if 1
 	if(hr <= 0){
-		infoRecorder->logError("[WrapperDirect3DTexture9]: m_tex id:%d ref:%d, ref count:%d, buffer size%d.\n",id, refCount, hr, bufferSize);
+		infoRecorder->logTrace("[WrapperDirect3DTexture9]: m_tex id:%d ref:%d, ref count:%d, buffer size%d.\n",id, refCount, hr, bufferSize);
 		for(int i = 0; i < Levels; i++){
 			if(surfaceArray[i]){
 				surfaceArray[i]->releaseData();

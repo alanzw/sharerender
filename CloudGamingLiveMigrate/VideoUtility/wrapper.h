@@ -46,13 +46,17 @@ namespace cg{
 		BITMAPINFO bmpInfo;
 		SOURCE_TYPE sourceType;   // the source type of the wrapper, to capture surface or image
 
+
+		cg::core::PTimer * pTimer;
+		UINT captureTime;
+
 		void makeBitmapInfo(int w, int h, int bitsPerPixel);
 		void fillBitmapInfo(int w, int h, int bitsPerPixel);
 
 		bool initilize();
 
 	public:
-
+		inline float getCaptureTime(){ return 1000.0 * captureTime / pTimer->getFreq(); }
 		Wrapper(HWND hwnd, int _winWidth, int _winHeight, pipeline *_src_pipe);
 		virtual ~Wrapper();
 
@@ -72,14 +76,14 @@ namespace cg{
 		static int count;					// record the class construction times
 		static IDirect3D9 * d3d;
 
-		cg::core::PTimer * pTimer;
+		
 
 	public:
 
 		// use source type and window height and width create the D3DWrapper
 		D3DWrapper(HWND h, IDirect3DDevice9 * device, int winWidth, int winHeight, pipeline *_src_pipe):Wrapper(h, winWidth, winHeight, _src_pipe), d3d_device(device), surface(NULL), sysOffscreenSurface(NULL), deviceOffscreenSurface(NULL){
 
-			pTimer = new cg::core::PTimer();
+			//pTimer = new cg::core::PTimer();
 
 		}
 

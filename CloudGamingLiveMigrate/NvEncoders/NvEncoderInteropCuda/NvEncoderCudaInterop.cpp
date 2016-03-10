@@ -458,7 +458,8 @@ namespace cg{
 			NVENCSTATUS nvStatus = NV_ENC_SUCCESS;
 			long long pts = -1LL;
 			
-			cg::core::infoRecorder->logError("[CNvEncoderCudaInteropImpl]: to load surface.\n");	
+			//cg::core::infoRecorder->logError("[CNvEncoderCudaInteropImpl]: to load surface.\n");	
+			
 			if(!(data = loadFrame())){
 				cg::core::infoRecorder->logError("[CNvEncoderCudaInpteropImpl]: load frame from pipeline failed.\n");
 				return TRUE;
@@ -466,7 +467,7 @@ namespace cg{
 			// convert format
 			SourceFrame * frame = (SourceFrame *)data->ptr;
 			pts = writer->updataPts(frame->imgPts);
-			frame->print();
+			//frame->print();
 
 #if 0
 			// get the device buffer
@@ -491,7 +492,14 @@ namespace cg{
 			if(!pEncodeBuffer){
 
 			}else{
+				pTimer->Start();
 				m_pNvHWEncoder->ProcessOutput(pEncodeBuffer, writer);
+				packTime = pTimer->Stop();
+				if(this->refIntraMigrationTimer){
+					UINT intramigration = this->refIntraMigrationTimer->Stop();
+					cg::core::infoRecorder->logError("[Global]: intra-migration time: %f (ms), in NVENC encoder.\n", 1000.0 * intramigration / this->refIntraMigrationTimer->getFreq());
+					this->refIntraMigrationTimer = NULL;
+				}
 				// UnMap the input buffer after frame done
 				if (pEncodeBuffer->stInputBfr.hInputSurface)
 				{
@@ -505,7 +513,7 @@ namespace cg{
 				cg::core::infoRecorder->logError("[CNvEncoderCudaInteropImpl]: NO available buffer to use.\n");
 			}
 #endif
-
+			pTimer->Start();
 			if(frame->type == IMAGE){
 				unsigned char * src = frame->imgBuf;
 				CCudaAutoLock cuLock(m_cuContext);
@@ -566,6 +574,8 @@ namespace cg{
 			if(nvStatus != NV_ENC_SUCCESS){
 				cg::core::infoRecorder->logError("[CNvEncoderCudaInteropImpl]: encode frame failed with:%d.\n", nvStatus);
 			}
+			encodeTime = pTimer->Stop();
+
 			return TRUE;
 		}
 

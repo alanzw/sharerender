@@ -278,7 +278,7 @@ HWND WINAPI CreateWindowExWCallback(
 #endif
 
 	HWND ret = CreateWindowExWNext(dwExStyle,lpClassName,lpWindowName,dwStyle,X,Y,nWidth,nHeight,hWndParent,hMenu,hInstance,lpParam);
-	infoRecorder->logError("[global]: CreateWindowExWCallback() called, x:%d, y:%d, Widht:%d, Height:%d, window:%p\n", X, Y, nWidth, nHeight, ret);
+	infoRecorder->logTrace("[global]: CreateWindowExWCallback() called, x:%d, y:%d, Widht:%d, Height:%d, window:%p\n", X, Y, nWidth, nHeight, ret);
 	WindowParam * win = new WindowParam();
 	win->dwExStyle = dwExStyle;
 	win->dwStyle = dwStyle;

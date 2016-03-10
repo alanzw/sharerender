@@ -1,6 +1,7 @@
 #include "GameServer.h"
 #include "../LibCore/CmdHelper.h"
 #include "KeyboardHook.h"
+#include "../VideoGen/generator.h"
 
 namespace cg{
 	namespace core{
@@ -64,13 +65,21 @@ namespace cg{
 					keyHelper->changeSendStep(0);
 				}else if(wParam == 0x5a){
 					// key Z, for x264 encoder
+					if(cg::gGenerator){
+						gGenerator->changeEncodeDevice(X264_ENCODER);
+					}
 
 				}else if(wParam == 0x58){
 					// key X, for CUDA encoder
+					if(gGenerator){
+						gGenerator->changeEncodeDevice(CUDA_ENCODER);
+					}
 
 				}else if(wParam == 0x43){
 					// key C, for nvenc encoder
-
+					if(gGenerator){
+						gGenerator->changeEncodeDevice(NVENC_ENCODER);
+					}
 				}
 			}
 			else{

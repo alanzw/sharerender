@@ -1,5 +1,9 @@
 #include "TextureHelper.h"
 #include "..\LibCore\InfoRecorder.h"
+
+//#define ENABLE_LOG_TEXTURE_HELPER
+
+
 int SurfaceHelper::TotalBufferedTextureSize = 0;
 
 TextureHelper::TextureHelper(short _levels, D3DFORMAT format, bool _autogenable /* = false */)
@@ -40,7 +44,9 @@ TextureHelper::TextureHelper(short _levels, D3DFORMAT format, bool _autogenable 
 			strcpy(formatStr, "DXT5");
 			break;
 		}
-		cg::core::infoRecorder->logError("[TextureHelper]: auto gen:%s, compression:%d, format:%s.\n", autoGenable ? "true": "false", compression, formatStr);
+#ifdef ENABLE_LOG_TEXTURE_HELPER
+		cg::core::infoRecorder->logTrace("[TextureHelper]: auto gen:%s, compression:%d, format:%s.\n", autoGenable ? "true": "false", compression, formatStr);
+#endif
 }
 
 
@@ -113,7 +119,9 @@ bool DeviceHelper::checkSupportForAutoGenMipmap(IDirect3DDevice9 *device){
 	supportAuoGenCubeTex = (SUCCEEDED(hr));
 
 	d3d9->Release();
-	cg::core::infoRecorder->logError("[DeviceHelper]: support texture auto gen:%s, support cube texture auto gen:%s.\n", supportAutoGenTex ? "true" : "false", supportAuoGenCubeTex? "true" : "false");
+	#ifdef ENABLE_LOG_TEXTURE_HELPER
+	cg::core::infoRecorder->logTrace("[DeviceHelper]: support texture auto gen:%s, support cube texture auto gen:%s.\n", supportAutoGenTex ? "true" : "false", supportAuoGenCubeTex? "true" : "false");
+#endif
 	return true;
 }
 
@@ -162,7 +170,9 @@ unsigned char * SurfaceHelper::allocateSurfaceBuffer(int _pitch, int _height){
 			TotalBufferedTextureSize += pitch * compressedHeight;
 		}
 	}
+	#ifdef ENABLE_LOG_TEXTURE_HELPER
 	cg::core::infoRecorder->logError("[SurfaceHelper]: allocate memory %d(%d x %d), ptr:%p.\n", pitch * compressedHeight, pitch, height, surfaceData);
+#endif
 	return surfaceData;
 }
 bool SurfaceHelper::copyTextureData(){
@@ -175,7 +185,9 @@ bool SurfaceHelper::copyTextureData(){
 	int compressedHeight = (height + compression -1)/compression;
 
 	int copySize = pitch * compressedHeight;
+#ifdef ENABLE_LOG_TEXTURE_HELPER
 	cg::core::infoRecorder->logError("[SurfaceHelper]: memcpy, src:%p, dst: %p, size:%d ( pitch:%d x real height:%d).\n", surfaceData, realSurfacePtr, copySize, pitch, compressedHeight);
+#endif
 	memcpy(realSurfacePtr, surfaceData, copySize);
 #if 0
 	for(int j = 0; j < height; j++){

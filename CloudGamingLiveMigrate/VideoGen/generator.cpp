@@ -9,6 +9,8 @@
 
 namespace cg{
 
+	//VideoGen * gGenerator = NULL;
+
 	// the generator currently is only for cuda encoder
 	int VideoGen::GenCounter = 0;
 	map<IDENTIFIER, VideoGen*> VideoGen::genMap;
@@ -108,6 +110,7 @@ namespace cg{
 		GetWindowRect(hwnd, &rect);
 		width = rect.right - rect.left;
 		height = rect.bottom - rect.top;
+		intraMigrationTimer = new PTimer();
 
 #ifdef ENABLE_GEN_LOG
 		infoRecorder->logTrace("[VideoGen]: window %p has rect (%d x %d).\n",hwnd, width, height);
@@ -150,6 +153,7 @@ namespace cg{
 		width = rect.right - rect.left;
 		height = rect.bottom - rect.top;
 		videoOutputName = NULL;
+		intraMigrationTimer = new PTimer();
 
 #ifdef ENABLE_GEN_LOG
 		infoRecorder->logError("[VideoGen]: constructor called. width:%d, height:%d\n", width, height);
@@ -201,6 +205,8 @@ namespace cg{
 		width = rect.right - rect.left;
 		height = rect.bottom - rect.top;
 
+		intraMigrationTimer = new PTimer();
+
 #ifdef ENABLE_GEN_LOG
 		infoRecorder->logError("[VideoGen]: window %p has rect (%d x %d), rect(%d, %d, %d, %d).\n", hwnd, width, height, rect.right, rect.left, rect.bottom, rect.top);
 #endif
@@ -249,6 +255,8 @@ namespace cg{
 		GetWindowRect(hwnd, &rect);
 		width = rect.right - rect.left;
 		height = rect.bottom - rect.top;
+
+		intraMigrationTimer = new PTimer();
 
 #ifdef ENABLE_GEN_LOG
 		infoRecorder->logError("[VideoGen]: window %p has rect (%d x %d).\n", width, height);
@@ -300,6 +308,8 @@ namespace cg{
 		width = rect.right - rect.left;
 		height = rect.bottom - rect.top;
 
+		intraMigrationTimer = new PTimer();
+
 #ifdef ENABLE_GEN_LOG
 		infoRecorder->logError("[VideoGen]: window %p has rect (%d x %d).\n", width, height);
 #endif
@@ -350,6 +360,8 @@ namespace cg{
 		width = rect.right - rect.left;
 		height = rect.bottom - rect.top;
 
+		intraMigrationTimer = new PTimer();
+
 #ifdef ENABLE_GEN_LOG
 		infoRecorder->logError("[VideoGen]: window %p has rect (%d x %d).\n", width, height);
 #endif
@@ -383,6 +395,10 @@ namespace cg{
 			nvEncoder = NULL;
 		}
 #endif // NVENC
+		if(intraMigrationTimer){
+			delete intraMigrationTimer;
+			intraMigrationTimer = NULL;
+		}
 	}
 
 	// init a video generator for non-d3d games, the fps is from the RTSP config.
@@ -676,7 +692,7 @@ namespace cg{
 		infoRecorder->logTrace("[VideoGen]: on encoder device change.\n");
 #endif
 		// the image pipeline is always created cause image source or surface source all need image pipe
-		//DebugBreak();
+		ENCODER_TYPE oldType = useEncoderType;
 		if(isChangedDevice){
 			isChangedDevice = false;
 			if(useEncoderType == changeToEncoder){
@@ -695,18 +711,23 @@ namespace cg{
 			return 0;
 		}
 
-		ENCODER_TYPE oldType = useEncoderType;
+		ENCODER_TYPE nowType = useEncoderType;
 		// determine the encoder type
 		if(encoderType == ADAPTIVE_CUDA){
-			useEncoderType = (oldType == ENCODER_NONE ? CUDA_ENCODER : (oldType == encoderType ? CUDA_ENCODER : oldType)); 
+			// only x264 and cuda allowed
+			useEncoderType = (nowType == X264_ENCODER ? nowType : (CUDA_ENCODER)); 
 		}else if(encoderType == ADAPTIVE_NVENC){
-			useEncoderType = (oldType == ENCODER_NONE ? NVENC_ENCODER : (oldType == encoderType ? NVENC_ENCODER : oldType));
+			// only x264 and nvenc allowed
+			useEncoderType = (nowType == X264_ENCODER ? nowType : (NVENC_ENCODER));
 		}else{
 			useEncoderType = encoderType;
 		}
 
 		// tell wrapper to capture right data
 		setSourceType(useEncoderType == X264_ENCODER ? IMAGE : SURFACE);
+		intraMigrationTimer->Start();
+
+		infoRecorder->logError("[VideoGen]: old encoder type:%s, now use encoder type: %s.\n", oldType == X264_ENCODER ? "x264": (oldType == CUDA_ENCODER ? "CUDA": (oldType == NVENC_ENCODER ? "NVENC" : "NONE")), useEncoderType == X264_ENCODER ? "x264" : (useEncoderType == CUDA_ENCODER ? "cuda" : (useEncoderType == NVENC_ENCODER ? "nvenc" : "none")));
 
 #ifdef ENABLE_GEN_LOG
 		infoRecorder->logTrace("[VideoGen]: use encoder type: %s.\n", useEncoderType == X264_ENCODER ? "x264" : (useEncoderType == CUDA_ENCODER ? "cuda" : (useEncoderType == NVENC_ENCODER ? "nvenc" : "none")));
@@ -1013,12 +1034,13 @@ namespace cg{
 					encoder->encoderChanged();
 				}
 			}
+			encoder->setRefIntraMigrationTimer(intraMigrationTimer);
 			break;
 		case X264_ENCODER:
 #ifdef ENABLE_GEN_LOG
 			infoRecorder->logTrace("X264 Encoder.\n");
-#endif
 			infoRecorder->logError("video gen, use x264 encoder.\n");
+#endif
 			initX264Encoder();
 			if(x264Encoder){
 				if(!x264Encoder->isStart()){
@@ -1034,6 +1056,7 @@ namespace cg{
 					x264Encoder->encoderChanged();
 				}
 			}
+			x264Encoder->setRefIntraMigrationTimer(intraMigrationTimer);
 			break;
 		case NVENC_ENCODER:
 #ifdef ENABLE_GEN_LOG
@@ -1058,6 +1081,7 @@ namespace cg{
 			}else{
 				infoRecorder->logError("[VideoGen]: NVENC Encoder get NULL nvEncoder.\n");
 			}
+			nvEncoder->setRefIntraMigrationTimer(intraMigrationTimer);
 			break;
 
 		case ADAPTIVE_CUDA:

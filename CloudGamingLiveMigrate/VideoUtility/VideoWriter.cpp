@@ -20,18 +20,24 @@ namespace cg{
 
 	int VideoWriter::sendPacket(int channelId, AVPacket * pkt, int64_t encoderPts){
 
+		pTimer->Start();
+#if 0
 		if(isChanged){
 			// the coder is changed
 			encodeEnd = GetTickCount();
 			cg::core::infoRecorder->logError("intra-migration(ms): %d ", encodeEnd - encodeStart);
 			isChanged = false;
 		}
+#endif   // the intra-migration time is not the interval of two frames, but interval of changed capture to first frame come out.
 
 		if(!ctx){
 			cg::core::infoRecorder->logTrace("[VideoWriter]: NULL rtsp context.\n");
 			return -1;
 		}
-		return sendPacket(channelId, ctx, pkt, encoderPts);
+		int ret = sendPacket(channelId, ctx, pkt, encoderPts);
+
+		writeTime = pTimer->Stop();
+		return ret;
 	}
 
 	// for VideoWriter

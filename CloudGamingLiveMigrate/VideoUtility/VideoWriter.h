@@ -6,7 +6,7 @@
 #endif
 #include <Windows.h>
 #include "../VideoGen/rtspcontext.h"
-
+#include "../LibCore/TimeTool.h"
 
 namespace cg{
 	class VideoWriter{
@@ -25,13 +25,18 @@ namespace cg{
 		bool					enableWriteToFile;
 		FILE *					m_fOutput;
 		cg::rtsp::RTSPContext *	ctx;
+		cg::core::PTimer *		pTimer;
+		UINT					writeTime;
 
 		int						writeToFile(FILE * file, AVPacket * pkt);
 		int						sendPacket(int channelId, cg::rtsp::RTSPContext * rtsp, AVPacket * pkt, int64_t encoderPts);
 		void					print();
-
+		
 		////////////////// public functions /////////////////
 	public:
+
+		inline float getWriteTime(){ return 1000.0 * writeTime / pTimer->getFreq(); }
+
 		// help changing encoder
 		inline void setChanged(bool val){ isChanged = val; encodeStart = GetTickCount(); }
 
@@ -42,15 +47,27 @@ namespace cg{
 			print();
 		}
 
-		VideoWriter(cg::rtsp::RTSPContext * _ctx): ctx(_ctx), m_fOutput(NULL), enableWriteToNet(true), enableWriteToFile(false){
+		VideoWriter(cg::rtsp::RTSPContext * _ctx): ctx(_ctx), m_fOutput(NULL), enableWriteToNet(true), enableWriteToFile(false), pTimer(NULL), writeTime(0){
 			print();
+			pTimer = new cg::core::PTimer();
 		}
-		VideoWriter(FILE *out, cg::rtsp::RTSPContext *_ctx): ctx(_ctx), m_fOutput(out), enableWriteToFile(true), enableWriteToNet(true){
+		VideoWriter(FILE *out, cg::rtsp::RTSPContext *_ctx): ctx(_ctx), m_fOutput(out), enableWriteToFile(true), enableWriteToNet(true), pTimer(NULL), writeTime(0){
 			print();
+			pTimer = new cg::core::PTimer();
 		}
 
 
-		virtual ~VideoWriter(){ if(m_fOutput){fflush(m_fOutput); fclose(m_fOutput); m_fOutput = NULL;}}
+		virtual ~VideoWriter(){ 
+			if(m_fOutput){
+				fflush(m_fOutput); 
+				fclose(m_fOutput); 
+				m_fOutput = NULL;
+			}
+			if(pTimer){
+				delete pTimer; 
+				pTimer = NULL;
+			}
+		}
 
 		int						ptsSynchronize(int sampleRate);
 		virtual int				sendPacket(int channelId, AVPacket * pkt, int64_t encoderPts);

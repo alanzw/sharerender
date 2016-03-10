@@ -176,10 +176,10 @@ video_quit:
 			unsigned i, n = vso->size();
 			for(i = 0; i< n; i += 2){
 				av_dict_set(&opts, (*vso)[i].c_str(), (*vso)[i + 1].c_str(), 0);
-				infoRecorder->logError("[X264Encoder]: vencoder-init: option %s = %s.\n", (*vso)[i].c_str(), (*vso)[i + 1].c_str());
+				infoRecorder->logTrace("[X264Encoder]: vencoder-init: option %s = %s.\n", (*vso)[i].c_str(), (*vso)[i + 1].c_str());
 			}
 		}else{
-			infoRecorder->logError("[X264Encoder]: vencoder-init: using default video encoder parameter.\n");
+			infoRecorder->logTrace("[X264Encoder]: vencoder-init: using default video encoder parameter.\n");
 		}
 
 		// lock
@@ -200,8 +200,12 @@ video_quit:
 		struct pooldata * data  = NULL;
 		long long pts = -1LL;
 
+		
+		pTimer->Start();
+
+
 		if(!(data = loadFrame())){
-			infoRecorder->logError("[X264Encoder]: load frame failed.\n");
+			infoRecorder->logTrace("[X264Encoder]: load frame failed.\n");
 			return TRUE;
 		}
 
@@ -246,7 +250,16 @@ video_quit:
 			pkt.stream_index = 0;
 			infoRecorder->logTrace("[X264Encoder]: to send frame packet. pkt size:%d.\n", pkt.size);
 			// send the nal data
+			encodeTime = pTimer->Stop();
+			pTimer->Start();
 			writer->sendPacket(0, &pkt, pts);
+			packTime = pTimer->Stop();
+
+			if(refIntraMigrationTimer){
+				UINT intramigration = refIntraMigrationTimer->Stop();
+				infoRecorder->logError("[Global]: intra-migration: %f (ms), in x264 encoder.\n", 1000.0 * intramigration / refIntraMigrationTimer->getFreq());
+				refIntraMigrationTimer = NULL;
+			}
 
 			if(pkt.side_data_elems > 0){
 				int i;

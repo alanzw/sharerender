@@ -16,8 +16,8 @@
 namespace cg{
 
 	// used by image source, only
-	Wrapper::Wrapper(HWND hwnd, int _winWidth, int _winHeight, pipeline *_src_pipe): sourceType(SOURCE_NONE),captureHwnd(hwnd), windowHeight(windowHeight), windowWidth(windowWidth), sourcePipe(_src_pipe), pBits(NULL){
-
+	Wrapper::Wrapper(HWND hwnd, int _winWidth, int _winHeight, pipeline *_src_pipe): sourceType(SOURCE_NONE),captureHwnd(hwnd), windowHeight(windowHeight), windowWidth(windowWidth), sourcePipe(_src_pipe), pBits(NULL), pTimer(NULL), captureTime(0){
+		pTimer = new cg::core::PTimer();
 	}
 
 	Wrapper::~Wrapper(){
@@ -145,6 +145,7 @@ namespace cg{
 			cg::core::infoRecorder->logError("[D3DWrapper]: the source pipeline is not specified.\n");
 			return false;
 		}
+		pTimer->Start();
 
 		data = sourcePipe->allocate_data();
 		if(data == NULL){
@@ -161,7 +162,7 @@ namespace cg{
 		sframe->imgPts = cg::core::pcdiff_us(captureTv, initialTv, freq) / (1+frameInterval);
 
 		if(this->isWrapSurface()){
-			cg::core::infoRecorder->logError("[D3DWrapper]: capture surface.\n");
+			cg::core::infoRecorder->logTrace("[D3DWrapper]: capture surface.\n");
 			// get the surface
 			if(frameInterval == 0){
 				frameInterval = 2;
@@ -188,9 +189,6 @@ namespace cg{
 			unsigned char * buf = sframe->getImgBuf();
 			char * src = NULL;
 
-			pTimer->Start();
-
-
 #ifndef USE_BACK_BUFFER
 #ifdef USE_RENDER_TARGET
 			IDirect3DSurface9 * renderTarget = NULL;
@@ -202,13 +200,13 @@ namespace cg{
 #ifdef USE_RENDER_TARGET
 				renderTarget->GetDesc(&desc);
 				if(desc.Width != windowWidth || desc.Height != windowHeight ){
-					cg::core::infoRecorder->logError("[D3DWrapper]: render target size not match window size, target size (%d x %d), window size (%d x %d), render target format:%d(desire:%d).\n", desc.Width, desc.Height, windowWidth, windowHeight, desc.Format, D3DFMT_A8R8G8B8);
+					cg::core::infoRecorder->logTrace("[D3DWrapper]: render target size not match window size, target size (%d x %d), window size (%d x %d), render target format:%d(desire:%d).\n", desc.Width, desc.Height, windowWidth, windowHeight, desc.Format, D3DFMT_A8R8G8B8);
 				}
-				if(desc.Format == D3DFMT_A8R8G8B8 || desc.Format == D3DFMT_X8R8G8B8){					cg::core::infoRecorder->logError("[D3DWrapper]: RGB render target format is:%d, supported(ARGB: %d or XRGB: %d\n", desc.Format, D3DFMT_A8R8G8B8, D3DFMT_X8R8G8B8);
-					
+				if(desc.Format == D3DFMT_A8R8G8B8 || desc.Format == D3DFMT_X8R8G8B8){					
+					cg::core::infoRecorder->logTrace("[D3DWrapper]: RGB render target format is:%d, supported(ARGB: %d or XRGB: %d\n", desc.Format, D3DFMT_A8R8G8B8, D3DFMT_X8R8G8B8);
 				}
 				else if(desc.Format == D3DFMT_A8B8G8R8 || desc.Format == D3DFMT_X8B8G8R8){
-					cg::core::infoRecorder->logError("[D3DWrapper]: BGR render target format is:%d, supported(ABGR: %d or XBGR: %d\n", desc.Format, D3DFMT_A8B8G8R8, D3DFMT_X8B8G8R8);
+					cg::core::infoRecorder->logTrace("[D3DWrapper]: BGR render target format is:%d, supported(ABGR: %d or XBGR: %d\n", desc.Format, D3DFMT_A8B8G8R8, D3DFMT_X8B8G8R8);
 				}
 				else{
 					cg::core::infoRecorder->logError("[D3DWrapper]: unsupported render target format is:%d, supported(BGR or RGB)\n", desc.Format);
@@ -232,10 +230,6 @@ namespace cg{
 					return false;
 				}
 			}
-
-			long interval = pTimer->Stop();
-			cg::core::infoRecorder->logError("[D3DWrapper]: capture prepare time:%f.\n", interval * 1000.0 / pTimer->getFreq());
-			pTimer->Start();
 
 
 			HRESULT hr;
@@ -275,10 +269,6 @@ namespace cg{
 			renderTarget->Release();
 #endif
 
-			interval = pTimer->Stop();
-			cg::core::infoRecorder->logError("[D3DWrapper]: get data from video ram use:%f.\n", interval * 1000.0 / pTimer->getFreq());
-			pTimer->Start();
-
 
 #else
 			HRESULT hr;
@@ -317,8 +307,8 @@ namespace cg{
 			}
 
 			sysOffscreenSurface->UnlockRect();
-			interval = pTimer->Stop();
-			cg::core::infoRecorder->logError("[D3DWrapper]: copy data use time:%f.\n", interval * 1000.0 / pTimer->getFreq());
+			captureTime = pTimer->Stop();
+			
 #ifdef USE_BACK_BUFFER
 			sysOffscreenSurface->Release();
 #endif
@@ -439,6 +429,7 @@ initErrorQuit:
 			return false;
 		}
 
+		pTimer->Start();
 		data = sourcePipe->allocate_data();
 		frame = (SourceFrame*)data->ptr;
 
@@ -469,6 +460,8 @@ initErrorQuit:
 		// draw coursor
 
 		frame->imgPts = core::pcdiff_us(captureTv, initialTv, freq) / frameInterval;
+
+		captureTime = pTimer->Stop();
 
 		sourcePipe->store_data(data);
 		sourcePipe->notify_all();

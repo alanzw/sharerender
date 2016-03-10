@@ -11,11 +11,12 @@
 /// encoder
 namespace cg{
 	Encoder::Encoder(int _id, int height, int width,/*SOURCE_TYPE srcType, */ENCODER_TYPE type,pipeline * _imgPipe, VideoWriter *_writer) 
-		:/*useSourceType(srcType),*/ assigned(false), encoderWidth(width), encoderHeight(height), cond(NULL), condMutex(NULL), useEncoderType(type), writer(_writer), sourcePipe(_imgPipe), id(_id), inited(false){
+		:/*useSourceType(srcType),*/ assigned(false), encoderWidth(width), encoderHeight(height), cond(NULL), condMutex(NULL), useEncoderType(type), writer(_writer), sourcePipe(_imgPipe), id(_id), inited(false), pTimer(NULL), encodeTime(0), packTime(0), refIntraMigrationTimer(NULL){
 			// create the cond and mutex
 			cond = CreateEvent(NULL, FALSE, FALSE, NULL);
 			condMutex = CreateMutex(NULL, FALSE, NULL);
-			cg::core::infoRecorder->logError("[Encoder]: encoder create event:%p, Mutex:%p.\n", cond, condMutex);
+			cg::core::infoRecorder->logTrace("[Encoder]: encoder create event:%p, Mutex:%p.\n", cond, condMutex);
+			pTimer = new cg::core::PTimer();
 	}	
 
 	Encoder::~Encoder(){
@@ -27,6 +28,11 @@ namespace cg{
 			CloseHandle(condMutex);
 			condMutex = NULL;
 		}
+		if(pTimer){
+			delete pTimer;
+			pTimer = NULL;
+		}
+
 	}
 
 	void Encoder::releaseData(pooldata * data){
@@ -49,7 +55,9 @@ namespace cg{
 			pipe->wait(cond, condMutex);
 			if((data = pipe->load_data()) == NULL){
 				// failed
+#if 0
 				cg::core::infoRecorder->logError("[Encoder]: recv unexpected NULL frame.\n");
+#endif
 				return NULL;
 			}
 		}
@@ -59,7 +67,7 @@ namespace cg{
 
 	void Encoder::registerEvent(){
 		if(sourcePipe){
-			cg::core::infoRecorder->logError("[Encoder]: register event %p to source pipe:%s.\n",cond, sourcePipe->name());
+			cg::core::infoRecorder->logTrace("[Encoder]: register event %p to source pipe:%s.\n",cond, sourcePipe->name());
 			sourcePipe->client_register(ccg_gettid(), cond);
 		}
 		else{

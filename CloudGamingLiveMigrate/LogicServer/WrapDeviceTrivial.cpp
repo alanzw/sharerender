@@ -24,7 +24,7 @@
 //#define SCRATCH_MEMO
 #define DELAY_TO_DRAW
 
-cg::VideoGen * gGenerator = NULL;
+
 bool tex_send[4024] = {0};
 double time_total = 0.0f;
 int frame_all_count = 0;
@@ -231,7 +231,6 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 #ifdef ENBALE_DEVICE_LOG
 	infoRecorder->logTrace("WrapperDirect3DDevice9::Present(), source %d, dst %d, wind %d, rgbdata %d\n", pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
 #endif
-	infoRecorder->logError("WrapperDirect3DDevice9::Present(), source %d, dst %d, wind %d, rgbdata %d\n", pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
 	bool tm = false, tm1 = false;
 
 
@@ -989,7 +988,6 @@ STDMETHODIMP WrapperDirect3DDevice9::GetRenderTarget(THIS_ DWORD RenderTargetInd
 #ifdef ENBALE_DEVICE_LOG
 	infoRecorder->logTrace("[WrapperDirect3DDevice9]::GetRenderTarget(), ");
 #endif
-	infoRecorder->logError("[WrapperDirect3DDevice9]::GetRenderTarget(), ");
 
 	HRESULT hr = D3D_OK;
 	WrapperDirect3DSurface9 * ws = NULL;
@@ -1003,7 +1001,6 @@ STDMETHODIMP WrapperDirect3DDevice9::GetRenderTarget(THIS_ DWORD RenderTargetInd
 #ifdef ENBALE_DEVICE_LOG
 			infoRecorder->logTrace(" new surface with id:%d\n", ws->getId());
 #endif
-			infoRecorder->logError(" new surface with id:%d\n", ws->getId());
 
 			// send command
 			csSet->beginCommand(D3DDGetRenderTarget_Opcode, id);
@@ -1017,7 +1014,9 @@ STDMETHODIMP WrapperDirect3DDevice9::GetRenderTarget(THIS_ DWORD RenderTargetInd
 			Initializer::PushObj(ws);
 
 		}else{
-			infoRecorder->logError("with id:%d, tex id:%d, level:%d\n", ws->getId(), ws->GetTexId(), ws->GetLevel());
+			#ifdef ENBALE_DEVICE_LOG
+			infoRecorder->logTrace("with id:%d, tex id:%d, level:%d\n", ws->getId(), ws->GetTexId(), ws->GetLevel());
+#endif
 		}
 
 		(*ppRenderTarget)=dynamic_cast<IDirect3DSurface9*>(ws);

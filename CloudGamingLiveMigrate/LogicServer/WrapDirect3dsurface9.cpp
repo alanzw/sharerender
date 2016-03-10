@@ -348,14 +348,19 @@ STDMETHODIMP WrapperDirect3DSurface9::LockRect(THIS_ D3DLOCKED_RECT* pLockedRect
 		infoRecorder->logError("[WrapperDirect3DSurface9]: GetDesc failed for %d.\n", id);
 	}
 	hr = m_surface->LockRect(pLockedRect, pRect, Flags);
-	
+
+#ifdef ENABLE_SURFACE_LO
+
 	infoRecorder->logError("WrapperDirect3DSurface9::LockRect() id:%d (tex id:%d, level:%d) called, flag:%d, locked pitch:%d, desc(width:%d, height:%d).",id, tex_id, level, Flags, pLockedRect->Pitch, desc.Width, desc.Height);
+
 	if(pRect){
 		infoRecorder->logError(" Lock Rect: (%d, %d) -> (%d, %d).\n", pRect->left, pRect->top, pRect->right, pRect->bottom);
 	}
 	else{
 		infoRecorder->logError(" Lock Rect: NULL.\n");
 	}
+#endif
+
 #ifdef USE_WRAPPER_TEXTURE   // use WrapperTexture
 	if(wrappterTex9){
 		// if is a texture's surface

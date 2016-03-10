@@ -18,12 +18,9 @@
 //#define USE_NVENC_D3D
 //#define USE_NVENC_NOR
 
-
 // define the user message for VideoGenerator
 
 #define WM_USR_ENCODER  (WM_USER + 100)
-
-
 
 
 // this definition will disable the video generation
@@ -116,6 +113,9 @@ namespace cg{
 		bool x264Inited, cudaInited, nvecnInited;  // init flags for each encoders
 		bool enableGen;					// if true, start to generate video
 
+
+		PTimer * intraMigrationTimer;   // the timer for intra migration, set to corresponding encoder when the encoder is actived
+
 		int onEncodeDeviceChange();		// called when encode device is changed
 		int setupSurfaceSource();		// setup the surface source
 		int setupImageSource();			// setup the image sourced
@@ -198,7 +198,7 @@ namespace cg{
 
 	};
 
-	//extern VideoGen * gGenerator;
+	extern VideoGen * gGenerator;
 
 	// tool function to write message to screen
 	BOOL _stdcall DrawMyText(LPDIRECT3DDEVICE9 pDxdevice,TCHAR* strText ,int nbuf);

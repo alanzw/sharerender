@@ -129,7 +129,7 @@ namespace cg{
 					return -1;
 			}
 #else
-			infoRecorder->logError("[RTSPContext]: init %d channels.\n", sources);
+			infoRecorder->logTrace("[RTSPContext]: init %d channels.\n", sources);
 			if (sources <= 0){
 				sources = 1;
 			}

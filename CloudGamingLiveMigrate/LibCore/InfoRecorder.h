@@ -54,7 +54,20 @@ namespace cg{
 			LPVOID mappingAddr;
 			bool useMapping;
 
+
+			// some buffers to store the critical performance data
+			float captureTime, convertTime, encodeTime, packetTime;
+			short captureCount, convertCount, encodeCount, packetCount;
+
 		public:
+			// setters for performance data
+			inline void addCaptureTime(float val){ captureTime += val; captureCount++;}
+			inline void addConvertTime(float val){ convertTime += val; convertCount++;}
+			inline void addEncodeTime(float val){ encodeTime += val; encodeCount++;}
+			inline void addPacketTime(float val){ packetTime += val; packetCount++; }
+
+
+
 			InfoRecorder(char * prefix);
 			~InfoRecorder();
 

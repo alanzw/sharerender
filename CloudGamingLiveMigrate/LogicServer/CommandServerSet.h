@@ -54,7 +54,7 @@ using namespace cg::core;
 #define ENABLE_VERTEX_SHADER_LOG
 #endif
 
-#define ENABLE_TEXTURE_LOG
+//#define ENABLE_TEXTURE_LOG
 
 
 enum CtxStatus{

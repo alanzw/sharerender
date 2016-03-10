@@ -169,7 +169,7 @@ namespace cg{
 			for (i = 0; i < n; i += 2){
 				av_dict_set(&opts, (*vso)[i].c_str(), (*vso)[i + 1].c_str(), 0);
 				// error
-				cg::core::infoRecorder->logError("Init: option %s = %s\n", (*vso)[i].c_str(), (*vso)[i + 1].c_str());
+				cg::core::infoRecorder->logTrace("Init: option %s = %s\n", (*vso)[i].c_str(), (*vso)[i + 1].c_str());
 			}
 
 		}

@@ -43,6 +43,10 @@
 namespace cg{
 	namespace nvcuvenc{
 		HANDLE CudaEncoder::mutex;
+
+		cg::core::PTimer *refIntraMigrationTimerForCuda = NULL;
+
+
 		// TODO: be careful with callbacks, we need to check the dependency
 		// encoder callback for net
 
@@ -81,6 +85,12 @@ namespace cg{
 			pkt.data = data;
 			pkt.size = size;
 			writer->sendPacket(0, &pkt, pts);
+
+			if(refIntraMigrationTimerForCuda){
+				UINT intramigration = refIntraMigrationTimerForCuda->Stop();
+				cg::core::infoRecorder->logError("[Global]: intra-migration: %f (ms), in cuda encoder.\n", 1000.0 * intramigration / refIntraMigrationTimerForCuda->getFreq());
+				refIntraMigrationTimerForCuda = NULL;
+			}
 		}
 
 		void EncoderCallbackNet::onBeginFrame(int frameNumber, PicType picType){
@@ -141,6 +151,12 @@ namespace cg{
 			}
 			
 		}
+		
+		void CudaEncoder::setRefIntraMigrationTimer(cg::core::PTimer * refTimer){
+			refIntraMigrationTimer = refTimer;
+			refIntraMigrationTimerForCuda = refTimer;
+		}
+		
 		bool CudaEncoder::initEncoder(){
 			inited = true;
 			return inited;
@@ -314,7 +330,7 @@ namespace cg{
 		int CudaEncoder::loadSurfaceToGpuMat(SourceFrame & frame, cv::cuda::GpuMat & mat){
 			//DebugBreak();
 			CCudaAutoLock cuLock(m_cuContext);
-			cg::core::infoRecorder->logError("[CudaEncoder]: load surface to gpu mat, fame resource:%p.\n", frame.cuResource);
+			cg::core::infoRecorder->logTrace("[CudaEncoder]: load surface to gpu mat, fame resource:%p.\n", frame.cuResource);
 			CUresult cuErr = CUDA_SUCCESS;
 			CUgraphicsResource ppResources[1] = {frame.cuResource};
 			__cu(cuErr = cuGraphicsMapResources(1, ppResources, NULL));
@@ -373,14 +389,16 @@ namespace cg{
 		BOOL CudaEncoder::run(){
 			struct pooldata * data = NULL;
 
+
+			pTimer->Start();
 			if(!(data = loadFrame())){
-				cg::core::infoRecorder->logError("[CudaEncoder]: load frame from pipe failed.\n");
+				cg::core::infoRecorder->logTrace("[CudaEncoder]: load frame from pipe failed.\n");
 				return TRUE;
 			}
 			SourceFrame * frame = (SourceFrame *)data->ptr;
 			writer_->updataPts(frame->imgPts);
 			if(frame->type == IMAGE){
-				cg::core::infoRecorder->logError("[CudaEncoder]: load image.\n");
+				cg::core::infoRecorder->logTrace("[CudaEncoder]: load image.\n");
 				// load the cpu array data to GPU and encode
 				if(!loadImageToGpuMat(*frame, *argbMat)){
 					// load failed
@@ -390,7 +408,7 @@ namespace cg{
 
 			}else if(frame->type == SURFACE){
 				// use ARGB surface as input
-				cg::core::infoRecorder->logError("[CudaEncoder]: load surface.\n");
+				cg::core::infoRecorder->logTrace("[CudaEncoder]: load surface.\n");
 				// load the cpu array data to GPU and encode
 				
 				CCudaAutoLock cuLock(m_cuContext);
@@ -411,11 +429,11 @@ namespace cg{
 				cg::core::infoRecorder->logError("[CudaEncoder]: use source type or pipe is error.\n");
 			}
 			releaseData(data);
-
 			// now, ARGB data is in argbMat, then, encode
-			cg::core::infoRecorder->logError("[CudaEncoder]: to encode frame.\n");
 
 			d_writer->write(*argbMat);
+			encodeTime = pTimer->Stop();
+
 			return TRUE;
 		}
 

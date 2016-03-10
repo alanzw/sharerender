@@ -11,7 +11,7 @@ namespace cg{
 #endif
 
 		// constructor and destructor
-		InfoRecorder::InfoRecorder(char * prefix): namedMutex(NULL), mappingHandle(NULL), mappingAddr(NULL), useMapping(false){
+		InfoRecorder::InfoRecorder(char * prefix): namedMutex(NULL), mappingHandle(NULL), mappingAddr(NULL), useMapping(false), captureTime(0.0f), convertTime(0.0f), encodeTime(0.0f), packetTime(0.0f){
 			char recorderName[100];
 
 			// init he frame recorder

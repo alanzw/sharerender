@@ -24,7 +24,7 @@ namespace cg{
 	std::map<struct VConventerConfig, struct SwsContext *> Conventer::conventers;
 
 	struct SwsContext * Conventer::lookupFrameConventerInternal(struct VConventerConfig * ccfg){
-		cg::core::infoRecorder->logError("[conventer]: look up frame conventer internal.\n");
+		cg::core::infoRecorder->logTrace("[conventer]: look up frame conventer internal.\n");
 		std::map<struct VConventerConfig, struct SwsContext *>::iterator mi;
 		if ((mi = conventers.find(*ccfg)) != conventers.end()){
 			return mi->second;
@@ -43,9 +43,7 @@ namespace cg{
 	}
 
 	struct SwsContext * Conventer::lookupFrameConventer(int w, int h, PixelFormat fmt, PixelFormat dstFmt){
-		cg::core::infoRecorder->logError("[Conventer]: to lookup frame conventer, w:%d, h:%d.\n", w, h);
 		struct VConventerConfig ccfg;
-
 		ccfg.width = w;
 		ccfg.height = h;
 		ccfg.fmt = fmt;

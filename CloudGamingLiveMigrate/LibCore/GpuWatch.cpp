@@ -324,7 +324,7 @@ namespace cg{
 				return -1;
 			}
 			//返回使用率
-			infoRecorder->logError("[NvidiaInterface]: 0:%d, 1:%d, 2:%d, 3:%d, 4:%d, 5:%d, 6:%d, 7:%d.\n", nvInfo.utilization[0].percentage, nvInfo.utilization[1].percentage, nvInfo.utilization[2].percentage, nvInfo.utilization[3].percentage, nvInfo.utilization[4].percentage, nvInfo.utilization[5].percentage, nvInfo.utilization[6].percentage, nvInfo.utilization[7].percentage);
+			infoRecorder->logTrace("[NvidiaInterface]: 0:%d, 1:%d, 2:%d, 3:%d, 4:%d, 5:%d, 6:%d, 7:%d.\n", nvInfo.utilization[0].percentage, nvInfo.utilization[1].percentage, nvInfo.utilization[2].percentage, nvInfo.utilization[3].percentage, nvInfo.utilization[4].percentage, nvInfo.utilization[5].percentage, nvInfo.utilization[6].percentage, nvInfo.utilization[7].percentage);
 			return static_cast<int>(nvInfo.utilization[0].percentage);
 		}
 

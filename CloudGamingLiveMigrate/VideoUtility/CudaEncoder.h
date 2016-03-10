@@ -119,6 +119,7 @@ namespace cg{
 			virtual void							onQuit();
 
 			//inline void								setSourceType(SOURCE_TYPE type){ useSourceType = type; }
+			virtual void							setRefIntraMigrationTimer(cg::core::PTimer * refTimer);
 		};
 
 	}

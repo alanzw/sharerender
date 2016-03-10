@@ -1,6 +1,7 @@
 #ifndef __FILTERRGB2YUV_H__
 #define __FILTERRGB2YUV_H__
 #include "avcodeccommon.h"
+#include "../LibCore/TimeTool.h"
 
 #define POOLSIZE 8
 
@@ -32,9 +33,17 @@ namespace cg{
 		CRITICAL_SECTION fmtSection;
 
 		HANDLE cond, condMutex;
+		UINT convertTime;
+		cg::core::PTimer * pTimer;
 
 	public:
-		~Filter();
+
+		float getConvertTime(){
+
+			return 1000.0 * convertTime / pTimer->getFreq();
+		}
+
+		virtual ~Filter();
 		Filter();
 		static void Release();
 

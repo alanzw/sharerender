@@ -9,6 +9,9 @@
 
 #define PATH_MAX 128
 
+
+//#define ENABLE_CCGCONFIG_LOG
+
 /////////////////////////////////////////////////////////////////////
 namespace cg{
 	ccgConfig::ccgConfig(char * filename){
@@ -110,27 +113,36 @@ namespace cg{
 				snprintf(incfile, sizeof(incfile), "%s/%s", dirname(tmpdn), token);
 			}
 #endif
+
+#ifdef ENABLE_CCGCONFIG_LOG
 			cg::core::infoRecorder->logTrace("# include: %s\n", incfile);
+#endif
 			return confLoad(incfile);
 		}
 		// check if its a map
 		if ((leftbracket = strchr(option, '[')) != NULL) {
 			rightbracket = strchr(leftbracket + 1, ']');
 			if (rightbracket == NULL) {
+				#ifdef ENABLE_CCGCONFIG_LOG
 				cg::core::infoRecorder->logTrace("# %s:%d: malformed option (%s without right bracket).\n",
 					filename, lineno, option);
+#endif
 				return -1;
 			}
 			// no key specified
 			if (leftbracket + 1 == rightbracket) {
+				#ifdef ENABLE_CCGCONFIG_LOG
 				cg::core::infoRecorder->logTrace("# %s:%d: malformed option (%s without a key).\n",
 					filename, lineno, option);
+#endif
 				return -1;
 			}
 			// garbage after rightbracket?
 			if (*(rightbracket + 1) != '\0') {
+				#ifdef ENABLE_CCGCONFIG_LOG
 				cg::core::infoRecorder->logTrace("# %s:%d: malformed option (%s?).\n",
 					filename, lineno, option);
+#endif
 				return -1;
 			}
 			*leftbracket = '\0';
@@ -139,11 +151,15 @@ namespace cg{
 		}
 		// its a map
 		if (leftbracket != NULL) {
+			#ifdef ENABLE_CCGCONFIG_LOG
 			cg::core::infoRecorder->logError("[ccgConfig]: %s[%s] = %s\n", option, leftbracket, token);
+#endif
 			_confVars[option][leftbracket] = token;
 		}
 		else {
+			#ifdef ENABLE_CCGCONFIG_LOG
 			cg::core::infoRecorder->logError("[ccgConfig]: %s = %s\n", option, token);
+#endif
 			_confVars[option] = token;
 		}
 		return 0;
@@ -156,7 +172,9 @@ namespace cg{
 		if (filename == NULL)
 			return -1;
 		if ((fp = fopen(filename, "rt")) == NULL) {
+			#ifdef ENABLE_CCGCONFIG_LOG
 			cg::core::infoRecorder->logError("[ccg config]: open coinfig file: %s failed\n", filename);
+#endif
 			return -1;
 		}
 		while (fgets(buf, sizeof(buf), fp) != NULL) {

@@ -12,6 +12,7 @@
 #include "../common/nvCPUOPSys.h"
 #include "../common/CNvEncoder.h"
 #include "../../LibCore/CThread.h"
+#include "../../VideoUtility/encoder.h"
 #include "../../VideoUtility/videocommon.h"
 #include "../../VideoUtility/VideoWriter.h"
 #include "../../VideoUtility/pipeline.h"

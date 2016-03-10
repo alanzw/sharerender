@@ -112,6 +112,8 @@ namespace cg{
 
 		InitializeCriticalSection(&fmtSection);
 		myname = std::string("Filter");
+		convertTime = 0;
+		pTimer = new cg::core::PTimer();
 	}
 
 	void Filter::Release(){
@@ -133,6 +135,10 @@ namespace cg{
 		if (dstPipe){
 			delete dstPipe;
 			dstPipe = NULL;
+		}
+		if(pTimer){
+			delete pTimer;
+			pTimer = NULL;
 		}
 	}
 
@@ -178,7 +184,6 @@ namespace cg{
 
 	// the new init function to create the sws, the pipeline 
 	int Filter::init(int iheight, int iwidth, int outH, int outW){
-		infoRecorder->logError("[Filter]: init the filter.\n");
 		struct SwsContext * swsctx = NULL;
 		RTSPConf * conf = RTSPConf::GetRTSPConf();
 
@@ -234,7 +239,7 @@ namespace cg{
 			if(swsctx == NULL){
 				swsctx = Conventer::createFrameConventer(iwidth, iheight, PIX_FMT_RGBA, outputW, outputH, PIX_FMT_NV12);
 				swsctx = Conventer::createFrameConventer(iwidth, iheight, PIX_FMT_RGBA, outputW, outputH, PIX_FMT_YUV420P);
-				infoRecorder->logError("[Filter]: no special source format, use RGBA.\n");
+				infoRecorder->logTrace("[Filter]: no special source format, use RGBA.\n");
 			}
 		}while(0);
 		// create NV12 filter
@@ -493,11 +498,11 @@ filter_quit:
 		LeaveCriticalSection(&fmtSection);
 	}
 
-	// stop the fitler 
+	// stop the filter 
 	BOOL Filter::stop(){
 		return TRUE;
 	}
-	// loop logic to execute in fitler
+	// loop logic to execute in filter
 
 	BOOL Filter::run(){
 		struct pooldata * srcdata = NULL;
@@ -510,6 +515,8 @@ filter_quit:
 		unsigned char * dst[] = { NULL, NULL, NULL, NULL };
 		int srcstride[] = { 0, 0, 0, 0 };
 		int dststride[] = { 0, 0, 0, 0 };
+
+		pTimer->Start();
 
 		srcdata = srcPipe->load_data();
 		if(srcdata == NULL){
@@ -577,31 +584,8 @@ filter_quit:
 				dstframe->realHeight = getH();
 				dstframe->realWidth = getW();
 
-#if 0
-				// test the bmp image
-				static int  count = 0;
-				char name[100] = {0};
-				sprintf(name,"filter-%d.bmp", count++);
-				long newSize = 0;
-				BYTE * bmp = ConvertRGBAToBMPBuffer(iframe->imgBuf, iframe->realWidth, iframe->realHeight, &newSize);
-				SaveBMP(bmp, iframe->realWidth, iframe->realHeight, newSize, name);
-				//delete []bmp;
-#endif
 				sws_scale(swsCtx, src, srcstride, 0, iframe->realHeight,
 					dst, dstframe->lineSize);
-#if 0
-				BYTE * rgb24 = new BYTE[getH() * getW() * 3];
-				YV12ToBGR24_Native(dstframe->imgBuf, rgb24, getW(), getH());
-				long bmp_size =0;
-				BYTE * bmp = ConvertRGBToBMPBuffer(rgb24, getW(), getH(), & bmp_size);
-				static int in = 0;
-				char tmp[512] = {0};
-				sprintf(tmp, "bmp_%d.bmp", in++);
-				SaveBMP(bmp, getW(), getH(), bmp_size, tmp);
-
-				delete[] rgb24;
-				delete[] bmp;
-#endif
 
 			}
 			else if(dstframe->pixelFormat == PIX_FMT_NV12){
@@ -655,6 +639,9 @@ filter_quit:
 		}
 		srcPipe->release_data(srcdata);
 		dstPipe->store_data(dstdata);
+
+		convertTime = pTimer->Stop();
+
 #ifdef ENABLE_LOG_FILTER
 		infoRecorder->logError("[Filter]: notify encoder.\n");
 #endif
@@ -705,7 +692,6 @@ filter_quit:
 		condMutex = CreateMutex(NULL, FALSE, NULL);
 		//if(cond == NULL)
 		cond = CreateEvent(NULL, FALSE, FALSE, NULL);
-		infoRecorder->logError("[Filter]: INFO, create wait event %p for %s.\n", cond, name());
 
 		srcPipe->client_register(ccg_gettid(), cond);
 		return TRUE;

@@ -47,6 +47,8 @@
 //}
 
 
+//#define ENABLE_RTSOCONF_LOG
+
 namespace cg{
 
 	std::map<std::string, int>RTSPConf::initialized;
@@ -58,7 +60,9 @@ namespace cg{
 	std::string RTSPConf::myname;
 
 	RTSPConf * RTSPConf::GetRTSPConf(char * filename){
+#ifdef ENABLE_RTSOCONF_LOG
 		cg::core::infoRecorder->logTrace("[RTSPConf]:get rtsp config!\n");
+#endif
 		if(conf == NULL){
 			if (filename == NULL){
 				// error
@@ -68,7 +72,9 @@ namespace cg{
 
 			}else{
 				// return a new one 
+				#ifdef ENABLE_RTSOCONF_LOG
 				cg::core::infoRecorder->logTrace("[RTSPConf]:create new rtsp config\n");
+#endif
 				conf = new RTSPConf(filename);
 			}
 			//load the config
@@ -105,14 +111,18 @@ namespace cg{
 		rtspConfMap[provider] = conf;
 		ReleaseMutex(rtspConfMutex);
 		conf->myname = provider;
+		#ifdef ENABLE_RTSOCONF_LOG
 		cg::core::infoRecorder->logError("[RTSPConf]: new rtsp config '%s' registered.\n", provider);
+#endif
 		return 0;
 	}
 	void RTSPConf::do_unregister(const char * provider){
 		DWORD ret = WaitForSingleObject(rtspConfMutex, INFINITE);
 		rtspConfMap.erase(provider);
 		ReleaseMutex(rtspConfMutex);
+		#ifdef ENABLE_RTSOCONF_LOG
 		cg::core::infoRecorder->logError("[RTSPConf]: rtsp config '%s' unregistered.\n", provider);
+#endif
 		return;
 	}
 	RTSPConf * RTSPConf::lookup(const char * provider){
@@ -185,7 +195,9 @@ namespace cg{
 	int RTSPConf::
 		rtspConfLoadCodec(const char *key, const char *value,
 		const char **names, AVCodec **codec, AVCodec *(*finder)(const char **, enum AVCodecID)) {
-			cg::core::infoRecorder->logError("[RTSPConf]: rtsp config load codec called.\n");
+			#ifdef ENABLE_RTSOCONF_LOG
+			cg::core::infoRecorder->logTrace("[RTSPConf]: rtsp config load codec called.\n");
+#endif
 			//
 			int idx = 0;
 			char buf[1024], *saveptr;
@@ -206,8 +218,10 @@ namespace cg{
 				return -1;
 			}
 			//
+			#ifdef ENABLE_RTSOCONF_LOG
 			cg::core::infoRecorder->logError("# RTSP[config]: %s = %s (%s)\n", key, (*codec)->name,
 				(*codec)->long_name == NULL ? "N/A" : (*codec)->long_name);
+#endif
 			return 0;
 	}
 
@@ -215,7 +229,9 @@ namespace cg{
 		rtspConfParse() {
 			char *ptr, buf[1024];
 			int v;
+#ifdef ENABLE_RTSOCONF_LOG
 			cg::core::infoRecorder->logError("[RTSPConf]: rtsp config parse called.\n");
+#endif
 			//
 			//rtspConfInit();
 			//read the distributor server name
@@ -226,12 +242,16 @@ namespace cg{
 			// read the server render server name
 			if ((ptr = confReadV("server-name", buf, sizeof(buf))) != NULL) {
 				servername = _strdup(ptr);
+				#ifdef ENABLE_RTSOCONF_LOG
 				cg::core::infoRecorder->logError("[RTSPConf]: server name:%s\n.", servername);
+#endif
 			}
 			// read the logic server name
 			if ((ptr = confReadV("logic-server-name", buf, sizeof(buf))) != NULL) {
 				logic_servername = _strdup(ptr);
+				#ifdef ENABLE_RTSOCONF_LOG
 				cg::core::infoRecorder->logError("[RTSPConf]: logic server name:%s\n.", logic_servername);
+#endif
 			}
 			//
 			if ((ptr = confReadV("base-object", buf, sizeof(buf))) != NULL) {
@@ -251,7 +271,9 @@ namespace cg{
 				cg::core::infoRecorder->logError("# RTSP[config]: invalid server port %d\n", v);
 				return -1;
 			}
+#ifdef ENABLE_RTSOCONF_LOG
 			cg::core::infoRecorder->logError("[RTSPConf]: server port:%d.\n", v);
+#endif
 			serverport = v;
 
 			// read the distributor server port
@@ -261,24 +283,32 @@ namespace cg{
 				return -1;
 			}
 			dis_port = v;
+			#ifdef ENABLE_RTSOCONF_LOG
 			cg::core::infoRecorder->logError("[RTSPConf]: distributor port:%d.\n", v);
+#endif
 
 			v = confReadInt("logic-server-port");
 			if (v <= 0 || v >= 65535){
 				cg::core::infoRecorder->logError("# RTSP[config]: invalid logic server port %d\n", v);
 				return -1;
 			}
+#ifdef ENABLE_RTSOCONF_LOG
 			cg::core::infoRecorder->logError("[RTSPConf]: logic server port:%d.\n", v);
+#endif
 			logic_serverport = v;
 			//
 			ptr = confReadV("proto", buf, sizeof(buf));
 			if (ptr == NULL || strcmp(ptr, "tcp") != 0) {
 				proto = IPPROTO_UDP;
+#ifdef ENABLE_RTSOCONF_LOG
 				cg::core::infoRecorder->logError("# RTSP[config]: using 'udp' for RTP flows.\n");
+#endif
 			}
 			else {
 				proto = IPPROTO_TCP;
+				#ifdef ENABLE_RTSOCONF_LOG
 				cg::core::infoRecorder->logError("# RTSP[config]: using 'tcp' for RTP flows.\n");
+#endif
 			}
 			//
 			ctrlenable = confReadBool("control-enabled", 0);
@@ -291,23 +321,31 @@ namespace cg{
 					return -1;
 				}
 				ctrlport = v;
+				#ifdef ENABLE_RTSOCONF_LOG
 				cg::core::infoRecorder->logError("# RTSP[config]: controller port = %d\n", ctrlport);
+#endif
 				//
 				ptr = confReadV("control-proto", buf, sizeof(buf));
 				if (ptr == NULL || strcmp(ptr, "tcp") != 0) {
 					ctrlproto = IPPROTO_UDP;
+					#ifdef ENABLE_RTSOCONF_LOG
 					cg::core::infoRecorder->logError("# RTSP[config]: controller via 'udp' protocol.\n");
+#endif
 				}
 				else {
 					ctrlproto = IPPROTO_TCP;
+					#ifdef ENABLE_RTSOCONF_LOG
 					cg::core::infoRecorder->logError("# RTSP[config]: controller via 'tcp' protocol.\n");
+#endif
 				}
 				//
 				sendmousemotion = confReadBool("control-send-mouse-motion", 1);
 			}
 			// video-encoder, audio-encoder, video-decoder, and audio-decoder
 			if ((ptr = confReadV("video-encoder", buf, sizeof(buf))) != NULL) {
+				#ifdef ENABLE_RTSOCONF_LOG
 				cg::core::infoRecorder->logError("[RTSPConf]: config parse, video-encoder:%s\n", buf);
+#endif
 				if (rtspConfLoadCodec("video-encoder", ptr,
 					(const char**)video_encoder_name,
 					&video_encoder_codec,
@@ -430,8 +468,10 @@ namespace cg{
 							continue;
 						vso->push_back(ptr);
 						vso->push_back(val);
+						#ifdef ENABLE_RTSOCONF_LOG
 						cg::core::infoRecorder->logError("# RTSP[config]: video specific option: %s = %s\n",
 							ptr, val);
+#endif
 				}
 			}
 			return 0;
