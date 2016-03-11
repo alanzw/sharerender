@@ -228,7 +228,7 @@ HWND WINAPI CreateWindowCallback(
 #endif
 
 	HWND ret = CreateWindowNext(dwExStyle,lpClassName,lpWindowName,dwStyle,x,y,nWidth,nHeight,hWndParent,hMenu,hInstance,lpParam);
-	infoRecorder->logError("[global]: CreateWindowCallback() called, width:%d, height:%d, window:%p\n", nWidth, nHeight, ret);
+	infoRecorder->logTrace("[global]: CreateWindowCallback() called, width:%d, height:%d, window:%p\n", nWidth, nHeight, ret);
 	windowMap.addMap(ret, win);
 
 #ifdef ENABLE_BACKGROUND_RUNNING
@@ -552,7 +552,7 @@ void ContextAndCache::eraseFlag(){
 }
 
 void WINAPI ExitProcessCallback(UINT uExitCode) {
-	infoRecorder->logError("[Global]: Exit process called\n");
+	infoRecorder->logError("[Global]: Summary:\n");
 
 	int ib_buffer_size = 0;
 	int vb_buffer_size = 0;

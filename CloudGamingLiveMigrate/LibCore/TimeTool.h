@@ -53,21 +53,27 @@ TIMEL1:
 			LARGE_INTEGER m_startcycle;
 			unsigned __int64 m_overhead;
 			LARGE_INTEGER freq;
+			bool startTimer;   // true when started and never start twice
 		public:
-			PTimer(){
+			PTimer(): startTimer(false){
 				m_overhead = 0;
 				QueryPerformanceFrequency(&freq);
 				Start();
 				m_overhead = Stop();
 			}
 			virtual void Start(void){
-				QueryPerformanceCounter(&m_startcycle);
+				if(!startTimer){
+					QueryPerformanceCounter(&m_startcycle);
+					startTimer = true;
+				}
 			}
 			virtual unsigned __int64 Stop(void){
 				LARGE_INTEGER m_endcycle;
 				QueryPerformanceCounter(&m_endcycle);
 				unsigned __int64 ret = m_endcycle.QuadPart - m_startcycle.QuadPart - m_overhead;
 				m_startcycle = m_endcycle;
+				if(startTimer)
+					startTimer = false;
 
 				return ret;
 			}

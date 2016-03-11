@@ -81,7 +81,7 @@ namespace cg{
 				objName_[1] += ('A' - 'a');
 			}
 			objName = string(objName_);
-			cg::core::infoRecorder->logError("[CmdHelper]: obj name:%s.\n", objName_);
+			cg::core::infoRecorder->logTrace("[CmdHelper]: obj name:%s.\n", objName_);
 
 			graphicMode = 0;   // default use D3D9
 

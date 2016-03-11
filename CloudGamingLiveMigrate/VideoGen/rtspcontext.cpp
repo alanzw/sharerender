@@ -32,7 +32,7 @@ namespace cg{
 
 		////// constructor  ////////////
 		RTSPContext::RTSPContext(){
-			infoRecorder->logError("RTSPContext constructor\n");
+			//infoRecorder->logError("RTSPContext constructor\n");
 			memset(object, 0, RTSPCONF_OBJECT_SIZE); 
 			tag = 0; 
 			state = SERVER_STATE_IDLE;

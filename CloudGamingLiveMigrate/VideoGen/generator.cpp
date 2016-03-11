@@ -493,26 +493,26 @@ namespace cg{
 	// init the wrapper
 	int VideoGen::setupWrapper(){
 #ifdef ENABLE_GEN_LOG
-		infoRecorder->logTrace("[VideoGen]: create the wrapper with dx version: ");
+		infoRecorder->logTrace("[VideoGen]: create the wrapper with dx version: %d", dxVer);
 #endif
 		// if support directx
 		switch(dxVer){
 		case DX9:
-			infoRecorder->logError("DX9\n");
+			//infoRecorder->logError("DX9\n");
 			wrapper = new D3DWrapper(windowHandle, d9Device, width, height, sourcePipe);
 			break;
 		case DX10:
-			infoRecorder->logError("DX10\n");
+			//infoRecorder->logError("DX10\n");
 			swapChain = (IDXGISwapChain *)d9Device;
 			wrapper = new D3D10Wrapper(windowHandle, swapChain, width, height, sourcePipe);
 			break;
 		case DX10_1:
-			infoRecorder->logError("DX10_1\n");
+			//infoRecorder->logError("DX10_1\n");
 			swapChain = (IDXGISwapChain *)d9Device;
 			wrapper = new D3D10Wrapper1(windowHandle, swapChain, width, height, sourcePipe);	
 			break;
 		case DX11:
-			infoRecorder->logError("DX11\n");
+			//infoRecorder->logError("DX11\n");
 			swapChain = (IDXGISwapChain *)d9Device;
 			wrapper = new D3D11Wrapper(windowHandle, swapChain, width, height, sourcePipe);
 			break;
@@ -727,9 +727,9 @@ namespace cg{
 		setSourceType(useEncoderType == X264_ENCODER ? IMAGE : SURFACE);
 		intraMigrationTimer->Start();
 
+#ifdef ENABLE_GEN_LOG
 		infoRecorder->logError("[VideoGen]: old encoder type:%s, now use encoder type: %s.\n", oldType == X264_ENCODER ? "x264": (oldType == CUDA_ENCODER ? "CUDA": (oldType == NVENC_ENCODER ? "NVENC" : "NONE")), useEncoderType == X264_ENCODER ? "x264" : (useEncoderType == CUDA_ENCODER ? "cuda" : (useEncoderType == NVENC_ENCODER ? "nvenc" : "none")));
 
-#ifdef ENABLE_GEN_LOG
 		infoRecorder->logTrace("[VideoGen]: use encoder type: %s.\n", useEncoderType == X264_ENCODER ? "x264" : (useEncoderType == CUDA_ENCODER ? "cuda" : (useEncoderType == NVENC_ENCODER ? "nvenc" : "none")));
 #endif
 
@@ -987,7 +987,6 @@ namespace cg{
 		infoRecorder->logTrace("[VideoGen]: init the x264 encoder.\n");
 #endif
 
-		infoRecorder->logError("[VideoGen]: init the x264 encoder.\n");
 		if(!x264Inited){
 			if(!sourcePipe){
 				// error

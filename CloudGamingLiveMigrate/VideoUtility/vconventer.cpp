@@ -62,7 +62,7 @@ namespace cg{
 			ccfg.fmt = srcfmt;
 			ccfg.dstFmt = dstfmt;
 
-			cg::core::infoRecorder->logError("[conventer]: creat frame conventor src (%d x %d) to dst (%d x %d), dst format:%s.\n", srcw, srch, dstw, dsth, dstfmt == PIX_FMT_NV12 ? "NV12": "YUV420P");
+			cg::core::infoRecorder->logTrace("[conventer]: creat frame conventor src (%d x %d) to dst (%d x %d), dst format:%s.\n", srcw, srch, dstw, dsth, dstfmt == PIX_FMT_NV12 ? "NV12": "YUV420P");
 
 			//DebugBreak();
 			if ((ctx = lookupFrameConventerInternal(&ccfg)) != NULL){
@@ -76,9 +76,9 @@ namespace cg{
 			}
 
 			conventers[ccfg] = ctx;
-			cg::core::infoRecorder->logError("Frame Conventer created: from (%d, %d)[%d] -> (%d, %d)[%d]\n",
+			cg::core::infoRecorder->logTrace("Frame Conventer created: from (%d, %d)[%d] -> (%d, %d)[%d]\n",
 				(int)srcw, (int)srch, (int)srcfmt, (int)dstw, (int)dsth, (int)dstfmt);
-			cg::core::infoRecorder->logError("[conventer]: swscontext:%p.\n", ctx);
+			cg::core::infoRecorder->logTrace("[conventer]: swscontext:%p.\n", ctx);
 			return ctx;
 	}
 	struct SwsContext * Conventer::createFrameConventer(VConventerConfig * src, VConventerConfig * dst){

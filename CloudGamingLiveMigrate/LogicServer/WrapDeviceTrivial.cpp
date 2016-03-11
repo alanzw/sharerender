@@ -94,9 +94,11 @@ STDMETHODIMP_(ULONG) WrapperDirect3DDevice9::Release(THIS) {
 #endif  // LOG_REF_COUNT1
 #endif
 	refCount--;
+#ifdef ENABLE_DEVICE_LOG
 	if(refCount <= 0){
 		infoRecorder->logError("[WrapperDirect3DDevice9]: m_device ref:%d, ref count:%d.\n", refCount, hr);
 	}
+#endif
 	return hr;
 }
 
@@ -398,7 +400,7 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 			gGenerator->setPresentHandle(presentEvt);
 
 			//cmdCtrl->setEncoderOption(ADAPTIVE_NVENC);
-			cg::core::infoRecorder->logError("[Present]: encode option:%d\n", cmdCtrl->getEncoderOption());
+			cg::core::infoRecorder->logTrace("[Present]: encode option:%d\n", cmdCtrl->getEncoderOption());
 
 			switch(cmdCtrl->getEncoderOption()){
 			case CUDA_ENCODER:
@@ -958,7 +960,6 @@ STDMETHODIMP WrapperDirect3DDevice9::SetRenderTarget(THIS_ DWORD RenderTargetInd
 #ifdef ENBALE_DEVICE_LOG
 		infoRecorder->logTrace("NULL target.\n");
 #endif
-		infoRecorder->logError("WrapperDirect3DDevice9::SetRenderTarget(), NULL target.\n");
 		return hh;
 	}
 	// check the surface's creation flag

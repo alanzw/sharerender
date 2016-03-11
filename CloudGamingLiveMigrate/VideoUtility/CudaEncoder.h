@@ -83,11 +83,19 @@ namespace cg{
 			void									onBeginFrame(int frameNumber, PicType picType);
 			void									onEndFrame(int frameNumber, PicType picType);
 
+			inline void setRefIntraMigrationTimer(cg::core::PTimer * pTimer){ refIntraMigrationTimer = pTimer; }
+			inline void setRefCudaEncodingTimer(cg::core::PTimer * pTimer){ refCudaEncodingTimer = pTimer; }
+			inline float getEncodeTime(){ return 1000.0 * encodeTime / refCudaEncodingTimer->getFreq(); }
+
 		private:
 			bool									isKeyFrame_;
 			uchar *									buf_;     // store the output data
 			int										bufSize;
 			VideoWriter*							writer;
+
+			cg::core::PTimer *						refCudaEncodingTimer;  // the timer for cuda encoding counting
+			cg::core::PTimer *						refIntraMigrationTimer;
+			UINT									encodeTime;
 		};
 
 		class CudaEncoder: public Encoder{
@@ -102,6 +110,9 @@ namespace cg{
 			CUdevice								m_cuDevice;
 			IDirect3DDevice9 *						d9Device;
 			VideoWriter *							writer_;
+
+			EncoderCallbackNet *					pCallbackNet;
+
 		protected:
 
 			int										loadFrameToGpuMat(SourceFrame & frame, cv::cuda::GpuMat & mat);

@@ -60,7 +60,7 @@ namespace cg{
 
 		avpicture_fill((AVPicture *)pic_in, pic_in_buf, PIX_FMT_YUV420P, encoderWidth, encoderHeight);
 
-		infoRecorder->logError("[X264Encoder]: AVPicture line size, [0]:%d, [1]:%d, [3]:%d.\n", ((AVPicture *)pic_in)->linesize[0],((AVPicture *)pic_in)->linesize[1],((AVPicture *)pic_in)->linesize[2]);
+		infoRecorder->logTrace("[X264Encoder]: AVPicture line size, [0]:%d, [1]:%d, [3]:%d.\n", ((AVPicture *)pic_in)->linesize[0],((AVPicture *)pic_in)->linesize[1],((AVPicture *)pic_in)->linesize[2]);
 
 		inited = true;
 
@@ -201,13 +201,15 @@ video_quit:
 		long long pts = -1LL;
 
 		
-		pTimer->Start();
+		
 
 
 		if(!(data = loadFrame())){
 			infoRecorder->logTrace("[X264Encoder]: load frame failed.\n");
 			return TRUE;
 		}
+
+		pTimer->Start();
 
 		ImageFrame* frame= (ImageFrame* )data->ptr;
 		if(frame->type ==  SURFACE){
@@ -251,9 +253,12 @@ video_quit:
 			infoRecorder->logTrace("[X264Encoder]: to send frame packet. pkt size:%d.\n", pkt.size);
 			// send the nal data
 			encodeTime = pTimer->Stop();
-			pTimer->Start();
+
+			infoRecorder->addEncodeTime(getEncodeTime());
+
+			//pTimer->Start();
 			writer->sendPacket(0, &pkt, pts);
-			packTime = pTimer->Stop();
+			//packTime = pTimer->Stop();
 
 			if(refIntraMigrationTimer){
 				UINT intramigration = refIntraMigrationTimer->Stop();

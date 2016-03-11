@@ -145,7 +145,7 @@ namespace cg{
 			cg::core::infoRecorder->logError("[D3DWrapper]: the source pipeline is not specified.\n");
 			return false;
 		}
-		pTimer->Start();
+		
 
 		data = sourcePipe->allocate_data();
 		if(data == NULL){
@@ -157,6 +157,8 @@ namespace cg{
 			cg::core::infoRecorder->logError("[D3DWrapper]: get NULL d3d device.\n");
 			return false;
 		}
+
+		pTimer->Start();
 
 		sframe = (SourceFrame *)data->ptr;
 		sframe->imgPts = cg::core::pcdiff_us(captureTv, initialTv, freq) / (1+frameInterval);
@@ -171,6 +173,10 @@ namespace cg{
 			sframe->type = SURFACE;
 			if(this->capture(sframe->getD3D9Surface())){
 				sourcePipe->store_data(data);
+
+				captureTime = pTimer->Stop();
+				cg::core::infoRecorder->addCaptureTime(getCaptureTime());
+
 				sourcePipe->notify_all();
 				return true;
 			}else{
@@ -308,6 +314,9 @@ namespace cg{
 
 			sysOffscreenSurface->UnlockRect();
 			captureTime = pTimer->Stop();
+
+
+			cg::core::infoRecorder->addCaptureTime(getCaptureTime());
 			
 #ifdef USE_BACK_BUFFER
 			sysOffscreenSurface->Release();

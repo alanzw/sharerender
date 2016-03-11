@@ -44,18 +44,18 @@ namespace cg{
 	namespace nvcuvenc{
 		HANDLE CudaEncoder::mutex;
 
-		cg::core::PTimer *refIntraMigrationTimerForCuda = NULL;
+		//cg::core::PTimer *refIntraMigrationTimerForCuda = NULL;
 
 
 		// TODO: be careful with callbacks, we need to check the dependency
 		// encoder callback for net
 
-		EncoderCallbackNet::EncoderCallbackNet(VideoWriter * _writer): writer(_writer){
+		EncoderCallbackNet::EncoderCallbackNet(VideoWriter * _writer): writer(_writer), isKeyFrame_(false), buf_(NULL), refCudaEncodingTimer(NULL), refIntraMigrationTimer(NULL), encodeTime(0){
 			buf_ = new unsigned char[BitStreamBufferSize];
 			assert(buf_ != NULL);
 		}
 
-		EncoderCallbackNet::EncoderCallbackNet(){
+		EncoderCallbackNet::EncoderCallbackNet(): refCudaEncodingTimer(NULL), refIntraMigrationTimer(NULL), encodeTime(0){
 			buf_ = new unsigned char[BitStreamBufferSize];
 			assert(buf_ != NULL);
 			//m_fOutput = NULL;
@@ -78,6 +78,13 @@ namespace cg{
 		// the result is in 'data' and it can be write to file
 		void EncoderCallbackNet::releaseBitStream(unsigned char * data, int size){
 			// write to file ?
+
+			// get the frame data
+			if(refCudaEncodingTimer){
+				encodeTime = refCudaEncodingTimer->Stop();
+				cg::core::infoRecorder->addEncodeTime(getEncodeTime()); 
+			}
+
 			cg::core::infoRecorder->logTrace("[EncoderCallback]: get encoded buffer: %p.\n", data);
 			int64_t pts = writer->getUpdatedPts();
 			AVPacket pkt;
@@ -86,10 +93,10 @@ namespace cg{
 			pkt.size = size;
 			writer->sendPacket(0, &pkt, pts);
 
-			if(refIntraMigrationTimerForCuda){
-				UINT intramigration = refIntraMigrationTimerForCuda->Stop();
-				cg::core::infoRecorder->logError("[Global]: intra-migration: %f (ms), in cuda encoder.\n", 1000.0 * intramigration / refIntraMigrationTimerForCuda->getFreq());
-				refIntraMigrationTimerForCuda = NULL;
+			if(refIntraMigrationTimer){
+				UINT intramigration = refIntraMigrationTimer->Stop();
+				cg::core::infoRecorder->logError("[Global]: intra-migration: %f (ms), in cuda encoder.\n", 1000.0 * intramigration / refIntraMigrationTimer->getFreq());
+				refIntraMigrationTimer = NULL;
 			}
 		}
 
@@ -126,12 +133,14 @@ namespace cg{
 
 
 		//////////////////// cuda encoder impl  /////////////////
-		CudaEncoder::CudaEncoder(int width, int height,/* SOURCE_TYPE _srcType, */pipeline * _imgPipe, VideoWriter * _writer, IDirect3DDevice9 * _device): Encoder(0, height, width,/* _srcType,*/ CUDA_ENCODER, _imgPipe, _writer), size_(width, height), d9Device(_device), argbMat(NULL), writer_(_writer){
+		CudaEncoder::CudaEncoder(int width, int height,/* SOURCE_TYPE _srcType, */pipeline * _imgPipe, VideoWriter * _writer, IDirect3DDevice9 * _device): Encoder(0, height, width,/* _srcType,*/ CUDA_ENCODER, _imgPipe, _writer), size_(width, height), d9Device(_device), argbMat(NULL), writer_(_writer), pCallbackNet(NULL){
 			if(mutex == NULL){
 				mutex = CreateMutex(NULL, FALSE, NULL);
 			}
 			if(d_writer.empty()){
-				cv::Ptr<EncoderCallbackNet> callbackNet(new EncoderCallbackNet(writer));
+				pCallbackNet = new EncoderCallbackNet(writer);
+				pCallbackNet->setRefCudaEncodingTimer(pTimer);
+				cv::Ptr<EncoderCallbackNet> callbackNet(pCallbackNet);
 				// create the video writer
 				WaitForSingleObject(mutex, INFINITE);
 				if(!initCuda(0)){
@@ -154,7 +163,9 @@ namespace cg{
 		
 		void CudaEncoder::setRefIntraMigrationTimer(cg::core::PTimer * refTimer){
 			refIntraMigrationTimer = refTimer;
-			refIntraMigrationTimerForCuda = refTimer;
+			//refIntraMigrationTimerForCuda = refTimer;
+			pCallbackNet->setRefIntraMigrationTimer(refTimer);
+
 		}
 		
 		bool CudaEncoder::initEncoder(){
@@ -165,7 +176,7 @@ namespace cg{
 		// init the cuda part
 		bool CudaEncoder::initCuda(uint32_t deviceID){
 			//
-			cg::core::infoRecorder->logError("[CudaEncoder]: init the cuda, get the context.\n");
+			cg::core::infoRecorder->logTrace("[CudaEncoder]: init the cuda, get the context.\n");
 #if 0
 			CUresult cuError = CUDA_SUCCESS;
 			CUcontext cuCtxCurr;
@@ -197,7 +208,7 @@ namespace cg{
 			__cu(cuCtxPopCurrent(&cuContextCurr));
 #endif
 
-			cg::core::infoRecorder->logError("[CudaEncoder]: get context:%p.\n", m_cuContext);
+			cg::core::infoRecorder->logTrace("[CudaEncoder]: get context:%p.\n", m_cuContext);
 			return true;
 		}
 
@@ -390,11 +401,15 @@ namespace cg{
 			struct pooldata * data = NULL;
 
 
-			pTimer->Start();
+			
 			if(!(data = loadFrame())){
 				cg::core::infoRecorder->logTrace("[CudaEncoder]: load frame from pipe failed.\n");
 				return TRUE;
 			}
+
+			pTimer->Start();
+
+
 			SourceFrame * frame = (SourceFrame *)data->ptr;
 			writer_->updataPts(frame->imgPts);
 			if(frame->type == IMAGE){
@@ -432,7 +447,10 @@ namespace cg{
 			// now, ARGB data is in argbMat, then, encode
 
 			d_writer->write(*argbMat);
+#if 0
 			encodeTime = pTimer->Stop();
+			cg::core::infoRecorder->addEncodeTime(getEncodeTime());
+#endif
 
 			return TRUE;
 		}
@@ -450,7 +468,10 @@ namespace cg{
 			if(d_writer.empty()){
 				return FALSE;
 				// create a callback 
-				cv::Ptr<EncoderCallbackNet> callbackNet(new EncoderCallbackNet());
+				pCallbackNet = new EncoderCallbackNet(writer);
+				// set the cuda encoding timer to the callback
+				pCallbackNet->setRefCudaEncodingTimer(pTimer);
+				cv::Ptr<EncoderCallbackNet> callbackNet(pCallbackNet);
 				// check the callbacks dependency
 				// create the video writer
 				WaitForSingleObject(mutex, INFINITE);

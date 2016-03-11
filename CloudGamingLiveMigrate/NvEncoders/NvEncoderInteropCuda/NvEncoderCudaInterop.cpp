@@ -575,6 +575,7 @@ namespace cg{
 				cg::core::infoRecorder->logError("[CNvEncoderCudaInteropImpl]: encode frame failed with:%d.\n", nvStatus);
 			}
 			encodeTime = pTimer->Stop();
+			cg::core::infoRecorder->addEncodeTime(getEncodeTime());
 
 			return TRUE;
 		}

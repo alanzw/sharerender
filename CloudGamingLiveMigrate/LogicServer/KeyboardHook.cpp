@@ -12,10 +12,10 @@ namespace cg{
 		LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam){
 
 			KeyCommandHelper * keyHelper = KeyCommandHelper::GetKeyCmdHelper();
-			infoRecorder->logError("[Global]: key event, WPARAM: %x, LPARAM:%x.\n", wParam, lParam);
+			infoRecorder->logTrace("[Global]: key event, WPARAM: %x, LPARAM:%x.\n", wParam, lParam);
 			if (lParam & 0x80000000) // released
 			{
-				infoRecorder->logError("[Global]: key release, WPARAM: %x, LPARAM:%x.\n", wParam, lParam);
+				infoRecorder->logTrace("[Global]: key release, WPARAM: %x, LPARAM:%x.\n", wParam, lParam);
 				if (wParam == VK_F7) // f7 pressed
 				{
 					keyHelper->setRenderStep(0);
@@ -91,7 +91,7 @@ namespace cg{
 
 		bool KeyCommandHelper::installKeyHook(DWORD threadId){
 			// set the keyboard hook
-			infoRecorder->logError("set the keyboard hook, module:%p, thread id:%d!\n", NULL, threadId);
+			infoRecorder->logTrace("set the keyboard hook, module:%p, thread id:%d!\n", NULL, threadId);
 			keyHookHandle = SetWindowsHookEx(WH_KEYBOARD, HookProc, NULL, threadId);
 			if(!keyHookHandle){
 				infoRecorder->logError("[KeyCommandHelper]: set window hook ex failed with:%d.\n", GetLastError());

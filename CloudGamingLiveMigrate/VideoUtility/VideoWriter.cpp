@@ -37,6 +37,7 @@ namespace cg{
 		int ret = sendPacket(channelId, ctx, pkt, encoderPts);
 
 		writeTime = pTimer->Stop();
+		cg::core::infoRecorder->addPacketTime(getWriteTime());
 		return ret;
 	}
 

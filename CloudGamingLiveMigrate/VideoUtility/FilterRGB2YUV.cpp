@@ -516,7 +516,7 @@ filter_quit:
 		int srcstride[] = { 0, 0, 0, 0 };
 		int dststride[] = { 0, 0, 0, 0 };
 
-		pTimer->Start();
+		
 
 		srcdata = srcPipe->load_data();
 		if(srcdata == NULL){
@@ -526,10 +526,12 @@ filter_quit:
 			srcdata = srcPipe->load_data();
 
 			if(srcdata == NULL){
-				infoRecorder->logError("Filter]: get NULL src data from source pipeline .\n");
+				//infoRecorder->logError("Filter]: get NULL src data from source pipeline .\n");
 				return FALSE;
 			}
 		}
+
+		pTimer->Start();
 
 		iframe = (SourceFrame *)srcdata->ptr;
 		dstdata = dstPipe->allocate_data();
@@ -641,6 +643,8 @@ filter_quit:
 		dstPipe->store_data(dstdata);
 
 		convertTime = pTimer->Stop();
+
+		infoRecorder->addConvertTime(getConvertTime());
 
 #ifdef ENABLE_LOG_FILTER
 		infoRecorder->logError("[Filter]: notify encoder.\n");

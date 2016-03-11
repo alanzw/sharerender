@@ -236,7 +236,7 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 	{
 	case DLL_PROCESS_ATTACH:
 		{ 
-			Log::init("game_server.log");
+			//Log::init("game_server.log");
 			
 			infoRecorder->logTrace("[Global]: ");
 			infoRecorder->logTrace(GetCommandLine());
@@ -255,7 +255,7 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 				cmdCtrl = CmdController::GetCmdCtroller(cmdLine);
 				cmdCtrl->parseCmd();
 
-				infoRecorder->logError("[DllMain]: cmd ctrl: %s.\n", cmdCtrl->toString().c_str());
+				infoRecorder->logTrace("[DllMain]: cmd ctrl: %s.\n", cmdCtrl->toString().c_str());
 				// open the mapping and the mutex
 				exeName = cmdCtrl->getExeName();
 				infoRecorder->initMapping(exeName);
@@ -286,7 +286,7 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 			}
 			// disable rendering
 			//cmdCtrl->setFrameStep(0);
-			infoRecorder->logError("[DllMain]: render step:%d.\n", cmdCtrl->getFrameStep());
+			infoRecorder->logTrace("[DllMain]: render step:%d.\n", cmdCtrl->getFrameStep());
 
 			if(cmdCtrl->isListenMode()){
 				infoRecorder->logTrace("[DllMain]: listen mode: :%d.\n", cmdCtrl->getMode());
@@ -312,7 +312,7 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 				}
 				else if(cmdCtrl->getMode() == 2){
 					// listen to render proxy, to listen 60000 port
-					infoRecorder->logError("[DllMain]: to create server for render proxy.\n");
+					infoRecorder->logTrace("[DllMain]: to create server for render proxy.\n");
 					clientThreadHandle = chBEGINTHREADEX(NULL, 0, RenderConnectionLitener, cmdCtrl, FALSE, &clientThreadId);
 				}
 				// how to set cooperate work mode, render proxy and logic server both do the rendering
