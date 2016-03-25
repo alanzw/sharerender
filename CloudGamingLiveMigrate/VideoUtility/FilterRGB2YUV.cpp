@@ -613,7 +613,7 @@ filter_quit:
 				dstframe->realWidth = getW();
 				dstframe->realHeight = getH();
 				dstframe->lineSize[3] = dststride[3] = 0;
-				printf("convert to NV12, width:%d, height:%d", getW(), getH());
+				//printf("convert to NV12, width:%d, height:%d", getW(), getH());
 				// convert the format
 				sws_scale(swsCtx, src, srcstride, 0, iframe->realHeight, dst, dstframe->lineSize);
 #else

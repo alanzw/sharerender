@@ -127,6 +127,7 @@ namespace cg{
 			inline bool		enableFrameLog(){ return frameLog; }
 			inline bool		enableRTSPService(){ return enableRTSP; }
 			inline bool		enableRateControl(){ return rateControl; }
+			inline void		setMaxFps(int val){ rateControl = true; maxFps = val; }
 			inline bool		isToConnectLogic(){ return connectLogic; }
 			inline bool		isUrlReady(){ return urlReady; }
 			inline bool		is2DGame(){ return graphicMode == 3 ? true: false;}

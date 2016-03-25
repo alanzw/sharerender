@@ -44,10 +44,8 @@ namespace cg{
 	namespace nvcuvenc{
 		HANDLE CudaEncoder::mutex;
 
-		//cg::core::PTimer *refIntraMigrationTimerForCuda = NULL;
-
-
 		// TODO: be careful with callbacks, we need to check the dependency
+		
 		// encoder callback for net
 
 		EncoderCallbackNet::EncoderCallbackNet(VideoWriter * _writer): writer(_writer), isKeyFrame_(false), buf_(NULL), refCudaEncodingTimer(NULL), refIntraMigrationTimer(NULL), encodeTime(0){
@@ -399,8 +397,6 @@ namespace cg{
 #endif
 		BOOL CudaEncoder::run(){
 			struct pooldata * data = NULL;
-
-
 			
 			if(!(data = loadFrame())){
 				cg::core::infoRecorder->logTrace("[CudaEncoder]: load frame from pipe failed.\n");
@@ -408,7 +404,6 @@ namespace cg{
 			}
 
 			pTimer->Start();
-
 
 			SourceFrame * frame = (SourceFrame *)data->ptr;
 			writer_->updataPts(frame->imgPts);
@@ -447,21 +442,13 @@ namespace cg{
 			// now, ARGB data is in argbMat, then, encode
 
 			d_writer->write(*argbMat);
-#if 0
-			encodeTime = pTimer->Stop();
-			cg::core::infoRecorder->addEncodeTime(getEncodeTime());
-#endif
 
 			return TRUE;
 		}
 
 		BOOL CudaEncoder::onThreadStart(){
 			// check the dependency
-#if 0
-			if(!isAssigned()){
-				return FALSE;
-			}
-#endif
+
 			// register the event
 			registerEvent();
 			// here check the CV_Encoder

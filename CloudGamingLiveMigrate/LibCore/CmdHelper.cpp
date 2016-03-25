@@ -27,6 +27,7 @@ namespace cg{
 			urlReady = false;
 
 			rateControl = false;
+			maxFps = 60;
 			frameLog = false;
 			enableRTSP = false;
 			generateVideo = false;

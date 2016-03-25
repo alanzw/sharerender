@@ -110,24 +110,10 @@ namespace cg{
 			if(type==-1){
 				gpuUtilization=-1;
 			}
-#if 0
-			//A¿¨
-			if(type==0)
-			{
-				AMDInterface amd;
-				gpuUtilization=amd.GetGpuUsage();
-			}
-			//N¿¨
-			if(type==1)
-			{
-				NvidiaInterface nv;
-				gpuUtilization = nv.GetGpuUsage();
-			}
-#else
+
 			if(gpuInterface){
 				gpuUtilization = gpuInterface->GetGpuUsage();
 			}
-#endif
 			return gpuUtilization;
 		}
 
@@ -141,25 +127,11 @@ namespace cg{
 			if(type == -1)
 				gpuTemp = -1;
 
-#if 0
-			//A¿¨
-			if(type == 0)
-			{
-				AMDInterface amd;
-				gpuTemp = amd.GetGpuTemp();	//»ñÈ¡GPUÎÂ¶È
-			}
-			//N¿¨
-			if(type == 1)
-			{
-				NvidiaInterface nv;
-				gpuTemp = nv.GetGpuTemp();
-			}
-#else
+
 			if(gpuInterface){
 				gpuTemp = gpuInterface->GetGpuTemp();
 			}
 
-#endif
 			return gpuTemp;
 		}
 

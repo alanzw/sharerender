@@ -30,6 +30,10 @@ namespace cg{
 			int					bufSendingStep;
 			int					sendStep;
 
+
+			int					maxFps;
+			bool				fpsChanged;
+
 			int					currentSending;   // current sending counter
 
 			CRITICAL_SECTION	section;
@@ -54,6 +58,8 @@ namespace cg{
 			inline bool isSending(){ return enableSending; }
 
 			inline HHOOK getHookHandle(){ return keyHookHandle; }
+			inline void setMaxFps(int val){ fpsChanged = true; maxFps = val; }
+			inline int getMaxFps(){ return maxFps; }
 			inline int getRenderStep(){ return renderStep; }
 			inline int getSendStep(){ return sendStep; }
 			inline bool isF10Pressed(){ return f10pressed; }

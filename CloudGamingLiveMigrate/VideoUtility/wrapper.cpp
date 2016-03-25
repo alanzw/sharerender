@@ -190,7 +190,7 @@ namespace cg{
 			// get the image, store to image pipeline
 
 			sframe->type = IMAGE;
-			sframe->imgPts = cg::core::pcdiff_us(captureTv, initialTv, freq) / frameInterval;
+			//sframe->imgPts = cg::core::pcdiff_us(captureTv, initialTv, freq) / frameInterval;
 
 			unsigned char * buf = sframe->getImgBuf();
 			char * src = NULL;

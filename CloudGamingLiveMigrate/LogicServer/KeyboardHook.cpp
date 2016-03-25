@@ -81,6 +81,37 @@ namespace cg{
 						gGenerator->changeEncodeDevice(NVENC_ENCODER);
 					}
 				}
+				// control the fps
+				else if(wParam == 0x59){
+					// key V, for 1 frame per second
+					keyHelper->setMaxFps(1);
+				}
+				else if(wParam == 0x42){
+					// key B, for 10 frames per second
+					keyHelper->setMaxFps(10);
+				}
+				else if(wParam == 0x4e){
+					// key N, for 20 frames per second
+					keyHelper->setMaxFps(20);
+				}
+				else if(wParam == 0x4d){
+					// key M, for 30 frames per second
+					keyHelper->setMaxFps(30);
+				}
+				else if(wParam == VK_OEM_COMMA){
+					// key ,, for 40 frames per second
+					keyHelper->setMaxFps(40);
+				}
+				else if(wParam == VK_OEM_PERIOD){
+					// key ., for 50 frames per second
+					keyHelper->setMaxFps(50);
+				}
+				else if(wParam == VK_OEM_2){
+					// key /, for 60 frames per second
+					keyHelper->setMaxFps(60);
+				}
+
+
 			}
 			else{
 				infoRecorder->logError("[Global]: key pressed, WPARAM: %x, LPARAM:%x.\n", wParam, lParam);
@@ -100,7 +131,7 @@ namespace cg{
 			return true;
 		}
 		KeyCommandHelper *KeyCommandHelper::keyCmdHelper = NULL;
-		KeyCommandHelper::KeyCommandHelper():enableRender(true), synSign(false), synStart(0), f10pressed(false), keyHookHandle(NULL), renderStep(1), sendStep(1), renderStepChanged(false), bufSendingStep(1), sendingStepChanged(false), currentSending(0){
+		KeyCommandHelper::KeyCommandHelper():enableRender(true), synSign(false), synStart(0), f10pressed(false), keyHookHandle(NULL), renderStep(1), sendStep(1), renderStepChanged(false), bufSendingStep(1), sendingStepChanged(false), currentSending(0), maxFps(60), fpsChanged(false){
 			InitializeCriticalSection(&section);
 		}
 		KeyCommandHelper::~KeyCommandHelper(){
@@ -155,6 +186,10 @@ namespace cg{
 					_cmdCtrl->setFrameStep(0);
 				}
 				renderStepChanged = false;
+			}
+			if(fpsChanged){
+				_cmdCtrl->setMaxFps(maxFps);
+				fpsChanged = false;
 			}
 
 			return commit();

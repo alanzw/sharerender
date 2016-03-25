@@ -33,7 +33,7 @@ int main(int argc, char ** argv){
 		// only listen the render proxy
 		WSADATA WSAData;
 		WSAStartup(0x101, &WSAData);
-		
+
 		// debug the logic factory
 		LogicFactory * factory = LogicFactory::GetFactory();
 		factory->init();
@@ -81,7 +81,7 @@ int main(int argc, char ** argv){
 
 		if(gameNameReady){
 			printf("[Main]: will start the game with cmd line:%s %s.\n", \
-			argv[1], args);
+				argv[1], args);
 
 			loaderLogger = new LoaderLogger(gameName);
 
@@ -112,80 +112,80 @@ int main(int argc, char ** argv){
 	}
 	else{
 #if 1
-	// start the network
-	WSADATA WSAData;
-	WSAStartup(0x101, &WSAData);
-	infoRecorder = new InfoRecorder("Logic");
-	// debug the logic factory
-	LogicFactory * factory = LogicFactory::GetFactory();
-	factory->init();
-	if(argc == 2){
-		// set encoder option
-		factory->setEncoderOption(1);
-		factory->connectDis(argv[1], DIS_PORT_DOMAIN);
-		factory->registerLogic();
-		// enter the network dealing loop
-		factory->startListen();
-	}
-	else if(argc == 3){
-		// set encoder option
-		
-		factory->setEncoderOption(atoi(argv[2]));
-		factory->connectDis(argv[1], DIS_PORT_DOMAIN);
-		factory->registerLogic();
-		// enter the network dealing loop
-		factory->startListen();
-	}
-	// REGISTER logic server
-	
+		// start the network
+		WSADATA WSAData;
+		WSAStartup(0x101, &WSAData);
+		//infoRecorder = new InfoRecorder("Logic");
+		// debug the logic factory
+		LogicFactory * factory = LogicFactory::GetFactory();
+		factory->init();
+		if(argc == 2){
+			// set encoder option
+			factory->setEncoderOption(1);
+			factory->connectDis(argv[1], DIS_PORT_DOMAIN);
+			factory->registerLogic();
+			// enter the network dealing loop
+			factory->startListen();
+		}
+		else if(argc == 3){
+			// set encoder option
+
+			factory->setEncoderOption(atoi(argv[2]));
+			factory->connectDis(argv[1], DIS_PORT_DOMAIN);
+			factory->registerLogic();
+			// enter the network dealing loop
+			factory->startListen();
+		}
+		// REGISTER logic server
+
 
 #ifdef INCLUDE_DIS_CLIENT
-	// set up the dis part
-	loader->connectDis();
+		// set up the dis part
+		loader->connectDis();
 #else
-	// to debug, start the game process 
+		// to debug, start the game process 
 
 #endif
-	
-	// dispatch
-	factory->enterLoop();
-#else
-	printf("[LogicServer]: enter the logic server.\n");
-	printf("[LogicServer]: to load the game information.\n");
 
-	GameInfo * info = GameInfo::GetGameInfo();
-	if(!info->loadInfo()){
-		printf("[LogicServer]: game info load failed.\n");
+		// dispatch
+		factory->enterLoop();
+#else
+		printf("[LogicServer]: enter the logic server.\n");
+		printf("[LogicServer]: to load the game information.\n");
+
+		GameInfo * info = GameInfo::GetGameInfo();
+		if(!info->loadInfo()){
+			printf("[LogicServer]: game info load failed.\n");
+			getchar();
+			return -1;
+		}
+		info->showAllInfo();
+
+
+
+		printf("[LogicServer]: to start the network.\n");
+		LogicServer * logic = LogicServer::GetLogicServer();
+
+		event_base * base = event_base_new();
+
+		// start the logic server
+		logic->start();
+
+		logic->startGraphic();
+		logic->startListenGameProcess();
+		// dispatch all
+
+		logic->dispatch();
+
+		printf("[LogicServer]: before exit, to clean up.\n");
 		getchar();
-		return -1;
-	}
-	info->showAllInfo();
-
-
-
-	printf("[LogicServer]: to start the network.\n");
-	LogicServer * logic = LogicServer::GetLogicServer();
-
-	event_base * base = event_base_new();
-
-	// start the logic server
-	logic->start();
-
-	logic->startGraphic();
-	logic->startListenGameProcess();
-	// dispatch all
-
-	logic->dispatch();
-
-	printf("[LogicServer]: before exit, to clean up.\n");
-	getchar();
-	getchar();
+		getchar();
 
 
 #endif
 #endif
 
-	GameLoader * loader = GameLoader::GetLoader();
+		GameLoader * loader = GameLoader::GetLoader();
 
 
 	}

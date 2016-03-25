@@ -111,7 +111,6 @@ void StartHook(bool enableBackRunning) {
 
 	// if the game is CastleStorm, no need to replace wnd proc
 	if(enableBackRunning){
-
 		DetourAttach((LPVOID *)&RegisterClassANext, RegisterClassACallback);
 		DetourAttach((LPVOID *)&RegisterClassWNext, RegisterClassWCallback);
 		DetourAttach((LPVOID *)&RegisterClassExANext, RegisterClassExACallback);
