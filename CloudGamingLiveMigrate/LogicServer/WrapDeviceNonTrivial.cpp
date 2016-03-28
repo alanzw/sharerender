@@ -226,7 +226,7 @@ STDMETHODIMP WrapperDirect3DDevice9::DrawIndexedPrimitiveUP(
 			csSet->writeUInt(PrimitiveCount);
 			csSet->writeUInt(IndexDataFormat);
 			csSet->writeUInt(VertexStreamZeroStride);
-			csSet->writeByteArr((char *)pIndexData, NumVertices * IndexSize);
+			csSet->writeByteArr((char *)pIndexData, PrimitiveCount * 3 * IndexSize);
 			csSet->writeByteArr((char *)pVertexStreamZeroData, NumVertices * VertexStreamZeroStride);
 			csSet->endCommand();
 		}

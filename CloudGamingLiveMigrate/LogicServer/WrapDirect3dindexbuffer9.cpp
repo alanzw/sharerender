@@ -412,10 +412,17 @@ int WrapperDirect3DIndexBuffer9::UpdateIndexBuffer(ContextAndCache * ctx) {
 	ctx->write_uint(base);
 	ctx->write_uint(size);
 	ctx->write_uint(flag);
-	ctx->write_int(CACHE_MODE_DIFF);
 
 	int stride = (Format == D3DFMT_INDEX16) ? 2 : 4;
 
+
+	ctx->write_int(CACHE_MODE_COPY);
+	ctx->write_char(stride);
+	ctx->write_byte_arr(((char *)m_LockData.pRAMBuffer) + base, size);
+	ctx->endCommand();
+	return 1;
+
+	ctx->write_int(CACHE_MODE_DIFF);
 	ctx->write_char(stride);
 
 	UINT count_limit = 0, count = 0;

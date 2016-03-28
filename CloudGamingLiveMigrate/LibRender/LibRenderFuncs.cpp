@@ -1122,8 +1122,18 @@ HRESULT FakedDrawIndexedPrimitiveUP(RenderChannel * rch) {
 	D3DFORMAT IndexDataFormat = (D3DFORMAT)(rch->cc->read_uint());
 	UINT VertexStreamZeroStride = rch->cc->read_uint();
 
-	int indexSize = NumVertices * 2;
+
+	int indexSize = 0;
+
+#if 0
+	indexSize = NumVertices * 2;
 	if(IndexDataFormat == D3DFMT_INDEX32) indexSize = NumVertices * 4;
+#else
+
+	indexSize = PrimitiveCount * 2 *3;
+	if(IndexDataFormat == D3DFMT_INDEX32) indexSize = PrimitiveCount * 4 * 3;
+
+#endif
 	char* indexData = new char[indexSize];
 	rch->cc->read_byte_arr(indexData, indexSize);
 
