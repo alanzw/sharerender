@@ -71,7 +71,7 @@ namespace cg{
 		IDirect3DDevice9 * d3d_device;		// the source device
 
 		IDirect3DSurface9 * surface;		// the surface
-		IDirect3DSurface9 * sysOffscreenSurface, * deviceOffscreenSurface; 
+		IDirect3DSurface9 * sysOffscreenSurface, * noAARenderTarget; 
 
 		static int count;					// record the class construction times
 		static IDirect3D9 * d3d;
@@ -81,7 +81,7 @@ namespace cg{
 	public:
 
 		// use source type and window height and width create the D3DWrapper
-		D3DWrapper(HWND h, IDirect3DDevice9 * device, int winWidth, int winHeight, pipeline *_src_pipe):Wrapper(h, winWidth, winHeight, _src_pipe), d3d_device(device), surface(NULL), sysOffscreenSurface(NULL), deviceOffscreenSurface(NULL){
+		D3DWrapper(HWND h, IDirect3DDevice9 * device, int winWidth, int winHeight, pipeline *_src_pipe):Wrapper(h, winWidth, winHeight, _src_pipe), d3d_device(device), surface(NULL), sysOffscreenSurface(NULL), noAARenderTarget(NULL){
 
 			//pTimer = new cg::core::PTimer();
 

@@ -235,6 +235,9 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 #endif
 	bool tm = false, tm1 = false;
 
+	
+	//DebugBreak();
+
 
 	keyCmdHelper->lock();
 	tm = keyCmdHelper->isSynSigned();

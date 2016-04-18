@@ -268,7 +268,7 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 			}
 			if (StartHookCalled == 0){
 				infoRecorder->logTrace("[Global]: start to hook.\n");
-				if(exeName == string("CastleStorm.exe") || exeName == string("castlestorm.exe") || exeName == string("castlestorm") || exeName == string("CastleStorm") || exeName == string("TransGame.exe") || exeName == string("transgame.exe")
+				if(exeName == string("CastleStorm.exe") || exeName == string("castlestorm.exe") || exeName == string("castlestorm") || exeName == string("CastleStorm") || exeName == string("TransGame.exe") || exeName == string("transgame.exe") || exeName == string("ShadowRun.exe") || exeName ==  string("shadowrun.exe")
 					){
 					enableBackRunning = false;
 				}

@@ -8,10 +8,8 @@
 #include "../LibCore/bmpformat.h"
 #include "../LibCore/InfoRecorder.h"
 
-
-#define USE_RENDER_TARGET    // enable when use logic server to gen video
-//#define USE_BACK_BUFFER    // enable when use render proxy to gen video
-
+#define USE_COPY_RT    // use the COPY render target to get antialiased screen
+//#define USE_RENDER_TARGET    // enable when use logic server to gen video
 
 namespace cg{
 
@@ -194,16 +192,15 @@ namespace cg{
 
 			unsigned char * buf = sframe->getImgBuf();
 			char * src = NULL;
-
-#ifndef USE_BACK_BUFFER
-#ifdef USE_RENDER_TARGET
+			HRESULT hr = D3D_OK;
+			// get the image to sysOffscreenSurface
+#ifndef USE_COPY_RT
 			IDirect3DSurface9 * renderTarget = NULL;
 			d3d_device->GetRenderTarget(0, &renderTarget);
-#endif
-			// get the image to sysOffscreenSurface
+
 			if(sysOffscreenSurface == NULL){
-				// if null, create new
-#ifdef USE_RENDER_TARGET
+				// if not created, create one
+
 				renderTarget->GetDesc(&desc);
 				if(desc.Width != windowWidth || desc.Height != windowHeight ){
 					cg::core::infoRecorder->logTrace("[D3DWrapper]: render target size not match window size, target size (%d x %d), window size (%d x %d), render target format:%d(desire:%d).\n", desc.Width, desc.Height, windowWidth, windowHeight, desc.Format, D3DFMT_A8R8G8B8);
@@ -216,47 +213,22 @@ namespace cg{
 				}
 				else{
 					cg::core::infoRecorder->logError("[D3DWrapper]: unsupported render target format is:%d, supported(BGR or RGB)\n", desc.Format);
+
 					return false;
 				}
-#else
-				IDirect3DSurface9 * renderTarget = NULL;
-				d3d_device->GetRenderTarget(0, &renderTarget);
-				//D3DSURFACE_DESC des;
-				renderTarget->GetDesc(&desc);
-				if(desc.Width != windowWidth || desc.Height != windowHeight){
-					cg::core::infoRecorder->logError("[D3DWrapper]: render target size not match window size.\n");
-				}
 
-				cg::core::infoRecorder->logError("[D3DWrapper]: render target size (%d x %d).\n", desc.Width, desc.Height);
-				renderTarget->Release();
-#endif
+
 				if(FAILED(d3d_device->CreateOffscreenPlainSurface(desc.Width, desc.Height, desc.Format, D3DPOOL_SYSTEMMEM, &sysOffscreenSurface, NULL))){
 					cg::core::infoRecorder->logError("[D3DWrapper]: create system offscreeen surface failed.\n");
 					sourcePipe->release_data(data);
 					return false;
 				}
 			}
-
-
-			HRESULT hr;
-			// 
-#ifndef USE_RENDER_TARGET
-			DWORD pass;
-			hr = d3d_device->ValidateDevice(&pass);
-			if(hr == D3DERR_DEVICELOST){
-				cg::core::infoRecorder->logError("[D3DWrapper]: validate device return LOST DEVICE.\n");
-			}
-
-			hr = d3d_device->GetFrontBufferData(0, sysOffscreenSurface);
-			if(FAILED(hr)){
-				cg::core::infoRecorder->logError("[D3DWrapper]: get front buffer data failed.\n");		
-			}
-#else
 			hr = d3d_device->GetRenderTargetData(renderTarget, sysOffscreenSurface);
 			if(FAILED(hr)){
 				cg::core::infoRecorder->logError("[D3DWrapper]: get render target data failed.\n");		
 			}
-#endif
+
 			if(FAILED(hr)){
 					
 				if(hr == D3DERR_DRIVERINTERNALERROR){
@@ -271,18 +243,66 @@ namespace cg{
 				}
 				return false;
 			}
-#ifdef USE_RENDER_TARGET
-			renderTarget->Release();
-#endif
 
+#else // USE_RENDER_TARGET
+			IDirect3DSurface9 * renderTarget = NULL;
+			hr = d3d_device->GetRenderTarget(0, &renderTarget);
+			// create the surface in system memory
+			if(sysOffscreenSurface == NULL){
+				// if not created, create one
+				renderTarget->GetDesc(&desc);
+				if(desc.Width != windowWidth || desc.Height != windowHeight ){
+					cg::core::infoRecorder->logTrace("[D3DWrapper]: render target size not match window size, target size (%d x %d), window size (%d x %d), render target format:%d(desire:%d).\n", desc.Width, desc.Height, windowWidth, windowHeight, desc.Format, D3DFMT_A8R8G8B8);
+				}
 
-#else
-			HRESULT hr;
-			if(FAILED(d3d_device->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE_MONO, &sysOffscreenSurface))){
-				cg::core::infoRecorder->logError("[D3DWrapper]: get back buffer failed.\n");
+				if(desc.Format == D3DFMT_A8R8G8B8 || desc.Format == D3DFMT_X8R8G8B8){					cg::core::infoRecorder->logTrace("[D3DWrapper]: RGB render target format is:%d, supported(ARGB: %d or XRGB: %d\n", desc.Format, D3DFMT_A8R8G8B8, D3DFMT_X8R8G8B8);
+				}
+				else if(desc.Format == D3DFMT_A8B8G8R8 || desc.Format == D3DFMT_X8B8G8R8){
+					cg::core::infoRecorder->logTrace("[D3DWrapper]: BGR render target format is:%d, supported(ABGR: %d or XBGR: %d\n", desc.Format, D3DFMT_A8B8G8R8, D3DFMT_X8B8G8R8);
+				}
+				else{
+					cg::core::infoRecorder->logError("[D3DWrapper]: unsupported render target format is:%d, supported(BGR or RGB)\n", desc.Format);
+
+					return false;
+				}
+
+				if(FAILED(d3d_device->CreateOffscreenPlainSurface(desc.Width, desc.Height, desc.Format/*D3DFMT_A8R8G8B8*/, D3DPOOL_SYSTEMMEM, &sysOffscreenSurface, NULL))){
+					cg::core::infoRecorder->logError("[D3DWrapper]: create system offscreeen surface failed.\n");
+					sourcePipe->release_data(data);
+					return false;
+				}
+			}
+
+			// check and create render target
+			if(noAARenderTarget == NULL){
+				//
+				renderTarget->GetDesc(&desc);
+				hr = d3d_device->CreateRenderTarget(desc.Width, desc.Height, desc.Format /*D3DFMT_A8R8G8B8*/, D3DMULTISAMPLE_NONE, 0, FALSE, &noAARenderTarget, NULL);
+				if(FAILED(hr) || !noAARenderTarget){
+					cg::core::infoRecorder->logError("[D3DWrapper]: Create Render Target Failed with:%x.\n", hr);
+					return false;
+				}
+			}
+
+			// stretch render target 
+
+			hr = d3d_device->StretchRect(renderTarget, NULL, noAARenderTarget, NULL, D3DTEXF_NONE);
+			if(FAILED(hr)){
+				cg::core::infoRecorder->logError("[D3DWrapper]: Stretch Render Target Failed with:%x.\n", hr);
 				return false;
 			}
-#endif // USE_BACK_BUFFER
+
+			hr = d3d_device->GetRenderTargetData(noAARenderTarget, sysOffscreenSurface);
+			if(FAILED(hr)){
+				cg::core::infoRecorder->logError("[D3DWrapper]: Get Render Target Data failed with: %x.\n", hr);
+				return false;
+			}
+			// release the render target
+			renderTarget->Release();
+
+#endif // USE_RENDER_TARGET
+
+			///// copy data from surface.
 
 			if(FAILED(sysOffscreenSurface->GetDesc(&desc))){
 				cg::core::infoRecorder->logError("[D3DWrapper]: sys off screen surface get desc failed.\n");
@@ -314,16 +334,10 @@ namespace cg{
 
 			sysOffscreenSurface->UnlockRect();
 			captureTime = pTimer->Stop();
-
-
 			cg::core::infoRecorder->addCaptureTime(getCaptureTime());
 			
-#ifdef USE_BACK_BUFFER
-			sysOffscreenSurface->Release();
-#endif
 			sourcePipe->store_data(data);
 			sourcePipe->notify_all();
-			//cg::core::infoRecorder->logError("[D3DWrapper]: capture image succ.\n");
 			return true;
 		}
 	}
