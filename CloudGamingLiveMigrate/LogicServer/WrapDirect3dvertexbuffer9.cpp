@@ -25,14 +25,28 @@ int WrapperDirect3DVertexBuffer9::sendCreation(void * ctx){
 	c->write_uint(Pool);
 	c->endCommand();
 
+	cg::core::PTimer *t_timer = new cg::core::PTimer();
+
+
+	t_timer->Start();
+
 	if(pTimer){
 		pTimer->Start();
 	}
 	int ret = PrepareVertexBuffer(c);
+#if 0
 	if(pTimer){
 		unsigned int interval =  pTimer->Stop();
 		infoRecorder->logError("[WrpaperDirect3DVertexBuffer9]: prepare vertex buffer use: %f ms.\n", interval * 1000.0 / pTimer->getFreq());
 	}
+#else
+	int interval = t_timer->Stop();
+	infoRecorder->logError("[WrpaperDirect3DVertexBuffer9]: prepare vertex buffer use: %f ms.\n", interval * 1000.0 / t_timer->getFreq());
+	if(pTimer){
+		int gInterval = pTimer->Stop();
+		infoRecorder->logError("[CheckCreation]: return time:%f.\n", gInterval *1000.0 / pTimer->getFreq());
+	}
+#endif
 
 	return ret;
 }
@@ -393,23 +407,45 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::GetDesc(THIS_ D3DVERTEXBUFFER_DESC *p
 }
 // prepare the vertex buffer
 int WrapperDirect3DVertexBuffer9::PrepareVertexBuffer(ContextAndCache *ctx){
-	infoRecorder->logError("[WrapperDirect3DVertexBuffer9]: Prepare vertex buffer for %d.\n", id);
+	infoRecorder->logError("[WrapperDirect3DVertexBuffer9]: Prepare vertex buffer for %d, len:%d.\n", id, Length);
+
+	cg::core::PTimer * t_timer = new cg::core::PTimer();
+
+	int interval = 0, interval1 = 0, interval2 = 0, interval3 = 0;
+
+	if(pTimer){
+	int gInterval = pTimer->Stop();
+	infoRecorder->logError("[PrepareVertexBuffer]: call time:%f.\n", gInterval *1000.0 / pTimer->getFreq());
+
+	}
+	t_timer->Start();
+
 	ctx->beginCommand(VertexBufferUnlock_Opcode, getId());
 	ctx->write_uint(0);
 	ctx->write_uint(Length);
 	ctx->write_uint(D3DLOCK_NOSYSLOCK);
 
 	ctx->write_int(CACHE_MODE_COPY);
+	interval = t_timer->Stop();
 	if(isFirst){
 		ctx->write_byte_arr((char *)ram_buffer, Length);
+		interval1 = t_timer->Stop();
 		memcpy(cache_buffer, ram_buffer, Length);
+		interval2= t_timer->Stop();
 		ctx->resetChanged(updateFlag);
 		isFirst = false;
 	}
 	else{
+		t_timer->Start();
 		ctx->write_byte_arr((char *)cache_buffer, Length); 
+		interval1 = t_timer->Stop();
 	}
 	ctx->endCommand();
+	interval3 = t_timer->Stop();
+	infoRecorder->logError("[PrepareVertexBuffer]: id:%d, begin use:%f, write_arr use:%f, memcpy use:%f, end use:%f.\n",id, interval * 1000.0 / t_timer->getFreq(), interval1 * 1000.0 / t_timer->getFreq(), interval2 * 1000.0 / t_timer->getFreq(), interval3 * 1000.0 / t_timer->getFreq());
+
+	if(pTimer)
+		pTimer->Start();
 
 	return Length;
 }

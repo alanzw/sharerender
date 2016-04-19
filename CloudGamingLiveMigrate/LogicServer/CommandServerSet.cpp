@@ -205,7 +205,7 @@ void ContextAndCache::write_packed_byte_arr(char * src, int length){
 		}
 
 		clear();
-		infoRecorder->logError("[ContextAndCache]: send packed byte arr, idx:%d, total count: %d, data len:%d, succ send:%d.\n", index, packetCount, sizeToSend, ret);
+		//infoRecorder->logError("[ContextAndCache]: send packed byte arr, idx:%d, total count: %d, data len:%d, succ send:%d.\n", index, packetCount, sizeToSend, ret);
 	}
 
 	
@@ -494,6 +494,8 @@ bool ContextManager::switchCtx(){
 			cur_ctx->taskQueue->setStatus(QUEUE_UPDATE);  // now, only update
 			// add ctx to pool
 			
+		}else{
+			infoRecorder->logError("[ContextManager]: ctx id:%d, status:%s, queen len:%d.\n", cur_ctx->getIndex(), cur_ctx->status == CTX_INIT ? "CTX_INIT" : (cur_ctx->status == CTX_PREPARE ? "CTX_PREPARE" : (cur_ctx->status == CTX_READY ? "CTX_READY" :"NONE")), cur_ctx->taskQueue->getCount());
 		}
 	}
 

@@ -81,6 +81,7 @@ DWORD TaskQueue::QueueProc(LPVOID param){
 			pPTimer = new PTimer();
 			pThreadTimer = new PTimer();
 			timeCounter = 0;
+			isWaiting = false;
 		}
 		TaskQueue::~TaskQueue(){
 			DeleteCriticalSection(&cs);
@@ -123,7 +124,7 @@ DWORD TaskQueue::QueueProc(LPVOID param){
 			count--;
 			LeaveCriticalSection(&cs);
 		}
-		inline int TaskQueue::getCount(){
+		int TaskQueue::getCount(){
 			int ret = 0;
 			EnterCriticalSection(&cs);
 			ret = count;
@@ -152,7 +153,7 @@ DWORD TaskQueue::QueueProc(LPVOID param){
 			count++;
 			totalObjects++;
 			taskQueue.push(obj);
-			if(count == 1){
+			if(isWaiting){
 				awake();
 			}
 			LeaveCriticalSection(&cs);
@@ -205,8 +206,9 @@ DWORD TaskQueue::QueueProc(LPVOID param){
 			int ret = 0;
 			int tmpTime = 0;
 			//infoRecorder->logError("[TaskQueue]: thread %d run.\n", getThreadId());
+			isWaiting = true;
 			DWORD waitRet = WaitForSingleObject(evt, INFINITE);
-
+			isWaiting = false;
 			pThreadTimer->Start();
 
 			switch(waitRet){
@@ -243,7 +245,7 @@ DWORD TaskQueue::QueueProc(LPVOID param){
 					infoRecorder->logError("[TaskQueue]: get NULL front, task queue has: %d.\n", count);
 					break;
 				}
-				context->resetChecked(ib->frameCheckFlag);
+				//context->resetChecked(ib->frameCheckFlag);
 
 				if(true == ib->sync){
 					infoRecorder->logError("[TaskQueue]: the task is synchronized, %s.\n", typeid(*ib).name());
@@ -276,6 +278,7 @@ DWORD TaskQueue::QueueProc(LPVOID param){
 								ib->print();
 							}
 						}
+						//context->resetChecked(ib->frameCheckFlag);
 					}else if(QUEUE_UPDATE == qStatus){
 #ifdef ENABLE_QUEUE_LOG
 						infoRecorder->logTrace("[TaskQueue]: update, check update.\n");
@@ -304,6 +307,7 @@ DWORD TaskQueue::QueueProc(LPVOID param){
 						infoRecorder->logError("[TaskQueue]: task status is invalid.\n");
 					}
 				}
+				//context->resetChecked(ib->frameCheckFlag);
 				popObj();
 			}
 			//infoRecorder->logError("[TaskQueue]: actually")

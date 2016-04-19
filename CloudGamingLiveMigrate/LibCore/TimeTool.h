@@ -62,6 +62,7 @@ TIMEL1:
 				m_overhead = Stop();
 			}
 			virtual void Start(void){
+				startTimer = false;
 				if(!startTimer){
 					QueryPerformanceCounter(&m_startcycle);
 					startTimer = true;

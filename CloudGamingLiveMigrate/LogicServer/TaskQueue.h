@@ -208,6 +208,8 @@ namespace cg{
 			HANDLE evt;
 			HANDLE mutex;
 			bool isLocked;
+
+			bool isWaiting;
 			
 			static int index;
 			int awakeTime;
@@ -222,7 +224,7 @@ namespace cg{
 			void awake();
 			IdentifierBase *getObj();
 			void popObj();
-			int getCount();
+			
 			PTimer *pPTimer;
 			PTimer *pThreadTimer;
 		public:
@@ -236,7 +238,7 @@ namespace cg{
 			TaskQueue();
 			~TaskQueue();
 
-
+			int getCount();
 			// queue operation
 			void add(IdentifierBase *obj);
 			void setStatus(QueueStatus s);
