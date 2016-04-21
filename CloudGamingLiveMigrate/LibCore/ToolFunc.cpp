@@ -64,7 +64,7 @@ void BufferLockData::updateLock(UINT offset, UINT size, DWORD flags){
 	}
 	else{
 		updatedOffset = org_off < offset ? org_off : offset;
-		updatedSizeToLock = (end > org_end ? end: org_end) - OffsetToLock;
+		updatedSizeToLock = (end > org_end ? end: org_end) - updatedOffset;
 		// get the real updated size
 		// if overlap, size = SizeToLock
 		// if no overlap, size = org_size + size

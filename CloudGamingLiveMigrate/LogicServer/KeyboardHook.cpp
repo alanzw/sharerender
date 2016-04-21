@@ -16,7 +16,7 @@ namespace cg{
 			if (lParam & 0x80000000) // released
 			{
 				infoRecorder->logTrace("[Global]: key release, WPARAM: %x, LPARAM:%x.\n", wParam, lParam);
-				if (wParam == VK_F7) // f7 pressed
+				if (wParam == VK_F7 || wParam == VK_F6) // f7 pressed
 				{
 					keyHelper->setRenderStep(0);
 #if 0

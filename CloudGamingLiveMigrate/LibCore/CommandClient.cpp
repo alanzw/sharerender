@@ -95,7 +95,7 @@ void CommandClient::recv_packed_byte_arr(char * dst, int length){
 			infoRecorder->logError("[CommandClient]: recv_packet failed, len:%d.\n", recvLen);
 			return;
 		}
-		infoRecorder->logError("[CommandClient]: recv_packet get data len:%d.\n", recvLen);
+		//infoRecorder->logError("[CommandClient]: recv_packet get data len:%d.\n", recvLen);
 		
 		packetCount = read_ushort();
 		count = packetCount;
@@ -105,7 +105,7 @@ void CommandClient::recv_packed_byte_arr(char * dst, int length){
 		read_byte_arr(dst, dataLen);
 		totalLen += dataLen;
 		dst += dataLen;
-		infoRecorder->logError("[CommandClient]: recv packed byte arr, idx:%d, total count:%d, data len:%d.\n", idx, packetCount, dataLen);
+		//infoRecorder->logError("[CommandClient]: recv packed byte arr, idx:%d, total count:%d, data len:%d.\n", idx, packetCount, dataLen);
 
 	}while(idx != (packetCount - 1));
 	if(totalLen != length){
@@ -145,7 +145,7 @@ int CommandClient::take_command(int& op_code, int& obj_id) {
 	}
 #endif
 
-	infoRecorder->logTrace("[CommandClient]: take_command, func count:%d.\n", func_count);
+	//infoRecorder->logTrace("[CommandClient]: take_command, func count:%d.\n", func_count);
 	
 #if 1
 	if(func_count == 0) {

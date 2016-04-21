@@ -273,7 +273,7 @@ DWORD WINAPI RenderChannel::ChannelThreadProc(LPVOID param){
 			func_remain = rch->cc->take_command(rch->op_code, rch->obj_id);
 			if (rch->op_code >= 0 && rch->op_code < MaxSizeUntilNow_Opcode){
 				if (rch->client_render){
-					cg::core::infoRecorder->logTrace("[RenderChannel]: opcode:%d, cmd :%s.\n", rch->op_code, (funcs[rch->op_code].name));
+					//cg::core::infoRecorder->logTrace("[RenderChannel]: opcode:%d, cmd :%s.\n", rch->op_code, (funcs[rch->op_code].name));
 					(*(funcs[rch->op_code].func))(rch);
 				}
 				if(rch->op_code == Present_Opcode){
@@ -407,7 +407,7 @@ void RenderChannel::onPresent(unsigned int tags){
 		VideoGen::addMap((IDENTIFIER )taskId, generator);
 	}
 	else{
-		cg::core::infoRecorder->logError("on present: generator inited: %p.\n", generator);
+		//cg::core::infoRecorder->logError("on present: generator inited: %p.\n", generator);
 	}
 	if(generator){
 		generator->setVideoTag(tags);

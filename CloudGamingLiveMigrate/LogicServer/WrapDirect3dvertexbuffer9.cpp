@@ -268,6 +268,7 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Lock(THIS_ UINT OffsetToLock,UINT Siz
 #else  // USE_MEM_VERTEX_BUFFER
 	
 	// store the lock information
+	infoRecorder->logError("WrapperDirect3DVertexBuffer9::Lock(), id=%d, length=%d, offest=%d, size_to_lock=%d, flag=%d\n",this->id, Length, OffsetToLock, SizeToLock, Flags);
 
 	UINT sizeToLock = SizeToLock;
 	if(SizeToLock == 0) 
@@ -313,6 +314,27 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Unlock(THIS) {
 	// copy to video buffer
 	memcpy(m_LockData.pVideoBuffer, (char *)m_LockData.pRAMBuffer + m_LockData.OffsetToLock, m_LockData.SizeToLock);
 
+#if 0
+	base = m_LockData.OffsetToLock;
+	// check the updated data size
+	UCHAR * src = (UCHAR *)(cache_buffer + m_LockData.OffsetToLock);
+	UCHAR * dst = (UCHAR *)((UCHAR *)(m_LockData.pRAMBuffer) + m_LockData.OffsetToLock);
+	for(int i = 0; i< m_LockData.SizeToLock; ++i){
+		if((*src) ^ (*dst)){
+			//d = i - last;
+			//last = i;
+			//ctx->write_int(d);
+			//ctx->write_char(*dst);
+			cnt++;
+			*src = *dst;
+			
+		}
+		src++;
+		dst++;
+	}
+	infoRecorder->logError("[UnlockVB]: updated:%d, total size(3x):%d.\n", cnt, cnt *3);
+
+#endif
 	updateFlag = 0x8fffffff;
 	csSet->checkObj(this);
 
@@ -461,16 +483,21 @@ int WrapperDirect3DVertexBuffer9::UpdateVertexBuffer(ContextAndCache * ctx){
 	UINT base = m_LockData.updatedOffset;
 	UINT size = m_LockData.updatedSizeToLock;
 	DWORD flag = m_LockData.Flags;
+	int updatedSize = m_LockData.updatedSize;
 
-	ctx->beginCommand(VertexBufferUnlock_Opcode, getId());
-	ctx->write_uint(base);
-	ctx->write_uint(size);
-	ctx->write_uint(flag);
+	m_LockData.updateClear();
+	
+	//if(updatedSize > Length / 3){
+		ctx->beginCommand(VertexBufferUnlock_Opcode, getId());
+		ctx->write_uint(base);
+		ctx->write_uint(size);
+		ctx->write_uint(flag);
 
-	ctx->write_int(CACHE_MODE_COPY);
-	ctx->write_byte_arr(((char *)m_LockData.pRAMBuffer) + base, size);
-	ctx->endCommand();
-	return 1;
+		ctx->write_int(CACHE_MODE_COPY);
+		ctx->write_byte_arr(((char *)m_LockData.pRAMBuffer) + base, size);
+		ctx->endCommand();
+		return 1;
+	//}
 
 	ctx->beginCommand(VertexBufferUnlock_Opcode, getId());
 	ctx->write_uint(base);

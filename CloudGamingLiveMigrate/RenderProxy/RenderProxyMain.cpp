@@ -374,7 +374,25 @@ int main(int argc, char ** argv){
 		printf("RenderProxy [url] [port] [GameName] [enableRtsp]\tWork in single render mode.\n");
 	}
 #else
-	dealCmd(argc, argv);
+
+	int t_argc = 11;
+	char * t_argv[] = {
+		"RenderProxy.exe",
+		"-m",
+		"2",
+		"-u",
+		"127.0.0.1",
+		"-p",
+		"7000",
+		"-e",
+		"1",
+		"-n",
+		"SprillRichi.exe"
+	};
+
+	dealCmd(t_argc, t_argv);
+
+	//dealCmd(argc, argv);
 #endif
 	return 0;
 }

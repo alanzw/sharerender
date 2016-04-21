@@ -55,6 +55,8 @@ using namespace cg::core;
 #endif
 
 //#define ENABLE_TEXTURE_LOG
+//#define ENABLE_DEVICE_LOG
+//#define ENBALE_DEVICE_LOG
 
 
 enum CtxStatus{

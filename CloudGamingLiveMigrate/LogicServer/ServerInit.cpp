@@ -85,7 +85,7 @@ LRESULT CALLBACK NewWndProc(
 	_In_ LPARAM lParam){
 		LRESULT hr = TRUE;
 
-		infoRecorder->logTrace("[Global]: WndProc, HWND:%p, Msg:%x.\n", hwnd, uMsg);
+		//infoRecorder->logTrace("[Global]: WndProc, HWND:%p, Msg:%x.\n", hwnd, uMsg);
 
 		switch(uMsg){
 		case WM_ACTIVATE:

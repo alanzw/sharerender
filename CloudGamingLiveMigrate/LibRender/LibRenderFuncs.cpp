@@ -26,7 +26,7 @@ using namespace cg::core;
 
 
 // this definition will log the specific string for each command
-//#define ENABLE_LOG_SPEC_STRING
+#define ENABLE_LOG_SPEC_STRING
 
 
 #ifdef BACKBUFFER_TEST
@@ -590,7 +590,7 @@ HRESULT FakedCreateVertexBuffer(RenderChannel * rch) {
 
 	LPDIRECT3DVERTEXBUFFER9 vb = NULL;
 
-	cg::core::infoRecorder->logTrace("FakedCreateVertexBuffer(%d, K%d, %d, %d, %p, %p)! Length:%d, Usage:%x, FVF:%x, Pool:%d, id:%d\n",Length, Usage, FVF, Pool, &vb, NULL, Length, Usage, FVF, Pool,id);
+	cg::core::infoRecorder->logTrace("FakedCreateVertexBuffer(%d, %d, %d, %d, %p, %p)! Length:%d, Usage:%x, FVF:%x, Pool:%d, id:%d\n",Length, Usage, FVF, Pool, &vb, NULL, Length, Usage, FVF, Pool,id);
 	rch->getDevice(rch->obj_id);
 	HRESULT hr = rch->curDevice->CreateVertexBuffer(Length, Usage, FVF, Pool, &vb, NULL);
 	if(FAILED(hr)){
@@ -845,7 +845,7 @@ HRESULT FakedCreateVertexDeclaration(RenderChannel * rch) {
 		strType = TypeToString(dt[i].Type);
 		strMethod = MethodToString(dt[i].Method);
 		strUsage = UsageToString(dt[i].Usage);
-		infoRecorder->logError("stream:%d offset:%d type:%s method:%s usage:%s usage index:%d\n", dt[i].Stream, dt[i].Offset, strType, strMethod, strUsage, dt[i].UsageIndex);
+		//infoRecorder->logError("stream:%d offset:%d type:%s method:%s usage:%s usage index:%d\n", dt[i].Stream, dt[i].Offset, strType, strMethod, strUsage, dt[i].UsageIndex);
 		free(strType);
 		free(strMethod);
 		free(strUsage);
@@ -1065,11 +1065,6 @@ HRESULT FakedDrawPrimitiveUP(RenderChannel * rch) {
 
 	rch->getDevice(rch->obj_id);
 
-
-	char * strType = PrimitiveTypeToString(PrimitiveType);
-	cg::core::infoRecorder->logTrace("FakedDrawPrimitiveUP(%s, %d, %p, %d), data size:%d.\n", strType, PrimitiveCount, up_buf, VertexStreamZeroStride, VertexCount * VertexStreamZeroStride);
-	free(strType);
-
 	HRESULT hr = rch->curDevice->DrawPrimitiveUP(PrimitiveType, PrimitiveCount, (void*)up_buf, VertexStreamZeroStride);
 	
 
@@ -1078,34 +1073,6 @@ HRESULT FakedDrawPrimitiveUP(RenderChannel * rch) {
 	cg::core::infoRecorder->logTrace("FakedDrawPrimitiveUP(%s, %d, %p, %d).\n", strType, PrimitiveCount, up_buf, VertexStreamZeroStride);
 	free(strType);
 
-#if 0
-	if(VertexStreamZeroStride == 40){
-		// print the vertex
-		cg::core::infoRecorder->logTrace("Vertex count:%d\n", VertexCount);
-		for(int i = 0; i< VertexCount; i++){
-			cg::core::infoRecorder->logTrace("vertex: %d is:\n", i);
-			for(int j = 0; j < VertexStreamZeroStride >> 2; j++){
-				cg::core::infoRecorder->logTrace("%f\t", ((float *)up_buf)[i * VertexStreamZeroStride >> 2 + j]);
-			}
-			cg::core::infoRecorder->logTrace("\n");
-		}
-		// save the result
-		IDirect3DSurface9 * backBuffer = NULL;
-		HRESULT hhr = rch->curDevice->GetBackBuffer(0, 0, D3DBACKBUFFER_TYPE::D3DBACKBUFFER_TYPE_MONO, &backBuffer);
-
-		if(FAILED(hhr)){
-			cg::core::infoRecorder->logError("[FakedDrawPrimitiveUP, get back buffer failed.\n");
-		}else{
-			// store the back buffer
-			static int count = 0;
-			char name[100] = {0};
-			sprintf(name, "backbuffer-%d.png", count++);
-			D3DXSaveSurfaceToFile(name, D3DXIMAGE_FILEFORMAT::D3DXIFF_PNG, backBuffer, NULL, NULL);
-			backBuffer->Release();
-		}
-	}
-#endif
-	
 #endif
 
 	return hr;

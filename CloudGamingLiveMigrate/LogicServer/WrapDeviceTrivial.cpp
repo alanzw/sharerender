@@ -1356,6 +1356,13 @@ STDMETHODIMP WrapperDirect3DDevice9::SetRenderState(THIS_ D3DRENDERSTATETYPE Sta
 		stateRecorder->WriteUInt(Value);
 		stateRecorder->EndCommand();
 	}
+	// for initializer to record the render states before BeginScene
+	if(Initializer::InitializerEnabled()){
+		Initializer::BeginCommand(SetRenderState_Opcode, id);
+		Initializer::WriteUInt(State);
+		Initializer::WriteUInt(Value);
+		Initializer::EndCommand();
+	}
 	HRESULT hh = m_device->SetRenderState(State, Value);
 
 	return hh;
@@ -1749,6 +1756,10 @@ STDMETHODIMP WrapperDirect3DDevice9::SetNPatchMode(THIS_ float nSegments) {
 		stateRecorder->WriteFloat(nSegments);
 		stateRecorder->EndCommand();
 	}
+
+	
+
+
 	HRESULT hh = m_device->SetNPatchMode(nSegments);
 
 	return hh;
