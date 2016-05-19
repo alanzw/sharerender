@@ -196,23 +196,12 @@ namespace cg{
 			QueryPerformanceCounter(&frameEnd);
 
 			if (frameStarted){
-#if 0
-				cpuUsage = frameCpuWatcher->GetProcessCpuUtilization(processHandle);
-				gpuUsage = gpuWatcher->GetGpuUsage();
-				curFps =  this->freq.QuadPart / ((frameEnd.QuadPart - frameStart.QuadPart));
-#endif
-
 				frameCountInSecond++;
 				timeCount += (frameEnd.QuadPart - frameStart.QuadPart);
 				if (timeCount >= this->freq.QuadPart){
 					onSecondEnd(recordGpu);
 					timeCount = 0;
 				}
-#if 0
-				// do the log for frame.
-				// the log format should be: [index] [fps] [cpuUsage] [gpuUsage]
-				frameRecorder->log("%d %f %f %f\n", frameIndex, curFps, cpuUsage, gpuUsage);
-#endif
 			}
 			else{
 				frameStarted = true;
@@ -226,6 +215,40 @@ namespace cg{
 			QueryPerformanceCounter(&frameStart);
 			return true;
 		}
+
+		bool InfoRecorder::onFrameEnd(float frameTime, bool recordGpu /* = true */){
+			// get the frame time
+			QueryPerformanceCounter(&frameEnd);
+
+			if (frameStarted){
+				frameCountInSecond++;
+				timeCount += (frameEnd.QuadPart - frameStart.QuadPart);
+				if (timeCount >= this->freq.QuadPart){
+					onSecondEnd(recordGpu);
+					timeCount = 0;
+				}
+			}
+			else{
+				frameStarted = true;
+			}
+
+			// log the frame index and new created object in this frame
+			frameRecorder->log("%8d\t%8d\t%8f\n", frameIndex, newCreated, frameTime);
+			newCreated = 0;
+
+			frameIndex++;
+			QueryPerformanceCounter(&frameStart);
+			return true;
+		}
+		bool InfoRecorder::onSecondEnd(float aveFrameTime, bool recordGpu /* = true */){
+			QueryPerformanceCounter(&secondEnd);
+			if(secondStarted){
+				// log the second counter
+			}
+
+			return true;
+		}
+
 		// get the cpu and gpu usage and the fps
 		bool InfoRecorder::onSecondEnd(bool recordGpu){
 			infoRecorder->logTrace("[InfoRecorder]: on second end.\n");

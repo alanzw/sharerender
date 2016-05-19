@@ -18,6 +18,7 @@
 #include "../libCore/InfoRecorder.h"
 #include "../VideoGen/generator.h"
 #include "KeyboardHook.h"
+#include "../LibCore/TimeTool.h"
 
 #include <MMSystem.h>
 
@@ -45,6 +46,10 @@ WrapperDirect3DDevice9::WrapperDirect3DDevice9(IDirect3DDevice9* device, int _id
 	updateFlag = 0;
 	stable = true;
 	deviceHelper = NULL;
+
+	pTimer = new cg::core::PTimer();
+	pTimer->Start();
+
 }
 WrapperDirect3DDevice9::~WrapperDirect3DDevice9(){
 	if(this->pPresentParameters){
@@ -234,10 +239,7 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 	infoRecorder->logTrace("WrapperDirect3DDevice9::Present(), source %d, dst %d, wind %d, rgbdata %d\n", pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
 #endif
 	bool tm = false, tm1 = false;
-
-	
 	//DebugBreak();
-
 
 	keyCmdHelper->lock();
 	tm = keyCmdHelper->isSynSigned();
@@ -301,47 +303,6 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 		// context switch is done, set device's creation
 		csSet->checkObj(dynamic_cast<IdentifierBase *>(this));
 	}
-	/////////////////////////////////////////////////////////////////////
-	//limit it to max_fps
-#if 1
-	static double last_time = timeGetTime();
-	static double elapse_time = 0.0;
-	static double frame_cnt = 0.0;
-	static double fps = 0.0;
-	double frame_time = 0.0f;
-	double cur_time = (float)timeGetTime();
-
-	elapse_time += (cur_time - last_time);
-	frame_time = cur_time - last_time;
-
-	last_time = cur_time;
-	frame_cnt++;
-
-	//limit it to max_fps
-#ifndef MULTI_CLIENTS
-	double to_sleep = 1000.0 / cs.config_->max_fps_ * frame_cnt - elapse_time;
-#else // MULTI_CLIENTS
-	double to_sleep = 1000.0 / cmdCtrl->getMaxFps() * frame_cnt - elapse_time;
-#endif  // MULTI_CLIENTS
-
-
-#if 1
-	int sleepTime = (int)to_sleep;
-	if (to_sleep > 0 && cmdCtrl->enableRateControl()) {
-
-		Sleep((DWORD)sleepTime);
-	}
-#endif
-
-	if (elapse_time >= 1000.0) {
-		fps = frame_cnt * 1000.0 / elapse_time;
-		frame_cnt = 0;
-		elapse_time = 0;
-	}
-#endif
-
-	//infoRecorder->onFrameEnd(cmdCtrl->getMode() ? false : true);
-	infoRecorder->onFrameEnd();
 
 	HRESULT hh = D3D_OK;
 
@@ -436,6 +397,51 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 	}else{
 		infoRecorder->logTrace("[WrapperDirect3DDevice9]:Present(), not render.\n");
 	}
+
+	int frameTime = pTimer->Stop();
+
+	infoRecorder->onFrameEnd(frameTime * 1000.0 / pTimer->getFreq(), true);
+
+	/////////////////////////////////
+	//limit it to max_fps
+#if 1
+	static double last_time = timeGetTime();
+	static double elapse_time = 0.0;
+	static double frame_cnt = 0.0;
+	static double fps = 0.0;
+	double frame_time = 0.0f;
+	double cur_time = (float)timeGetTime();
+
+	elapse_time += (cur_time - last_time);
+	frame_time = cur_time - last_time;
+
+	last_time = cur_time;
+	frame_cnt++;
+
+	//limit it to max_fps
+#ifndef MULTI_CLIENTS
+	double to_sleep = 1000.0 / cs.config_->max_fps_ * frame_cnt - elapse_time;
+#else // MULTI_CLIENTS
+	double to_sleep = 1000.0 / cmdCtrl->getMaxFps() * frame_cnt - elapse_time;
+#endif  // MULTI_CLIENTS
+
+#if 1
+	int sleepTime = (int)to_sleep;
+	if (to_sleep > 0 && cmdCtrl->enableRateControl()) {
+
+		Sleep((DWORD)sleepTime);
+	}
+#endif
+
+	if (elapse_time >= 1000.0) {
+		fps = frame_cnt * 1000.0 / elapse_time;
+		frame_cnt = 0;
+		elapse_time = 0;
+	}
+#endif
+
+	pTimer->Start();
+
 	return hh;
 }
 

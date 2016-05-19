@@ -78,6 +78,10 @@ namespace cg{
 			void flush();
 			bool onFrameEnd(bool recordGpu = true);
 			bool onSecondEnd(bool recordGpu = true);
+
+
+			bool onFrameEnd(float frameTime, bool recordGpu = true);
+			bool onSecondEnd(float aveFrameTime, bool recordGpu = true);
 		
 
 			// log error message to file

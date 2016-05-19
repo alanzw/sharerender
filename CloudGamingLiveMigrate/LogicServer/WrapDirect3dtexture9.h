@@ -28,6 +28,7 @@ public:
 
 	TextureHelper *		texHelper;
 	int					bufferSize;
+	static int			totalBuffer, maxBufferSize;
 
 	static HashSet		m_list;
 	static HashSet		m_side_list;    // the list store's the id to surface map

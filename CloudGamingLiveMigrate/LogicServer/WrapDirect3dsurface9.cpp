@@ -241,15 +241,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DSurface9::Release(THIS) {
 #endif
 	refCount--;
 	if(refCount <= 0){
-		if(id == 3393){
-			refCount++;
-			refCount--;
-		}
-		if(id == 3392){
-			refCount++;
-			refCount--;
-		}
-		//infoRecorder->logError("[WrapperDirect3DSurface9]: m_surface id:%d(tex id:%d, level:%d) ref:%d, ref count:%d, creation cmd:%d, tex:%d.\n",id, tex_id, level, refCount, hr, creationCommand, tex_id);
+		infoRecorder->logTrace("[WrapperDirect3DSurface9]: m_surface id:%d(tex id:%d, level:%d) ref:%d, ref count:%d, creation cmd:%d, tex:%d.\n",id, tex_id, level, refCount, hr, creationCommand, tex_id);
 	}
 
 	return hr;

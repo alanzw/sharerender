@@ -6,6 +6,10 @@
 //#define SAVE_IMG
 //#define LOCAL_IMG
 
+
+int WrapperDirect3DTexture9::totalBuffer =0;
+int WrapperDirect3DTexture9::maxBufferSize = 0;
+
 WrapperDirect3DTexture9::WrapperDirect3DTexture9(const WrapperDirect3DTexture9 &tex){
 #ifdef ENABLE_TEXTURE_LOG
 	infoRecorder->logError("[WrapperDirect3DTexture9]: copy constructor this:%p, id:%d.\n", this, id);
@@ -614,9 +618,10 @@ STDMETHODIMP_(ULONG) WrapperDirect3DTexture9::Release(THIS) {
 			}
 		}
 		if(texHelper){
-			//bufferSize = texHelper->getBufferSize();
+			bufferSize = texHelper->getBufferSize();
 			delete texHelper;
 			texHelper = NULL;
+			totalBuffer -= bufferSize;
 		}
 		m_list.DeleteMember(m_tex);
 	}
@@ -793,7 +798,11 @@ STDMETHODIMP WrapperDirect3DTexture9::GetSurfaceLevel(THIS_ UINT Level,IDirect3D
 				surHelper = texHelper->getSurfaceHelper(Level);
 				surface->setSurfaceHelper(surHelper);
 			}
-			//bufferSize = texHelper->getBufferSize();
+			bufferSize = texHelper->getBufferSize();
+			totalBuffer+= bufferSize;
+			if(totalBuffer > maxBufferSize){
+				maxBufferSize = totalBuffer;
+			}
 		}
 #endif
 	}
@@ -823,6 +832,7 @@ STDMETHODIMP WrapperDirect3DTexture9::LockRect(THIS_ UINT Level, D3DLOCKED_RECT*
 	}
 
 	SurfaceHelper * surHelper = NULL;
+	int newAllocate = 0;
 	if(texHelper->isAutoGenable()){
 		// buffer the top surface
 		if(0 == Level){
@@ -833,6 +843,9 @@ STDMETHODIMP WrapperDirect3DTexture9::LockRect(THIS_ UINT Level, D3DLOCKED_RECT*
 					// not aquired yet, means no memory allocated
 					surHelper->setRealSurfacePointer(pLockedRect->pBits);
 					pLockedRect->pBits = surHelper->allocateSurfaceBuffer(pLockedRect->Pitch, desc.Height);
+
+					newAllocate += surHelper->getPitchedSize();
+					
 				}
 				else{
 					surHelper->setRealSurfacePointer(pLockedRect->pBits);
@@ -848,12 +861,22 @@ STDMETHODIMP WrapperDirect3DTexture9::LockRect(THIS_ UINT Level, D3DLOCKED_RECT*
 			if(!surHelper->isAquired()){
 				// not aquired yet, means no memory allocated
 				pLockedRect->pBits = surHelper->allocateSurfaceBuffer(pLockedRect->Pitch, desc.Height);
+				newAllocate = surHelper->getPitchedSize();
 			}
 			else{
 				pLockedRect->pBits = surHelper->getSurfaceData();
 			}
 		}
 	}
+
+	bufferSize = texHelper->getBufferSize();
+	if(newAllocate){
+		totalBuffer+= newAllocate;
+		if(maxBufferSize < totalBuffer){
+			maxBufferSize = totalBuffer;
+		}
+	}
+
 #endif
 
 	return hr;

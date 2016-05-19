@@ -587,7 +587,7 @@ void WINAPI ExitProcessCallback(UINT uExitCode) {
 	infoRecorder->logError("WrapperDirect3DVertexDeclaration9::ins_count = %d\n", WrapperDirect3DVertexDeclaration9::ins_count);
 	infoRecorder->logError("WrapperDirect3DVertexShader9::ins_count = %d, use buffer size:%d\n", WrapperDirect3DVertexShader9::ins_count, vs_buffer_size);
 	infoRecorder->logError("WrapperDirect3DPixelShader9::ins_count = %d, use buffer size:%d\n", WrapperDirect3DPixelShader9::ins_count, ps_buffer_size);
-	infoRecorder->logError("WrapperDirect3DTexture9::ins_count = %d, use buffer:%d\n", WrapperDirect3DTexture9::ins_count, tx_buffer_size);
+	infoRecorder->logError("WrapperDirect3DTexture9::ins_count = %d, use buffer:%d, total:%d, max:%d\n", WrapperDirect3DTexture9::ins_count, tx_buffer_size, WrapperDirect3DTexture9::totalBuffer, WrapperDirect3DTexture9::maxBufferSize);
 	infoRecorder->logError("WrapperDirect3DStateBlock9::ins_count = %d\n", WrapperDirect3DStateBlock9::ins_count);
 	infoRecorder->logError("WrapperDirect3DCubeTexture9::ins_count = %d\n", WrapperDirect3DCubeTexture9::ins_count);
 	infoRecorder->logError("WrapperDirect3DSwapChain9::ins_count = %d\n", WrapperDirect3DSwapChain9::ins_count);

@@ -268,7 +268,7 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::Lock(THIS_ UINT OffsetToLock,UINT Siz
 #else  // USE_MEM_VERTEX_BUFFER
 	
 	// store the lock information
-	infoRecorder->logError("WrapperDirect3DVertexBuffer9::Lock(), id=%d, length=%d, offest=%d, size_to_lock=%d, flag=%d\n",this->id, Length, OffsetToLock, SizeToLock, Flags);
+	//infoRecorder->logError("WrapperDirect3DVertexBuffer9::Lock(), id=%d, length=%d, offest=%d, size_to_lock=%d, flag=%d\n",this->id, Length, OffsetToLock, SizeToLock, Flags);
 
 	UINT sizeToLock = SizeToLock;
 	if(SizeToLock == 0) 
@@ -486,7 +486,7 @@ int WrapperDirect3DVertexBuffer9::UpdateVertexBuffer(ContextAndCache * ctx){
 	int updatedSize = m_LockData.updatedSize;
 
 	m_LockData.updateClear();
-	
+#if 0
 	//if(updatedSize > Length / 3){
 		ctx->beginCommand(VertexBufferUnlock_Opcode, getId());
 		ctx->write_uint(base);
@@ -498,6 +498,7 @@ int WrapperDirect3DVertexBuffer9::UpdateVertexBuffer(ContextAndCache * ctx){
 		ctx->endCommand();
 		return 1;
 	//}
+#endif
 
 	ctx->beginCommand(VertexBufferUnlock_Opcode, getId());
 	ctx->write_uint(base);
