@@ -19,6 +19,7 @@ public:
 	StateBlock(int id, Buffer * buf, list<IdentifierBase *>& dlist);
 	~StateBlock(){ if(cmdBuf_) delete cmdBuf_; }
 	Buffer * getBuffer(){ return cmdBuf_; }
+	int getSize(){ return cmdBuf_->get_size(); }
 	bool sendCreation(ContextAndCache * ctx);
 };
 
