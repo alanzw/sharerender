@@ -551,7 +551,8 @@ void ContextAndCache::eraseFlag(){
 	// done
 }
 
-void WINAPI ExitProcessCallback(UINT uExitCode) {
+
+void printStatics(){
 	infoRecorder->logError("[Global]: Summary:\n");
 
 	int ib_buffer_size = 0;
@@ -589,7 +590,7 @@ void WINAPI ExitProcessCallback(UINT uExitCode) {
 		sb_buffer_size += ((WrapperDirect3DStateBlock9*)(it->pData))->stateBlock->getSize();
 	}
 	//output the static data
-	
+
 	infoRecorder->logError("WrapperDirect3D9::ins_count = %d\n", WrapperDirect3D9::ins_count);
 	infoRecorder->logError("WrapperDirect3DDevice9::ins_count = %d\n", WrapperDirect3DDevice9::ins_count);
 	infoRecorder->logError("WrapperDirect3DVertexBuffer9::ins_count = %d, use buffer size:%d\n", WrapperDirect3DVertexBuffer9::ins_count, vb_buffer_size);
@@ -603,14 +604,12 @@ void WINAPI ExitProcessCallback(UINT uExitCode) {
 	infoRecorder->logError("WrapperDirect3DSwapChain9::ins_count = %d\n", WrapperDirect3DSwapChain9::ins_count);
 	infoRecorder->logError("WrapperDirect3DSurface9::ins_count = %d\n", WrapperDirect3DSurface9::ins_count);
 
-	//do the clean job here
+}
 
-#ifndef MULTI_CLIENTS
-	cs.shut_down();
-#else
-	
-#endif
-	Log::close();
+
+void WINAPI ExitProcessCallback(UINT uExitCode) {
+	printStatics();
+	//do the clean job here
 	ExitProcessNext(uExitCode);
 }
 

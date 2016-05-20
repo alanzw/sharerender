@@ -307,6 +307,7 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateVertexDeclaration(
 			vd->pDecl = (D3DVERTEXELEMENT9 *)malloc(sizeof(D3DVERTEXELEMENT9) * (ve_cnt + 1));
 			memcpy(vd->pDecl, (const void *)pVertexElements, sizeof(D3DVERTEXELEMENT9) * (ve_cnt + 1));
 			vd->print();
+			vd->declSize = sizeof(D3DVERTEXELEMENT9) * (ve_cnt + 1);
 		}
 
 		return hr;

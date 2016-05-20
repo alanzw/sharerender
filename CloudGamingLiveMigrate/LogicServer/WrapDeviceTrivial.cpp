@@ -47,8 +47,8 @@ WrapperDirect3DDevice9::WrapperDirect3DDevice9(IDirect3DDevice9* device, int _id
 	stable = true;
 	deviceHelper = NULL;
 
-	pTimer = new cg::core::PTimer();
-	pTimer->Start();
+	pPresentTimer = new cg::core::PTimer();
+	pPresentTimer->Start();
 
 }
 WrapperDirect3DDevice9::~WrapperDirect3DDevice9(){
@@ -398,9 +398,9 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 		infoRecorder->logTrace("[WrapperDirect3DDevice9]:Present(), not render.\n");
 	}
 
-	int frameTime = pTimer->Stop();
+	int frameTime = pPresentTimer->Stop();
 
-	infoRecorder->onFrameEnd(frameTime * 1000.0 / pTimer->getFreq(), true);
+	infoRecorder->onFrameEnd(frameTime * 1000.0 / pPresentTimer->getFreq(), true);
 
 	/////////////////////////////////
 	//limit it to max_fps
@@ -440,7 +440,7 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 	}
 #endif
 
-	pTimer->Start();
+	pPresentTimer->Start();
 
 	return hh;
 }

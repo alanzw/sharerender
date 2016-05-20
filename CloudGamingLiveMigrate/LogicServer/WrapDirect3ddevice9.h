@@ -45,7 +45,7 @@ public:
 	//TextureHelper * texHelper;   // texture helper for this device
 	DeviceHelper *deviceHelper;
 
-	cg::core::PTimer * pTimer;
+	cg::core::PTimer * pPresentTimer;
 
 	virtual int checkCreation(void * ctx);
 	virtual int sendCreation(void * ctx);

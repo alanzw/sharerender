@@ -150,6 +150,9 @@ SOCKET GetProcessSocket(
 
 void RaiseToDebugP();
 
+
+void printStatics();
+
 #ifdef MULTI_CLIENTS
 // for supporting multiple clients
 class IdentifierBase{

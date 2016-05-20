@@ -30,6 +30,11 @@ namespace cg{
 					keyHelper->setSynSigin(true);
 					keyHelper->unlock();
 				}
+#if 1
+				else if(wParam == VK_F12){
+					printStatics();
+				}
+#endif
 				else if (wParam == VK_F1) // f10 pressed
 				{
 					keyHelper->lock();
@@ -110,11 +115,9 @@ namespace cg{
 					// key /, for 60 frames per second
 					keyHelper->setMaxFps(60);
 				}
-
-
 			}
 			else{
-				infoRecorder->logError("[Global]: key pressed, WPARAM: %x, LPARAM:%x.\n", wParam, lParam);
+				infoRecorder->logTrace("[Global]: key pressed, WPARAM: %x, LPARAM:%x.\n", wParam, lParam);
 			}
 			//
 			return CallNextHookEx(keyHelper->getHookHandle(), nCode, wParam, lParam);
