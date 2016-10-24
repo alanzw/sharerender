@@ -1,0 +1,234 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="源文件">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="头文件">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="资源文件">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Buffer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="BmpSaver.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="BitSet.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CommandClient.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CommandRecorder.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CommandServer.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CommonNet.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Compressor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Config.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="FloatHelper.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Hash.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="HashSet.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Log.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Network.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ToolFunc.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="InfoRecorder.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CpuWatch.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="DisNetwork.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="TimeTool.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CThread.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="GpuWatch.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="LightWeightRecoder.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SmallHash.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="MemOp.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="lzo\minilzo.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="StringTool.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CmdHelper.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Cache.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="gc.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ClientCache.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="BitSet.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="BmpFormat.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Buffer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Cache.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CommandClient.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CommandRecorder.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CommandServer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CommonNet.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Compressor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Config.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="FloatHelper.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="HashSet.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Log.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Network.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Opcode.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Slice.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Utility.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="InfoRecorder.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CpuWatch.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DXDataTypes.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GpuWatch.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="WatcherDefines.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="DisNetwork.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TimeTool.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CThread.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LightWeightReocder.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="lzo\minilzo.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="lzo\lzodefs.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="lzo\lzoconf.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SmallHash.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="LinkedList.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Queue.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="MemOp.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="TagDriver.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="StringTool.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CmdHelper.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="gc.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="hash.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Mat.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="types.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

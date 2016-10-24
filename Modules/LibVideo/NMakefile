@@ -1,0 +1,23 @@
+
+!include <..\NMakefile.def>
+
+LIBS	= $(LIB_SYSTEM) $(LIB_SDL) $(LIB_FFMPEG) $(LIB_D3D)
+LDFLAGS	= $(LIB_PATH) $(LIBS) /opt:noref
+
+OBJS	= avcodeccommon.obj ccg_config.obj ccg_win32.obj  channelmanager.obj \
+		  cthread.obj CudaEncoder.obj distributor.obj encoder.obj encodermanager.obj \
+		  FilterRGB2YUV.obj pipeline.obj renderpool.obj rtspconf.obj rtspcontext.obj \
+		  vconventer.obj video_part.obj vsource.obj X264Encoder.obj
+
+.cpp.obj:
+	$(CXX) -c /MT $(CXX_FLAGS) -I..\inputmodule -I..\utility $<
+
+all: $(OBJS)
+	lib /OUT:renderpool.lib $(OBJS)
+
+install:
+	-mkdir ..\release
+	copy /y renderpool.lib ..\release
+
+clean:
+	-del /f /q *.obj *.lib *.exp *~

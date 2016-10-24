@@ -1,0 +1,162 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{16461A0E-F94A-43CE-AB83-66BF54EA57E8}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>LibCore</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;$(CUDA_PATH_V6_0)/include;$(DXSDK_DIR)/include;</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LibraryPath>$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib;$(CUDA_PATH_V6_0)/Lib/Win32;$(DXSDK_DIR)/Lib/x86;</LibraryPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;$(CUDA_PATH_V6_0)/include;$(DXSDK_DIR)/include;</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LibraryPath>$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib;$(CUDA_PATH_V6_0)/Lib/Win32;$(DXSDK_DIR)/Lib/x86;</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <None Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="BitSet.cpp" />
+    <ClCompile Include="BmpSaver.cpp" />
+    <ClCompile Include="Buffer.cpp" />
+    <ClCompile Include="Cache.cpp" />
+    <ClCompile Include="CmdHelper.cpp" />
+    <ClCompile Include="CommandClient.cpp" />
+    <ClCompile Include="CommandRecorder.cpp" />
+    <ClCompile Include="CommandServer.cpp" />
+    <ClCompile Include="CommonNet.cpp" />
+    <ClCompile Include="Compressor.cpp" />
+    <ClCompile Include="Config.cpp" />
+    <ClCompile Include="CpuWatch.cpp" />
+    <ClCompile Include="CThread.cpp" />
+    <ClCompile Include="DisNetwork.cpp" />
+    <ClCompile Include="FloatHelper.cpp" />
+    <ClCompile Include="gc.cpp" />
+    <ClCompile Include="GpuWatch.cpp" />
+    <ClCompile Include="Hash.cpp" />
+    <ClCompile Include="HashSet.cpp" />
+    <ClCompile Include="InfoRecorder.cpp" />
+    <ClCompile Include="LightWeightRecoder.cpp" />
+    <ClCompile Include="Log.cpp" />
+    <ClCompile Include="lzo\minilzo.c" />
+    <ClCompile Include="MemOp.cpp" />
+    <ClCompile Include="Network.cpp" />
+    <ClCompile Include="SmallHash.cpp" />
+    <ClCompile Include="StringTool.cpp" />
+    <ClCompile Include="TimeTool.cpp" />
+    <ClCompile Include="ToolFunc.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="BitSet.h" />
+    <ClInclude Include="BmpFormat.h" />
+    <ClInclude Include="Buffer.h" />
+    <ClInclude Include="Cache.hpp" />
+    <ClInclude Include="ClientCache.hpp" />
+    <ClInclude Include="CmdHelper.h" />
+    <ClInclude Include="CommandClient.h" />
+    <ClInclude Include="CommandRecorder.h" />
+    <ClInclude Include="CommandServer.h" />
+    <ClInclude Include="CommonNet.h" />
+    <ClInclude Include="Compressor.h" />
+    <ClInclude Include="Config.h" />
+    <ClInclude Include="CpuWatch.h" />
+    <ClInclude Include="CThread.h" />
+    <ClInclude Include="DisNetwork.h" />
+    <ClInclude Include="DXDataTypes.h" />
+    <ClInclude Include="FloatHelper.h" />
+    <ClInclude Include="gc.h" />
+    <ClInclude Include="GpuWatch.h" />
+    <ClInclude Include="hash.h" />
+    <ClInclude Include="HashSet.h" />
+    <ClInclude Include="InfoRecorder.h" />
+    <ClInclude Include="LightWeightReocder.h" />
+    <ClInclude Include="LinkedList.h" />
+    <ClInclude Include="Log.h" />
+    <ClInclude Include="lzo\lzoconf.h" />
+    <ClInclude Include="lzo\lzodefs.h" />
+    <ClInclude Include="lzo\minilzo.h" />
+    <ClInclude Include="Mat.hpp" />
+    <ClInclude Include="MemOp.h" />
+    <ClInclude Include="Network.h" />
+    <ClInclude Include="Opcode.h" />
+    <ClInclude Include="Queue.h" />
+    <ClInclude Include="Slice.hpp" />
+    <ClInclude Include="SmallHash.h" />
+    <ClInclude Include="StringTool.h" />
+    <ClInclude Include="TagDriver.h" />
+    <ClInclude Include="TimeTool.h" />
+    <ClInclude Include="types.hpp" />
+    <ClInclude Include="Utility.h" />
+    <ClInclude Include="WatcherDefines.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

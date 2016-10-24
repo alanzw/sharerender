@@ -1,0 +1,606 @@
+	.version 1.4
+	.target sm_10, map_f64_to_f32
+	// compiled with C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v6.0\bin/../open64/lib//be.exe
+	// nvopencc 4.1 built on 2014-03-14
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	//-----------------------------------------------------------
+	// Compiling C:/Users/alan/AppData/Local/Temp/tmpxft_00001958_00000000-12_preproc.cpp3.i (C:/Users/alan/AppData/Local/Temp/ccBI#.a05768)
+	//-----------------------------------------------------------
+
+	//-----------------------------------------------------------
+	// Options:
+	//-----------------------------------------------------------
+	//  Target:ptx, ISA:sm_10, Endian:little, Pointer Size:32
+	//  -O0	(Optimization level)
+	//  -g2	(Debug level)
+	//  -m2	(Report advisories)
+	//-----------------------------------------------------------
+
+	.file	1	"C:/Users/alan/AppData/Local/Temp/tmpxft_00001958_00000000-11_preproc.cudafe2.gpu"
+	.file	2	"d:\applications\microsoft visual studio 10.0\vc\include\codeanalysis\sourceannotations.h"
+	.file	3	"C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v7.0/include\crt/device_runtime.h"
+	.file	4	"C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v7.0/include\host_defines.h"
+	.file	5	"C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v7.0/include\builtin_types.h"
+	.file	6	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\device_types.h"
+	.file	7	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\host_defines.h"
+	.file	8	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\driver_types.h"
+	.file	9	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\surface_types.h"
+	.file	10	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\texture_types.h"
+	.file	11	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\vector_types.h"
+	.file	12	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\builtin_types.h"
+	.file	13	"C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v7.0/include\device_launch_parameters.h"
+	.file	14	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\crt\storage_class.h"
+	.file	15	"E:/[visual studio]/CloudGaming.v10/TestCloudGameModule/NvEncoderCudaInterop/preproc.cu"
+	.file	16	"C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v7.0/include\common_functions.h"
+	.file	17	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\math_functions.h"
+	.file	18	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\math_constants.h"
+	.file	19	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\device_functions_decls.h"
+	.file	20	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\device_functions.h"
+	.file	21	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\device_functions.hpp"
+	.file	22	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\device_atomic_functions.h"
+	.file	23	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\device_atomic_functions.hpp"
+	.file	24	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\device_double_functions.h"
+	.file	25	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\device_double_functions.hpp"
+	.file	26	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\sm_20_atomic_functions.h"
+	.file	27	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\sm_20_atomic_functions.hpp"
+	.file	28	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\sm_32_atomic_functions.h"
+	.file	29	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\sm_32_atomic_functions.hpp"
+	.file	30	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\sm_35_atomic_functions.h"
+	.file	31	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\sm_20_intrinsics.h"
+	.file	32	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\sm_20_intrinsics.hpp"
+	.file	33	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\sm_30_intrinsics.h"
+	.file	34	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\sm_30_intrinsics.hpp"
+	.file	35	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\sm_32_intrinsics.h"
+	.file	36	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\sm_32_intrinsics.hpp"
+	.file	37	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\sm_35_intrinsics.h"
+	.file	38	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\surface_functions.h"
+	.file	39	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\surface_functions.hpp"
+	.file	40	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\texture_fetch_functions.h"
+	.file	41	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\texture_fetch_functions.hpp"
+	.file	42	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\texture_indirect_functions.h"
+	.file	43	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\texture_indirect_functions.hpp"
+	.file	44	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\surface_indirect_functions.h"
+	.file	45	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\surface_indirect_functions.hpp"
+	.file	46	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\math_functions.hpp"
+	.file	47	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\math_functions_dbl_ptx3.h"
+	.file	48	"c:\program files\nvidia gpu computing toolkit\cuda\v7.0\include\math_functions_dbl_ptx3.hpp"
+
+
+	.entry InterleaveUV (
+		.param .u32 __cudaparm_InterleaveUV_yuv_cb,
+		.param .u32 __cudaparm_InterleaveUV_yuv_cr,
+		.param .u32 __cudaparm_InterleaveUV_nv12_chroma,
+		.param .s32 __cudaparm_InterleaveUV_chroma_width,
+		.param .s32 __cudaparm_InterleaveUV_chroma_height,
+		.param .s32 __cudaparm_InterleaveUV_cb_pitch,
+		.param .s32 __cudaparm_InterleaveUV_cr_pitch,
+		.param .s32 __cudaparm_InterleaveUV_nv12_pitch)
+	{
+	.reg .u32 %r<58>;
+	.reg .pred %p<3>;
+	.loc	15	5	0
+$LDWbegin_InterleaveUV:
+$LDWbeginblock_871_1:
+	.loc	15	11	0
+	cvt.u32.u16 	%r1, %tid.x;
+	cvt.u32.u16 	%r2, %ctaid.x;
+	cvt.u32.u16 	%r3, %ntid.x;
+	mul.lo.u32 	%r4, %r2, %r3;
+	add.u32 	%r5, %r1, %r4;
+	mov.s32 	%r6, %r5;
+	.loc	15	12	0
+	cvt.u32.u16 	%r7, %tid.y;
+	cvt.u32.u16 	%r8, %ctaid.y;
+	cvt.u32.u16 	%r9, %ntid.y;
+	mul.lo.u32 	%r10, %r8, %r9;
+	add.u32 	%r11, %r7, %r10;
+	mov.s32 	%r12, %r11;
+	.loc	15	14	0
+	ld.param.s32 	%r13, [__cudaparm_InterleaveUV_chroma_width];
+	mov.s32 	%r14, %r6;
+	set.gt.u32.s32 	%r15, %r13, %r14;
+	neg.s32 	%r16, %r15;
+	ld.param.s32 	%r17, [__cudaparm_InterleaveUV_chroma_height];
+	mov.s32 	%r18, %r12;
+	set.gt.u32.s32 	%r19, %r17, %r18;
+	neg.s32 	%r20, %r19;
+	and.b32 	%r21, %r16, %r20;
+	mov.u32 	%r22, 0;
+	setp.eq.s32 	%p1, %r21, %r22;
+	@%p1 bra 	$L_0_1538;
+	.loc	15	16	0
+	ld.param.s32 	%r23, [__cudaparm_InterleaveUV_cb_pitch];
+	mov.s32 	%r24, %r12;
+	mul.lo.s32 	%r25, %r23, %r24;
+	ld.param.u32 	%r26, [__cudaparm_InterleaveUV_yuv_cb];
+	add.u32 	%r27, %r25, %r26;
+	mov.s32 	%r28, %r27;
+	.loc	15	17	0
+	ld.param.s32 	%r29, [__cudaparm_InterleaveUV_cr_pitch];
+	mov.s32 	%r30, %r12;
+	mul.lo.s32 	%r31, %r29, %r30;
+	ld.param.u32 	%r32, [__cudaparm_InterleaveUV_yuv_cr];
+	add.u32 	%r33, %r31, %r32;
+	mov.s32 	%r34, %r33;
+	.loc	15	18	0
+	ld.param.s32 	%r35, [__cudaparm_InterleaveUV_nv12_pitch];
+	mov.s32 	%r36, %r12;
+	mul.lo.s32 	%r37, %r35, %r36;
+	ld.param.u32 	%r38, [__cudaparm_InterleaveUV_nv12_chroma];
+	add.u32 	%r39, %r37, %r38;
+	mov.s32 	%r40, %r39;
+	.loc	15	19	0
+	mov.s32 	%r41, %r6;
+	mov.s32 	%r42, %r28;
+	add.u32 	%r43, %r41, %r42;
+	ld.global.u8 	%r44, [%r43+0];
+	mov.s32 	%r45, %r6;
+	shl.b32 	%r46, %r45, 1;
+	mov.s32 	%r47, %r40;
+	add.u32 	%r48, %r46, %r47;
+	st.global.u8 	[%r48+0], %r44;
+	.loc	15	20	0
+	mov.s32 	%r49, %r6;
+	mov.s32 	%r50, %r34;
+	add.u32 	%r51, %r49, %r50;
+	ld.global.u8 	%r52, [%r51+0];
+	mov.s32 	%r53, %r40;
+	mov.s32 	%r54, %r6;
+	shl.b32 	%r55, %r54, 1;
+	add.u32 	%r56, %r53, %r55;
+	st.global.u8 	[%r56+1], %r52;
+$L_0_1538:
+$LDWendblock_871_1:
+	.loc	15	22	0
+	exit;
+$LDWend_InterleaveUV:
+	} // InterleaveUV
+
+ 	@@DWARF .section .debug_info, "",@progbits
+	@@DWARF .byte	0xd8, 0x03, 0x00, 0x00, 0x02, 0x00
+	@@DWARF .4byte	.debug_abbrev
+	@@DWARF .4byte	0x3a430104, 0x6573552f, 0x612f7372, 0x2f6e616c
+	@@DWARF .4byte	0x44707041, 0x2f617461, 0x61636f4c, 0x65542f6c
+	@@DWARF .4byte	0x742f706d, 0x6678706d, 0x30305f74, 0x39313030
+	@@DWARF .4byte	0x305f3835, 0x30303030, 0x2d303030, 0x705f3231
+	@@DWARF .4byte	0x72706572, 0x632e636f, 0x2e337070, 0x3a450069
+	@@DWARF .4byte	0x69765b5c, 0x6c617573, 0x75747320, 0x5d6f6964
+	@@DWARF .4byte	0x6f6c435c, 0x61476475, 0x676e696d, 0x3031762e
+	@@DWARF .4byte	0x7365545c, 0x6f6c4374, 0x61476475, 0x6f4d656d
+	@@DWARF .4byte	0x656c7564, 0x45764e5c, 0x646f636e, 0x75437265
+	@@DWARF .4byte	0x6e496164, 0x6f726574, 0x706f0070, 0x63636e65
+	@@DWARF .byte	0x20, 0x34, 0x2e, 0x31, 0x00, 0x04, 0x00
+	@@DWARF .4byte	.debug_line
+	@@DWARF .4byte	0x736e7502, 0x656e6769, 0x6e692064, 0x04070074
+	@@DWARF .4byte	0x75bf0b03, 0x33746e69, 0x00fb0c00, 0x0b040000
+	@@DWARF .4byte	0xb50078c0, 0x02000000, 0x04010023, 0x0079c00b
+	@@DWARF .4byte	0x000000b5, 0x01042302, 0x7ac00b04, 0x0000b500
+	@@DWARF .4byte	0x08230200, 0x0b050001, 0x6975017f, 0x0033746e
+	@@DWARF .4byte	0x000000c5, 0x0000fb06, 0xa20b0700, 0x6d696401
+	@@DWARF .4byte	0x470c0033, 0x08000001, 0x7801a30b, 0x0000b500
+	@@DWARF .4byte	0x00230200, 0xa30b0801, 0xb5007901, 0x02000000
+	@@DWARF .4byte	0x08010423, 0x7a01a30b, 0x0000b500, 0x08230200
+	@@DWARF .4byte	0x0b050001, 0x696401ab, 0x0e00336d, 0x06000001
+	@@DWARF .4byte	0x00000147, 0x746e6902, 0x06040500, 0x00000159
+	@@DWARF .4byte	0x6e6f6c02, 0x6f6c2067, 0x6920676e, 0x0500746e
+	@@DWARF .4byte	0x05040908, 0x01790b0a, 0x05040000, 0x731d020c
+	@@DWARF .4byte	0x5f657a69, 0x00b50074, 0x75020000, 0x6769736e
+	@@DWARF .4byte	0x2064656e, 0x72616863, 0x0b010800, 0x0000018f
+	@@DWARF .4byte	0x6c020504, 0x20676e6f, 0x676e6f6c, 0x736e7520
+	@@DWARF .4byte	0x656e6769, 0x6e692064, 0x08070074, 0x6e6f6c02
+	@@DWARF .4byte	0x6e692067, 0x04050074, 0x6f6c6602, 0x04007461
+	@@DWARF .4byte	0x6f640204, 0x656c6275, 0x02080400, 0x726f6873
+	@@DWARF .4byte	0x6e752074, 0x6e676973, 0x69206465, 0x0700746e
+	@@DWARF .4byte	0x01cd0b02, 0x05040000, 0x0001590b, 0x0d050400
+	@@DWARF .4byte	0x00000159, 0x0002040b, 0x0b050400, 0x000000b5
+	@@DWARF .4byte	0xa70b0504, 0x04000001, 0x01650d05, 0x1e0b0000
+	@@DWARF .4byte	0x04000002, 0x01cd0d05, 0x2a0b0000, 0x04000002
+	@@DWARF .4byte	0x01d60b05, 0x05040000, 0x0001d60d, 0x023d0b00
+	@@DWARF .4byte	0x05040000, 0x0001650b, 0x0d050400, 0x000000b5
+	@@DWARF .4byte	0x0002500b, 0x0d050400, 0x000001a7, 0x00025c0b
+	@@DWARF .4byte	0x02050400, 0x72616863, 0x06010600, 0x00000268
+	@@DWARF .4byte	0x0002700b, 0x02050400, 0x6e676973, 0x63206465
+	@@DWARF .4byte	0x00726168, 0x7c060105, 0x0b000002, 0x0000028b
+	@@DWARF .4byte	0x0f0e0504, 0x746e4905, 0x656c7265, 0x55657661
+	@@DWARF .byte	0x56, 0x00, 0x01, 0x01, 0x00
+	@@DWARF .4byte	$LDWbegin_InterleaveUV
+	@@DWARF .4byte	$LDWend_InterleaveUV
+	@@DWARF .4byte	0x79050f0f, 0x635f7675, 0x01a00062, 0x03050000
+	@@DWARF .4byte	__cudaparm_InterleaveUV_yuv_cb
+	@@DWARF .4byte	0x050f0f07, 0x5f767579, 0xa0007263, 0x05000001
+	@@DWARF .byte	0x03
+	@@DWARF .4byte	__cudaparm_InterleaveUV_yuv_cr
+	@@DWARF .4byte	0x050f0f07, 0x3231766e, 0x7268635f, 0x00616d6f
+	@@DWARF .byte	0xa0, 0x01, 0x00, 0x00, 0x05, 0x03
+	@@DWARF .4byte	__cudaparm_InterleaveUV_nv12_chroma
+	@@DWARF .4byte	0x050f0f07, 0x6f726863, 0x775f616d, 0x68746469
+	@@DWARF .byte	0x00, 0x59, 0x01, 0x00, 0x00, 0x05, 0x03
+	@@DWARF .4byte	__cudaparm_InterleaveUV_chroma_width
+	@@DWARF .4byte	0x050f0f07, 0x6f726863, 0x685f616d, 0x68676965
+	@@DWARF .byte	0x74, 0x00, 0x59, 0x01, 0x00, 0x00, 0x05, 0x03
+	@@DWARF .4byte	__cudaparm_InterleaveUV_chroma_height
+	@@DWARF .4byte	0x050f0f07, 0x705f6263, 0x68637469, 0x00015900
+	@@DWARF .byte	0x00, 0x05, 0x03
+	@@DWARF .4byte	__cudaparm_InterleaveUV_cb_pitch
+	@@DWARF .4byte	0x050f0f07, 0x705f7263, 0x68637469, 0x00015900
+	@@DWARF .byte	0x00, 0x05, 0x03
+	@@DWARF .4byte	__cudaparm_InterleaveUV_cr_pitch
+	@@DWARF .4byte	0x050f0f07, 0x3231766e, 0x7469705f, 0x59006863
+	@@DWARF .byte	0x01, 0x00, 0x00, 0x05, 0x03
+	@@DWARF .4byte	__cudaparm_InterleaveUV_nv12_pitch
+	@@DWARF .byte	0x07, 0x10
+	@@DWARF .4byte	$LDWbeginblock_871_1
+	@@DWARF .4byte	$LDWendblock_871_1
+	@@DWARF .4byte	0x78070f11, 0x00015900, 0xb6900500, 0x020195e4
+	@@DWARF .4byte	0x79070f11, 0x00015900, 0xb2900600, 0x02abc8e2
+	@@DWARF .4byte	0x080f1102, 0x00624370, 0x000001a0, 0xe4b89006
+	@@DWARF .4byte	0x0202abc8, 0x70090f11, 0xa0007243, 0x06000001
+	@@DWARF .4byte	0xc8e6b490, 0x110202ab, 0x44700a0f, 0xa0007473
+	@@DWARF .byte	0x01, 0x00, 0x00, 0x06, 0x90, 0xb0, 0xe8, 0xc8
+	@@DWARF .byte	0xab, 0x02, 0x02, 0x00, 0x00, 0x00, 0x00
+
+ 	@@DWARF .section .debug_pubnames, "",@progbits
+	@@DWARF .byte	0x1f, 0x00, 0x00, 0x00, 0x02, 0x00
+	@@DWARF .4byte	.debug_info
+	@@DWARF .4byte	0x000003dc, 0x00000297, 0x65746e49, 0x61656c72
+	@@DWARF .byte	0x76, 0x65, 0x55, 0x56, 0x00, 0x00, 0x00, 0x00
+	@@DWARF .byte	0x00
+
+ 	@@DWARF .section .debug_line, "",@progbits
+	@@DWARF .4byte	0x00000019, 0x00100002, 0x00040000, 0x000a04ff
+	@@DWARF .byte	0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x01
+	@@DWARF .byte	0x00, 0x00, 0x00, 0x01, 0x01
+
+ 	@@DWARF .section .debug_abbrev, "",@progbits
+	@@DWARF .4byte	0x03011101, 0x25081b08, 0x420b1308, 0x0006100b
+	@@DWARF .4byte	0x00240200, 0x0b3e0803, 0x00000b0b, 0x3a011303
+	@@DWARF .4byte	0x030b3b0b, 0x010b0b08, 0x04000013, 0x0b3a000d
+	@@DWARF .4byte	0x08030b3b, 0x0a381349, 0x00000b32, 0x3a001605
+	@@DWARF .4byte	0x03053b0b, 0x00134908, 0x00260600, 0x00001349
+	@@DWARF .4byte	0x3a011307, 0x03053b0b, 0x010b0b08, 0x08000013
+	@@DWARF .4byte	0x0b3a000d, 0x0803053b, 0x0a381349, 0x00000b32
+	@@DWARF .4byte	0x0b000f09, 0x000b330b, 0x00260a00, 0x0f0b0000
+	@@DWARF .4byte	0x0b134900, 0x000b330b, 0x00160c00, 0x0b3b0b3a
+	@@DWARF .4byte	0x13490803, 0x350d0000, 0x00134900, 0x012e0e00
+	@@DWARF .4byte	0x0b3b0b3a, 0x0c3f0803, 0x0a400c27, 0x01120111
+	@@DWARF .4byte	0x050f0000, 0x3b0b3a00, 0x4908030b, 0x330a0213
+	@@DWARF .4byte	0x1000000b, 0x0111010b, 0x00000112, 0x3a003411
+	@@DWARF .byte	0x0b, 0x3b, 0x0b, 0x03, 0x08, 0x49, 0x13, 0x02
+	@@DWARF .byte	0x0a, 0x33, 0x0b, 0x00, 0x00, 0x00, 0x00
+

@@ -1,0 +1,24 @@
+
+!include <..\NMakefile.def>
+
+LIBS	= $(LIB_SYSTEM) $(LIB_SDL) $(LIB_FFMPEG) $(LIB_LIVE555) 
+
+LDFLAGS	= $(LIB_PATH) /libpath:..\renderpool /libpath:..\utility /libpath:..\inputmodule $(LIBS) /subsystem:console /opt:noref
+
+TARGET	= ccg_client.exe
+
+all:	$(TARGET)
+
+.cpp.obj:
+	$(CXX) -c /MT $(CXX_FLAGS) -I..\renderpool -I..\utility -I..\inputmodule $<
+
+ccg_client.exe: client.obj minih264.obj minivp8.obj rtsp_client.obj
+	link /out:$(TARGET) $** $(LDFLAGS) utility.lib renderpool.lib inputmodule.lib
+
+install:
+	-mkdir ..\bin
+	copy /y $(TARGET) ..\bin
+	copy /y *.ttf ..\bin
+
+clean:
+	-del /f /q $(TARGET) *.obj *~

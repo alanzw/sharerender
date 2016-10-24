@@ -1,0 +1,60 @@
+///////////////////////////////////////////////////////////
+// H.264 encoder parameter file
+// syntax: [parameter [=] value] [[#|//] comment]
+///////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////
+// Profile, Level
+
+profile           = 100        // 66=Baseline, 77=Main, 100=High, 0=auto(=lowest possible profile)
+level             = 40        // 10,11,12,13,20,21,22,30,31,32,40,41,42,50,51=level_idc, 0=auto(=lowest possible level)
+
+///////////////////////////////////////////////////////////
+// sequence structure
+
+gopLength           = 30       // IDR frame distance
+numBFrames          = 1        // number of B frames between I and P frames
+fieldMode           = 0        // 0=prog frame, 1=field
+bottomfieldFirst    = 0        // 0=top field first, 1=bottom field first
+numSlices           = 0        // 0=auto, 1..PicHeightInMbs=number of slices per picture
+
+///////////////////////////////////////////////////////////
+// Input File Details
+width           = 1920      // Width of Input Frame
+height          = 1080      // Height of Input Frame
+maxwidth        = 1920      // Max Width for resource allocation. Max resoultion  change during reconfiguration can not go beyond  MaxWidth, MaxHeight
+maxheight       = 1080      // Max Width for resource allocation. Max resoultion  change during reconfiguration can not go beyond  MaxWidth, MaxHeight
+inFile          =../YUV/1080p/HeavyHandIdiot.3sec.yuv
+
+
+// Driver COde Path property
+preset          = 1        // 0=NV_ENC_PRESET_DEFAULT, 1=NV_ENC_PRESET_LOW_LATENCY_DEFAULT, 2=NV_ENC_PRESET_HP, 3=NV_ENC_PRESET_HQ, 4=NV_ENC_PRESET_BD, 5=NV_ENC_PRESET_LOW_LATENCY_HQ, 6=NV_ENC_PRESET_LOW_LATENCY_HP
+interfaceType   = 2         // 0=DX9, 1=DX11, 2=CUDA, 3=DX10
+syncMode        = 1         // 0=AsyncMode, 1=SyncMode
+
+    
+
+///////////////////////////////////////////////////////////
+// bitstream characteristics (Type I HRD)
+
+maxbitrate        = 2000000  // Peakbitrate, maximum bitrate (bits/sec), 0=use encoder defined default (level limit)
+vbvBufferSize     = 2000000  // vbvBufferSize, decoder buffer size (bits), 0=use encoder defined default (level limit)
+vbvInitialDelay   = 1000000  // vbvInitialDelay, initial decoder buffer fullness (bits), 0=use encoder defined default (50%)
+
+///////////////////////////////////////////////////////////
+// rate control
+
+rcMode              = 0        // 0=fixed QP, 1=VBR, 2=CBR, 4=VBR_MINQP, 8=CBR_TWOPASS
+bitrate             = 2000000  // average bit rate (bits/s) (ignored if RCMode != 1)
+enableInitialRCQP   = 1
+initialQPI          = 28       // If enableInitialRCQP set then It will be used as InitialQP value for I slices for RCMode !=0. constant QP value for I slices For RCMode =0.
+initialQPP          = 28       // If enableInitialRCQP set then It will be used as InitialQP value for P slices for RCMode !=0. constant QP value for P slices For RCMode =0.
+initialQPB          = 34       // If enableInitialRCQP set then It will be used as InitialQP value for B slices for RCMode !=0. constant QP value for B slices For RCMode =0.
+frameRateNum        = 30  
+frameRateDen        = 1
+
+
+///////////////////////////////////////////////////////////
+// picture type decision
+
+enablePtd           = 1        // 1=picture type decision will be takane by Encoder driver. 0=picture type decision will be takane by application

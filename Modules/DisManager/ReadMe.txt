@@ -1,0 +1,1 @@
+The dis Manager is designed to manage the whole system. Dis Manager contains the Distributor module

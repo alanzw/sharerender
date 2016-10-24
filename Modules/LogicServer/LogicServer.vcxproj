@@ -1,0 +1,173 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{6BE4E46E-6FD2-4F91-B3E5-EB30FB5F51CA}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>LogicServer</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;$(DXSDK_DIR)/include;..\..\DepsWin32\include;$(CUDA_PATH_V6_0)/include;</IncludePath>
+    <LibraryPath>$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib;$(DXSDK_DIR)/Lib/x86;..\..\DepsWin32\lib;$(CUDA_PATH_V6_0)/lib/win32;</LibraryPath>
+    <EmbedManifest>false</EmbedManifest>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;$(DXSDK_DIR)/include;..\..\DepsWin32\include;$(CUDA_PATH_V6_0)/include;</IncludePath>
+    <LibraryPath>$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib;$(DXSDK_DIR)/Lib/x86;..\..\DepsWin32\lib;$(CUDA_PATH_V6_0)/lib/win32;</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;LOGICSERVER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <ModuleDefinitionFile>LogicServer.def</ModuleDefinitionFile>
+      <AdditionalOptions>/Profile %(AdditionalOptions)</AdditionalOptions>
+      <OptimizeReferences>false</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;LOGICSERVER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>false</OptimizeReferences>
+      <ModuleDefinitionFile>LogicServer.def</ModuleDefinitionFile>
+      <AdditionalOptions>/Profile %(AdditionalOptions)</AdditionalOptions>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <None Include="LogicServer.def" />
+    <None Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="CommandServerSet.h" />
+    <ClInclude Include="GameClient.h" />
+    <ClInclude Include="GameServer.h" />
+    <ClInclude Include="Initializer.h" />
+    <ClInclude Include="InputServer.h" />
+    <ClInclude Include="KeyboardHook.h" />
+    <ClInclude Include="LogicContext.h" />
+    <ClInclude Include="Matrix.h" />
+    <ClInclude Include="Quadrics.h" />
+    <ClInclude Include="TaskQueue.h" />
+    <ClInclude Include="TextureHelper.h" />
+    <ClInclude Include="WrapDirect3d9.h" />
+    <ClInclude Include="WrapDirect3dcubetexture9.h" />
+    <ClInclude Include="WrapDirect3ddevice9.h" />
+    <ClInclude Include="WrapDirect3dindexbuffer9.h" />
+    <ClInclude Include="WrapDirect3dpixelshader9.h" />
+    <ClInclude Include="WrapDirect3dstateblock9.h" />
+    <ClInclude Include="WrapDirect3dsurface9.h" />
+    <ClInclude Include="WrapDirect3dswapchain9.h" />
+    <ClInclude Include="WrapDirect3dtexture9.h" />
+    <ClInclude Include="WrapDirect3dvertexbuffer9.h" />
+    <ClInclude Include="WrapDirect3dvertexdeclaration9.h" />
+    <ClInclude Include="WrapDirect3dvertexshader9.h" />
+    <ClInclude Include="WrapDirect3dvolume9.h" />
+    <ClInclude Include="WrapDirect3dvolumetexture9.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="CommandServerSet.cpp" />
+    <ClCompile Include="GameClient.cpp" />
+    <ClCompile Include="GameServer.cpp" />
+    <ClCompile Include="Initializer.cpp" />
+    <ClCompile Include="InputServer.cpp" />
+    <ClCompile Include="KeyboardHook.cpp" />
+    <ClCompile Include="Quadrics.cpp" />
+    <ClCompile Include="ServerInit.cpp" />
+    <ClCompile Include="TaskQueue.cpp" />
+    <ClCompile Include="TextureHelper.cpp" />
+    <ClCompile Include="WrapDeviceNonTrivial.cpp" />
+    <ClCompile Include="WrapDeviceTrivial.cpp" />
+    <ClCompile Include="WrapDirect3d9.cpp" />
+    <ClCompile Include="WrapDirect3dcubetexture9.cpp" />
+    <ClCompile Include="WrapDirect3dindexbuffer9.cpp" />
+    <ClCompile Include="WrapDirect3dpixelshader9.cpp" />
+    <ClCompile Include="WrapDirect3dstateblock9.cpp" />
+    <ClCompile Include="WrapDirect3dsurface9.cpp" />
+    <ClCompile Include="WrapDirect3dswapchain9.cpp" />
+    <ClCompile Include="WrapDirect3dtexture9.cpp" />
+    <ClCompile Include="WrapDirect3dvertexbuffer9.cpp" />
+    <ClCompile Include="WrapDirect3dvertexdeclaration9.cpp" />
+    <ClCompile Include="WrapDirect3dvertexshader9.cpp" />
+    <ClCompile Include="WrapDirect3dvolume9.cpp" />
+    <ClCompile Include="WrapDirect3dvolumetexture9.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LibCore\LibCore.vcxproj">
+      <Project>{16461a0e-f94a-43ce-ab83-66bf54ea57e8}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\LibDistrubutor\LibDistrubutor.vcxproj">
+      <Project>{504c7eab-31f6-41eb-a5d9-6b650ac49af0}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\LibInput\LibInput.vcxproj">
+      <Project>{b199bc49-39f1-4ef5-b781-b5172bd00150}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\NvEncoders\NvEncoderInteropCuda\NvEncoderInteropCuda.vcxproj">
+      <Project>{3c512387-3d5d-4df7-ac04-5fa81b697a05}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\NvEncoders\NvEncoderInteropD3D\NvEncoderInteropD3D.vcxproj">
+      <Project>{331ea0bf-5c9b-4779-82f5-7f91d97a7a54}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\VideoGen\VideoGen.vcxproj">
+      <Project>{b3ab51a0-8096-47ff-9354-2eff69456b91}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\VideoUtility\VideoUtility.vcxproj">
+      <Project>{d905062c-47a4-494a-b308-b6e7a939dbec}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\X264Encoder\X264Encoder.vcxproj">
+      <Project>{35c8e9cd-b0b0-428e-a64a-d1be3f049a92}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
