@@ -57,3 +57,5 @@ Unity Angry Bots: http://unity3d.com/showcase/live-demos#angrybots
 
 # ShareRender architecture
 ========
+
+![image](https://github.com/alanzw/sharerender/tree/master/pic/system-overview-max.pdf)
