@@ -24,14 +24,17 @@ Add DirectX install path to System Environment as "DXSDK_DIR" and add CUDA 6.0 i
 You can start with our pre-compiled exe files for Windows X86(with visual studio c++ 2010, the reason is that some other dependency library was compiled with VS2010, if using other version, 
 you need to re-compile all libraries).
 
-1. you need to write the configure file which named gamemap.txt in default. The configure file includes exe file for game, the path, support D3D or not, the interception dll to use(
-use LogicServer.dll in default)
+1. you need to write the configure file which named gamemap.txt in default. The configure file includes exe file for game, the path, support D3D or not, the interception dll to use(use LogicServer.dll in default)
 
 2. install the compiled files, double click DebugCopyToBin.bat when use debug version and double click ReleaseCopyToBin.bat when use release version.
 
-3. copy all files in bin to game directory for simple.
+3. copy all files in bin to game directory for simple(These files are dependecies, copy to game dirctory is the easiest way to make it work).
 
-4.  
+4. Start DisManager.exe, which act as scheduler and accept the regiesteration of gameloader and render proxy.
+
+5. Start gameloader.exe with IP of DisManager in VM. Gameloader waill load game and inject LogicServer.dll to game process.
+
+6. Start RenderProxy.exe with IP of DisManager in any physic server.
 
 ##Game test cases
 
@@ -46,5 +49,5 @@ Trine: http://trine-thegame.com/site/
 
 Unity Angry Bots: http://unity3d.com/showcase/live-demos#angrybots
 
-# FGCG architecture
+# ShareRender architecture
 ========
