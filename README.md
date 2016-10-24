@@ -14,10 +14,12 @@ DirectX SDK 9.0 c (Recommended: DXSDK_Jun10 version, the version released in Jun
 ####CUDA SDK
 To use NVCUVENC encoding library, CUDA 6.0 is required. And for lastest GPU such maxwell, we can use NVENC instead.
 
-###Build
-
 ###Configuration
 Add DirectX install path to System Environment as "DXSDK_DIR" and add CUDA 6.0 install path to "CUDA_PATH".
+
+###Build
+
+Start to build the soluation in VS2010, if gets warnings about missing libraries, add them to linker input.
 
 ##Quick Start
 
@@ -35,6 +37,10 @@ you need to re-compile all libraries).
 5. Start gameloader.exe with IP of DisManager in VM. Gameloader waill load game and inject LogicServer.dll to game process.
 
 6. Start RenderProxy.exe with IP of DisManager in any physic server.
+
+7. Start client with request of RTSP and rqeust of game. (e.g. )
+
+8. Some other functions is integrated to system for convenience to query performance data. Please contact author for detailed information.
 
 ##Game test cases
 
