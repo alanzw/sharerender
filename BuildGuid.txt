@@ -1,0 +1,1 @@
+Some dependency libraries are compressed to ShareRenderDeps.v10.zip, you need to unzip this file and copy bin/* to <root dir of ShareRender>/bin/ and copy DepsWin32/* to <root dir of ShareRender>/DepsWin32/
