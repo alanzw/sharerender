@@ -58,10 +58,10 @@ Unity Angry Bots: http://unity3d.com/showcase/live-demos#angrybots
 # ShareRender architecture
 ========
 ##System Overview
-![image](https://github.com/alanzw/sharerender/tree/master/pic/system-overview.png)
+![image](https://github.com/alanzw/sharerender/raw/master/pic/system-overview.png)
 ##System Flow
-![image](https://github.com/alanzw/sharerender/tree/master/pic/sharerender-flow.png)
+![image](https://github.com/alanzw/sharerender/raw/master/pic/sharerender-flow.png)
 ##Retrieving Geometry Data
-![image](https://github.com/alanzw/sharerender/tree/master/pic/retrieving-data.png)
+![image](https://github.com/alanzw/sharerender/raw/master/pic/retrieving-data.png)
 ##Context Sync
-![image](https://github.com/alanzw/sharerender/tree/master/pic/context-sync.png)
+![image](https://github.com/alanzw/sharerender/raw/master/pic/context-sync.png)
