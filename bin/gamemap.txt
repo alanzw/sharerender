@@ -1,0 +1,9 @@
+#option: [path] [game name] [use dll name] [support d3d or not]
+#example D:/Trine Trine.exe  logicServer.dll true
+D:/GameTest/Games/Trine Trine.exe logicServer.dll true
+D:/GameTest/Games/4-0_AngryBots DemoUnity.exe logicServer.dll true
+D:/GameTest/Games/CastleStorm CastleStorm.exe logicServer.dll true
+D:/GameTest/Games/SprillRichi SprillRichi.exe logicServer.dll true
+D:/GameTest/Games/Shadowrun_Returns Shadowrun.exe logicServer.dll true
+D:/GameTest/Games/Transformers/Binaries TransGame.exe logicServer.dll true
+D:/GameTest/Games/Samples/C++/Direct3D/Bin/x86 LocalDeformablePRT.exe logicServer.dll true
