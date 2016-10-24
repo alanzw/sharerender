@@ -1,6 +1,6 @@
-# FGCG manual
+# ShareRender manual
 =========
-Fine grained scheduling framework for cloud gaming system.
+ShareRender is a cloud gaming system that enables fine-grained resource sharing at the frame-level.
 
 ##Set up
 
