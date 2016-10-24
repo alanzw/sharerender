@@ -58,7 +58,7 @@ Unity Angry Bots: http://unity3d.com/showcase/live-demos#angrybots
 # ShareRender architecture
 ========
 ##System Overview
-![image](https://github.com/alanzw/sharerender/raw/master/pic/system-overview.png)
+![image](https://github.com/alanzw/sharerender/raw/master/pic/system-over-view.png)
 ##System Flow
 ![image](https://github.com/alanzw/sharerender/raw/master/pic/sharerender-flow.png)
 ##Retrieving Geometry Data
