@@ -19,7 +19,9 @@ Add DirectX install path to System Environment as "DXSDK_DIR" and add CUDA 6.0 i
 
 ###Build
 
-Start to build the soluation in VS2010, if gets warnings about missing libraries, add them to linker input.
+1. Some dependency libraries are compressed to ShareRenderDeps.v10.zip, you need to unzip this file and copy bin/* to <root dir of ShareRender>/bin/ and copy DepsWin32/* to <root dir of ShareRender>/DepsWin32/
+
+2. Start to build the soluation in VS2010, if gets warnings about missing libraries, add them to linker input.
 
 ##Quick Start
 
