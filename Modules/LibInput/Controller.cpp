@@ -1571,6 +1571,8 @@ error:
 				replay = NULL;
 			}
 		}
+
+#if 0
 		int CtrlMessagerServer::init(struct RTSPConf *conf, const char *ctrlid) {
 			if (ctrlSocketInit(conf) < 0){
 				infoRecorder->logError("[CtrlMessagerServer]:init socket failed\n");
@@ -1616,6 +1618,9 @@ error:
 			ctrlSocket = -1;
 			return -1;
 		}
+#endif
+
+
 		int CtrlMessagerServer::init(CtrlConfig *conf, const char *ctrlid) {
 			if (!conf){
 				infoRecorder->logError("[CtrlMessagerServer]: NULL CtrlConsfig.\n");
@@ -1733,8 +1738,8 @@ restart:
 			if (conf->ctrlproto == IPPROTO_TCP) {
 tcp_readmore:
 				if ((rlen = recv(sock, (char*)buf + buflen, sizeof(buf)-buflen, 0)) <= 0) {
-					infoRecorder->logTrace("controller server-read: %s\n", strerror(errno));
-					infoRecorder->logTrace("controller server-thread: conenction closed.\n");
+					infoRecorder->logTrace("[CtrlMessagerServer]: controller server-read: %s\n", strerror(errno));
+					infoRecorder->logTrace("[CtrlMessagerServer]: controller server-thread: conenction closed.\n");
 					closesocket(sock);
 					return FALSE;
 				}
@@ -1755,7 +1760,7 @@ tcp_readmore:
 					clientaccepted = 1;
 				}
 				else if (memcmp(&csin, &xsin, sizeof(csin)) != 0) {
-					infoRecorder->logError("controller server-thread: NOTICE - UDP client reconnected?\n");
+					infoRecorder->logError("[CtrlMessagerServer]: controller server-thread: NOTICE - UDP client reconnected?\n");
 					bcopy(&xsin, &csin, sizeof(csin));
 					//continue;
 				}
@@ -1771,7 +1776,7 @@ tcp_again:
 			msglen = ntohs(*((unsigned short*)(buf + bufhead)));
 			//
 			if (msglen == 0) {
-				infoRecorder->logError("controller server: WARNING - invalid message with size equal to zero!\n");
+				infoRecorder->logError("[CtrlMessagerServer]: controller server: WARNING - invalid message with size equal to zero!\n");
 				return TRUE;
 			}
 			else{
@@ -1786,7 +1791,7 @@ tcp_again:
 			}
 			else if (conf->ctrlproto == IPPROTO_UDP) {
 				if (buflen != msglen) {
-					infoRecorder->logError("controller server: UDP msg size matched (expected %d, got %d).\n",
+					infoRecorder->logError("[CtrlMessagerServer]: controller server: UDP msg size matched (expected %d, got %d).\n",
 						msglen, buflen);
 					return TRUE;
 				}
@@ -1796,7 +1801,7 @@ tcp_again:
 				replay(buf + bufhead, msglen);
 			}
 			else if (writeMsg(buf + bufhead, msglen) != msglen) {
-				infoRecorder->logError("controller server: queue full, message dropped.\n");
+				infoRecorder->logError("[CtrlMessagerServer]: controller server: queue full, message dropped.\n");
 			}
 			else {
 				SetEvent(wakeup);
@@ -1813,7 +1818,7 @@ tcp_again:
 		}
 		BOOL CtrlMessagerServer::stop(){
 			clientaccepted = 0;
-			infoRecorder->logError("CtrlMessgerClient thread terminated: tid =%d\n", this->getThreadId());
+			infoRecorder->logError("[CtrlMessagerServer]: thread terminated: tid =%d\n", this->getThreadId());
 			CThread::stop();
 			return TRUE;
 		}
@@ -1878,7 +1883,20 @@ again:
 			return;
 		}
 
-		CtrlMessagerServer::CtrlMessagerServer(){}
+		CtrlMessagerServer::CtrlMessagerServer(){
+			currHeight = 0, currWidth = 0;
+			outputHeight = 0, outputWidth = 0;
+			 ctrlSocket = NULL, sock = NULL;
+			 clientaccepted = 0;
+			 
+
+			 bufhead = 0, buflen = 0;
+			 wakeupMutex = NULL;
+			 wakeup = NULL;
+			 replay = NULL;
+			 conf = NULL;
+
+		}
 
 	}
 }

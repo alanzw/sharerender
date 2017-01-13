@@ -60,7 +60,7 @@
 #define	CTRL_QUEUE_SIZE		65536	// 64K
 
 
-//#define ENABLE_CLIENT_CONTROL
+#define ENABLE_CLIENT_CONTROL
 
 namespace cg{
 	namespace input{
@@ -265,7 +265,9 @@ namespace cg{
 			virtual void onQuit();
 
 			// for server
+#if 0
 			int init(struct cg::RTSPConf * conf, const char * ctrlid);
+#endif
 			msgfunc setReplay(msgfunc);
 			int readNext(void *msg, int msglen);
 			int ctrlSocketInit(struct cg::RTSPConf * conf);

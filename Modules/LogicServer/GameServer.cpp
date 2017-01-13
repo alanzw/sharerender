@@ -160,9 +160,7 @@ DWORD WINAPI RenderConnectionLitener(LPVOID param){
 		}while(true);
 
 		csSet->addServer(sockConn);
-
 	}
-
 #else
 	ListenServer * server = new ListenServer();
 	event_base * base = event_base_new();
@@ -235,8 +233,6 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 	{
 	case DLL_PROCESS_ATTACH:
 		{ 
-			//Log::init("game_server.log");
-			
 			infoRecorder->logTrace("[Global]: ");
 			infoRecorder->logTrace(GetCommandLine());
 			infoRecorder->logTrace("\n");
@@ -311,7 +307,7 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 					}
 				}
 				else if(cmdCtrl->getMode() == 2){
-					// listen to render proxy, to listen 60000 port
+					// listen to render proxy, to listen 70000 port
 					infoRecorder->logTrace("[DllMain]: to create server for render proxy.\n");
 					clientThreadHandle = chBEGINTHREADEX(NULL, 0, RenderConnectionLitener, cmdCtrl, FALSE, &clientThreadId);
 				}
@@ -383,9 +379,8 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 						break;
 					}
 				}
-				enableRender = conf->enableRender;
+				//enableRender = conf->enableRender;
 			} while (0);
-
 			
 #endif  // ENABLE_CLIENT_CONTROL
 			first = 0;
