@@ -25,7 +25,7 @@ using namespace cg::core;
 #pragma comment(lib, "detours/detours.lib")
 
 #define COM_METHOD(TYPE, METHOD) TYPE STDMETHODCALLTYPE METHOD
-#define STREAM_SERVER_CONFIG "config/server.controller.conf"
+
 
 extern bool tex_send[4024];
 

@@ -610,73 +610,112 @@ namespace cg{
 				return INVALID_KEY;
 		}
 
-
-
-
 		static char *myctrlid = NULL;
 		static bool ctrlenabled = true;
 
-		ccgRect CtrlReplayer::cropRect;
-		ccgRect * CtrlReplayer::prect;
-		int CtrlReplayer::outputW;
-		int CtrlReplayer::outputH;
-		int CtrlReplayer::cxsize;
-		int CtrlReplayer::cysize;
+		static bool clientControlCreated = false;
 
-		double CtrlReplayer::scaleFactorX;
-		double CtrlReplayer::scaleFactorY;
+		void CreateClientControl(HWND wnd){
+#ifdef ENABLE_CLIENT_CONTROL
 
-		CtrlMessagerServer * CtrlReplayer::ctrlMsgServer;
-		CtrlConfig *CtrlReplayer::conf;
+			if(clientControlCreated)
+				return;
+
+			clientControlCreated = true;
+
+			RECT windowRect;
+			memset(&windowRect, 0, sizeof(RECT));
 
 
-		int CtrlReplayer::init(RECT * rect){
-			if (keymap_initialized == false) {
-				SDLKeyToKeySym_init();
-			}
-			if (ctrlMsgServer && ctrlMsgServer->getCtrlConfig()){
-				conf = ctrlMsgServer->getCtrlConfig();
-			}
-			if (rect != NULL) {
-				if (ccg_fillrect(&cropRect, rect->left, rect->top, rect->right, rect->bottom) == NULL) {
-					cg::core::infoRecorder->logError("controller: invalid rect (%d,%d)-(%d,%d)\n",
-						rect->left, rect->top,
-						rect->right, rect->bottom);
-					return -1;
+			cg::input::CtrlConfig * conf = NULL;
+			conf = cg::input::CtrlConfig::GetCtrlConfig(STREAM_SERVER_CONFIG);
+			cg::input::CtrlMessagerServer * ctrlServer = new cg::input::CtrlMessagerServer();
+			do{
+				if (conf->ctrlenable){
+					if (ctrlServer->initQueue(32768, sizeof(cg::input::sdlmsg_t)) < 0){
+						conf->ctrlenable = 0;
+						break;
+					}
+					// create the replay callback
+
+					GetWindowRect(wnd, &windowRect);
+
+					ReplayCallbackImp * replayCallback = new ReplayCallbackImp(&windowRect, &windowRect);
+					if(ctrlServer->init(conf, CTRL_CURRENT_VERSION)){
+						cg::core::infoRecorder->logError("[SERVER]: cannot start the input thread.\n");
+					}
+
+					ctrlServer->setReplay(replayCallback);
+
+					if (!ctrlServer->start()){
+						cg::core::infoRecorder->logError("Cannot create controller thread, controller disable\n");
+						conf->ctrlenable = 0;
+						break;
+					}
 				}
-				prect = &cropRect;
-				cg::core::infoRecorder->logError("controller: crop rect (%d,%d)-(%d,%d)\n",
-					prect->left, prect->top,
-					prect->right, prect->bottom);
+				//enableRender = conf->enableRender;
+			} while (0);
+
+#endif  // ENABLE_CLIENT_CONTROL
+		}
+		
+		ReplayCallbackImp::ReplayCallbackImp(RECT * windowRect, RECT * pOutputRect): prect(NULL), pOutputWindowRect(NULL), scaleFactorX(0), scaleFactorY(0),cxsize(0), cysize(0)
+		{
+			if(windowRect){
+				prect = new RECT;
+				memcpy(prect, windowRect, sizeof(RECT));
 			}
-			else {
+			if(pOutputRect){
+				pOutputWindowRect = new RECT;
+				memcpy(pOutputWindowRect, pOutputRect, sizeof(RECT));
+			}
+		}
+
+		ReplayCallbackImp::~ReplayCallbackImp(){
+			if(prect){
+				delete prect;
 				prect = NULL;
 			}
+			if(pOutputWindowRect){
+				delete pOutputWindowRect;
+				pOutputWindowRect = NULL;
+			}
+		}
+		
+		int ReplayCallbackImp::initKeyMap(){
+			if(keymap_initialized == false){
+				SDLKeyToKeySym_init();
+			}
+			// set the scaler 
 
-			cg::core::infoRecorder->logTrace("sdl_replayer: sizeof(sdlmsg) = %d\n", sizeof(sdlmsg_t));
-			//
-
+			// get the screen resolution
 			cxsize = GetSystemMetrics(SM_CXSCREEN);
 			cysize = GetSystemMetrics(SM_CYSCREEN);
-			ctrlMsgServer->setResolution(cxsize, cysize);
-			ctrlMsgServer->setOutputResolution(cxsize, cysize);
-			scaleFactorX = 1.0f;
-			scaleFactorY = 1.0f;
-			cg::core::infoRecorder->logTrace("sdl replayer: Replay using SendInput(), screen-size=%dx%d\n", cxsize, cysize);
+
 
 			// compute scale factor
 			do {
 				int resolution[2];
 				int baseX, baseY;
 
+#if 0
 				if (conf->confReadInts("output-resolution", resolution, 2) != 2)
 					break;
 				//
-				outputW = resolution[0];
-				outputH = resolution[1];
-				ctrlMsgServer->setOutputResolution(outputW, outputH);
+				int outputW = resolution[0];
+				int outputH = resolution[1];
+#else
+				int outputW = 0; int outputH = 0;
+				if(pOutputWindowRect == NULL){
+					cg::core::infoRecorder->logError("[Callback]: NULL output window rect.\n");
+					outputW = cxsize;
+					outputH = cysize;
+				}
+				outputW = pOutputWindowRect->right - pOutputWindowRect->left + 1;
+				outputH = pOutputWindowRect->bottom - pOutputWindowRect->top + 1;
+#endif
 				//
-				if (rect == NULL) {
+				if (prect == NULL) {
 					baseX = cxsize;
 					baseY = cysize;
 				}
@@ -684,85 +723,25 @@ namespace cg{
 					baseX = prect->right - prect->left + 1;
 					baseY = prect->bottom - prect->top + 1;
 				}
-				ctrlMsgServer->setResolution(baseX, baseY);
-				ctrlMsgServer->getScaleFactor(&scaleFactorX, &scaleFactorY);
-				//
-				cg::core::infoRecorder->logTrace("sdl replayer: mouse coordinate scale factor = (%.3f,%.3f)\n",
+
+				double rx, ry;
+				rx = 1.0 * baseX / outputW;
+				ry = 1.0 * baseY / outputH;
+
+				if(rx <= 0.0)	rx = 1.0;
+				if(ry <= 0.0)	ry = 1.0;
+
+				scaleFactorX = rx;
+				scaleFactorY = ry;
+
+				cg::core::infoRecorder->logTrace("[Callback]: sdl replayer: mouse coordinate scale factor = (%.3f,%.3f)\n",
 					scaleFactorX, scaleFactorY);
 			} while (0);
-			// register callbacks
-			ctrlMsgServer->setReplay(&(CtrlReplayer::replayCallback));
-			//
-			return 0;
-		}
-		int CtrlReplayer::init(ccgRect * rect, CtrlConfig * config){
-			if (keymap_initialized == false) {
-				SDLKeyToKeySym_init();
-			}
-			if (config){
-				conf = config;
-			}
-			else if (ctrlMsgServer && ctrlMsgServer->getCtrlConfig()){
-				conf = ctrlMsgServer->getCtrlConfig();
-			}
-			if (rect != NULL) {
-				if (ccg_fillrect(&cropRect, rect->left, rect->top, rect->right, rect->bottom) == NULL) {
-					cg::core::infoRecorder->logError("controller: invalid rect (%d,%d)-(%d,%d)\n",
-						rect->left, rect->top,
-						rect->right, rect->bottom);
-					return -1;
-				}
-				prect = &cropRect;
-				("controller: crop rect (%d,%d)-(%d,%d)\n",
-					prect->left, prect->top,
-					prect->right, prect->bottom);
-			}
-			else {
-				prect = NULL;
-			}
 
-			cg::core::infoRecorder->logTrace("sdl_replayer: sizeof(sdlmsg) = %d\n", sizeof(sdlmsg_t));
-			//
 
-			cxsize = GetSystemMetrics(SM_CXSCREEN);
-			cysize = GetSystemMetrics(SM_CYSCREEN);
-			ctrlMsgServer->setResolution(cxsize, cysize);
-			ctrlMsgServer->setOutputResolution(cxsize, cysize);
-			cg::core::infoRecorder->logTrace("sdl replayer: Replay using SendInput(), screen-size=%dx%d\n", cxsize, cysize);
-
-			// compute scale factor
-			do {
-				int resolution[2];
-				int baseX, baseY;
-
-				if (conf->confReadInts("output-resolution", resolution, 2) != 2)
-					break;
-				//
-				outputW = resolution[0];
-				outputH = resolution[1];
-				ctrlMsgServer->setOutputResolution(outputW, outputH);
-				//
-				if (rect == NULL) {
-					baseX = cxsize;
-					baseY = cysize;
-				}
-				else {
-					baseX = prect->right - prect->left + 1;
-					baseY = prect->bottom - prect->top + 1;
-				}
-				ctrlMsgServer->setResolution(baseX, baseY);
-				ctrlMsgServer->getScaleFactor(&scaleFactorX, &scaleFactorY);
-				//
-				cg::core::infoRecorder->logTrace("sdl replayer: mouse coordinate scale factor = (%.3f,%.3f)\n",
-					scaleFactorX, scaleFactorY);
-			} while (0);
-			// register callbacks
-			ctrlMsgServer->setReplay(&(CtrlReplayer::replayCallback));
-			//
 			return 0;
 		}
 
-		void CtrlReplayer::deInit(){}
 		//void sdlmsg_replay_deinit(void *arg) {
 		//#ifdef WIN32
 		//#elif defined __APPLE__
@@ -777,12 +756,12 @@ namespace cg{
 		//}
 
 #ifdef WIN32
-		void CtrlReplayer::replayNative(sdlmsg_t *msg) {
-			INPUT in;
-			sdlmsg_keyboard_t *msgk = (sdlmsg_keyboard_t*) msg;
-			sdlmsg_mouse_t *msgm = (sdlmsg_mouse_t*) msg;
-			//
-			infoRecorder->logError("[CtrlReplayer]: replay native.\n");
+
+		void ReplayCallbackImp::replayNative(sdlmsg_t *msg){
+			INPUT				in;
+			sdlmsg_keyboard_t *	msgk = (sdlmsg_keyboard_t*) msg;
+			sdlmsg_mouse_t *	msgm = (sdlmsg_mouse_t*) msg;
+
 			switch(msg->msgtype) {
 			case SDL_EVENT_MSGTYPE_KEYBOARD:
 				bzero(&in, sizeof(in));
@@ -792,7 +771,7 @@ namespace cg{
 						in.ki.dwFlags |= KEYEVENTF_KEYUP;
 					}
 					in.ki.wScan = MapVirtualKey(in.ki.wVk, MAPVK_VK_TO_VSC);
-					//ga_error("sdl replayer: vk=%x scan=%x\n", in.ki.wVk, in.ki.wScan);
+					//infoRecorder->logError("sdl replayer: vk=%x scan=%x\n", in.ki.wVk, in.ki.wScan);
 					SendInput(1, &in, sizeof(in));
 				} else {
 					////////////////
@@ -804,7 +783,7 @@ namespace cg{
 				}
 				break;
 			case SDL_EVENT_MSGTYPE_MOUSEKEY:
-				//ga_error("sdl replayer: button event btn=%u pressed=%d\n", msg->mousebutton, msg->is_pressed);
+				//infoRecorder->logError("sdl replayer: button event btn=%u pressed=%d\n", msg->mousebutton, msg->is_pressed);
 				bzero(&in, sizeof(in));
 				in.type = INPUT_MOUSE;
 				if(msgm->mousebutton == 1 && msgm->is_pressed != 0) {
@@ -893,6 +872,7 @@ namespace cg{
 			}
 			return;
 		}
+
 #elif defined __APPLE__
 		static void
 			sdlmsg_replay_native(sdlmsg_t *msg) {
@@ -1075,24 +1055,19 @@ namespace cg{
 				return;
 		}
 #endif
-		int CtrlReplayer::replay(sdlmsg_t * msg){
-			// convert from network byte order to host byte order
+
+		void ReplayCallbackImp::operator()(void * buf, int len){
+			sdlmsg_t *m = (sdlmsg_t *)buf;
+			if(len  != ntohs(m->msgsize)){
+				cg::core::infoRecorder->logError("[ReplaCallbackImp]: msg length mismatched. (%d != %d).\n", len, ntohs(m->msgsize));
+			}
+			replay((sdlmsg_t*)buf);
+		}
+		void ReplayCallbackImp::replay(sdlmsg_t * msg){
 			sdlmsg_ntoh(msg);
 			replayNative(msg);
-			return 0;
 		}
-
-		void CtrlReplayer::replayCallback(void * msg, int msglen){
-			sdlmsg_t *m = (sdlmsg_t*)msg;
-			if (msglen != ntohs(m->msgsize)/*sizeof(sdlmsg_t)*/) {
-				cg::core::infoRecorder->logError("message length mismatched. (%d != %d)\n",
-					msglen, ntohs(m->msgsize));
-			}
-			replay((sdlmsg_t*)msg);
-			return;
-		}
-
-
+		
 
 		//
 
@@ -1115,7 +1090,7 @@ namespace cg{
 				}
 				return addr.s_addr;
 		}
-		// for queuemessager
+		// for queue messager
 		int QueueMessager::initQueue(int size, int maxunit){
 
 			InitializeCriticalSection(&queueSection);
@@ -1634,10 +1609,7 @@ error:
 			// init the msg queue
 			//QueueMessager::initQueue(size, maxunit);
 			// init the critical sections
-			currWidth = -1;
-			currHeight = -1;
-			outputWidth = -1;
-			outputHeight = -1;
+			
 			InitializeCriticalSection(&reslock);
 			InitializeCriticalSection(&oreslock);
 
@@ -1672,11 +1644,7 @@ error:
 			return -1;
 		}
 
-		msgfunc CtrlMessagerServer::setReplay(msgfunc callback) {
-			msgfunc old = replay;
-			replay = callback;
-			return old;
-		}
+		
 		BOOL CtrlMessagerServer::onThreadStart(){
 			struct sockaddr_in csin, xsin;
 			clientaccepted = 0;
@@ -1735,11 +1703,10 @@ restart:
 			//
 			bufhead = 0;
 			//
-			if (conf->ctrlproto == IPPROTO_TCP) {
 tcp_readmore:
+			if (conf->ctrlproto == IPPROTO_TCP) {
 				if ((rlen = recv(sock, (char*)buf + buflen, sizeof(buf)-buflen, 0)) <= 0) {
 					infoRecorder->logTrace("[CtrlMessagerServer]: controller server-read: %s\n", strerror(errno));
-					infoRecorder->logTrace("[CtrlMessagerServer]: controller server-thread: conenction closed.\n");
 					closesocket(sock);
 					return FALSE;
 				}
@@ -1772,15 +1739,14 @@ tcp_again:
 				else
 					return TRUE;
 			}
-			//
 			msglen = ntohs(*((unsigned short*)(buf + bufhead)));
-			//
+
 			if (msglen == 0) {
 				infoRecorder->logError("[CtrlMessagerServer]: controller server: WARNING - invalid message with size equal to zero!\n");
 				return TRUE;
 			}
 			else{
-				infoRecorder->logError("[CtrlMessagerServer]: msglen :%d.\n", msglen);
+				infoRecorder->logError("[CtrlMessagerServer]: controller receive msglen :%d.\n", msglen);
 			}
 			// buffer checks for TCP - not sufficient?
 			if (conf->ctrlproto == IPPROTO_TCP) {
@@ -1798,7 +1764,7 @@ tcp_again:
 			}
 			// replay or queue the event
 			if (replay != NULL) {
-				replay(buf + bufhead, msglen);
+				(*replay)(buf + bufhead, msglen);
 			}
 			else if (writeMsg(buf + bufhead, msglen) != msglen) {
 				infoRecorder->logError("[CtrlMessagerServer]: controller server: queue full, message dropped.\n");
@@ -1847,6 +1813,8 @@ again:
 			// never return from here
 			return 0;
 		}
+
+#if 0
 		void CtrlMessagerServer::setOutputResolution(int width, int height) {
 			EnterCriticalSection(&oreslock);
 			outputWidth = width;
@@ -1882,10 +1850,13 @@ again:
 			*fy = ry;
 			return;
 		}
+#endif
 
 		CtrlMessagerServer::CtrlMessagerServer(){
+#if 0
 			currHeight = 0, currWidth = 0;
 			outputHeight = 0, outputWidth = 0;
+#endif
 			 ctrlSocket = NULL, sock = NULL;
 			 clientaccepted = 0;
 			 

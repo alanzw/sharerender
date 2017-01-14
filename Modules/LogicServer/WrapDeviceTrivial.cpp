@@ -232,9 +232,8 @@ STDMETHODIMP WrapperDirect3DDevice9::Reset(THIS_ D3DPRESENT_PARAMETERS* pPresent
 	return m_device->Reset(pPresentationParameter);
 }
 
+
 extern int serverInputArrive;
-
-
 static double last_time = 0.0f;
 static float last_frame_time = 0.0f;
 static bool init = false;
@@ -318,6 +317,11 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 	//infoRecorder->logError("[WrapperDirect3dDeivce9]:Present(), key cmd helper commit, is sending:%s, sending step:%d.\n", keyCmdHelper->isSending() ? "true" : "false", keyCmdHelper->getSendStep());
 
 	cmdCtrl->commitRender();
+#ifdef ENABLE_CLIENT_CONTROL
+	CreateClientControl(cmdCtrl->getHwnd());
+#endif
+
+
 
 #ifdef ENBALE_DEVICE_LOG
 	infoRecorder->logTrace("[WrapperDirect3DDevice9]: render step:%d.\n", cmdCtrl->getFrameStep());

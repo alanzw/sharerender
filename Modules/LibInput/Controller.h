@@ -59,6 +59,7 @@
 #define	CTRL_CURRENT_VERSION	"GACtrlV01"
 #define	CTRL_QUEUE_SIZE		65536	// 64K
 
+#define STREAM_SERVER_CONFIG "config/server.controller.conf"
 
 #define ENABLE_CLIENT_CONTROL
 
@@ -234,9 +235,20 @@ namespace cg{
 			void setCtrlConfig(cg::input::CtrlConfig * conf);
 		};
 
+
+		// the callback interface
+		class ReplayCallback{
+		public:
+			virtual void operator()(void * buf, int len) = 0;
+			virtual ~ReplayCallback(){};
+		};
+
+
 		class CtrlMessagerServer : public QueueMessager, public cg::core::CThread{
+#if 0
 			int currWidth, currHeight;
 			int outputWidth, outputHeight;
+#endif
 			//double scaleFactorX, scaleFactorY;
 			CRITICAL_SECTION reslock;
 			CRITICAL_SECTION oreslock;
@@ -250,7 +262,8 @@ namespace cg{
 
 			HANDLE wakeupMutex;
 			HANDLE wakeup;
-			msgfunc replay;
+			//msgfunc replay;
+			ReplayCallback * replay;
 			CtrlConfig * conf;
 
 		public:
@@ -265,10 +278,9 @@ namespace cg{
 			virtual void onQuit();
 
 			// for server
-#if 0
-			int init(struct cg::RTSPConf * conf, const char * ctrlid);
-#endif
-			msgfunc setReplay(msgfunc);
+
+			inline void setReplay(ReplayCallback * callback){ replay = callback; }
+
 			int readNext(void *msg, int msglen);
 			int ctrlSocketInit(struct cg::RTSPConf * conf);
 			int init(CtrlConfig * conf, const char * ctrlid);
@@ -276,33 +288,42 @@ namespace cg{
 			int ctrlSocketInit(CtrlConfig * conf);
 			void setCtrlConfig(CtrlConfig * conf);
 			void setRtspConf(cg::RTSPConf * conf);
+
+#if 0
 			void setOutputResolution(int width, int height);
 			void getOutputResolution(int *widht, int *height);
 
 			void setResolution(int width, int height);
 			void getResolution(int * width, int * height);
 			void getScaleFactor(double * fx, double *fy);
+#endif
 			inline CtrlConfig * getCtrlConfig(){ return conf; }
 		};
 
-		class CtrlReplayer{
-			static ccgRect cropRect;
-			static ccgRect *prect;
-			static double scaleFactorX, scaleFactorY;
-			static int outputW, outputH, cxsize, cysize;
-			static CtrlConfig * conf;
-			static CtrlMessagerServer * ctrlMsgServer;
+		class ReplayCallbackImp: public ReplayCallback{
+			// attribute
+			float scaleFactorX, scaleFactorY;
+			float cxsize, cysize;
 
-			static void replayNative(sdlmsg_t * msg);
-			static int init(ccgRect * rect, CtrlConfig * conf);
-			static void deInit();
-			static int replay(sdlmsg_t * msg);
-			static void replayCallback(void * msg, int msglen);
+			RECT*	prect; // the display window rect
+			RECT*	pOutputWindowRect;   // the output window rect
+
+			void scaleCoordinate(); // called before use
+			int initKeyMap(); // called before use
+
+			void replayNative(sdlmsg_t *msg);
+			void replay(sdlmsg_t * msg);
+			
 		public:
-			static void startCtrlServer(){ ctrlMsgServer->start(); }
-			static void setMsgServer(CtrlMessagerServer * _server){ ctrlMsgServer = _server; }
-			static int init(RECT * rect);
+			ReplayCallbackImp(RECT * windowRect, RECT * pOutputRect);
+			virtual void operator()(void * buf, int len);
+			virtual ~ReplayCallbackImp();
 		};
+
+		
+		void CreateClientControl(HWND);
+
+
 	}
 }
 

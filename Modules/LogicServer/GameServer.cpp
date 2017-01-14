@@ -201,6 +201,8 @@ DWORD WINAPI GameClientEventProc(LPVOID param){
 	return 0;
 }
 
+
+
 // get the socket from command, and connect to the logic manager port( we can use the port 8759)
 BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved ) {
 	WSADATA wsaData;
@@ -356,33 +358,7 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 			// create the input server thread
 			//InitializeCriticalSection(&f9);
 
-#ifdef ENABLE_CLIENT_CONTROL
-			cg::input::CtrlConfig * conf = NULL;
-			conf = cg::input::CtrlConfig::GetCtrlConfig(STREAM_SERVER_CONFIG);
-			cg::input::CtrlMessagerServer * ctrlServer = new cg::input::CtrlMessagerServer();
-			do{
-				if (conf->ctrlenable){
-					if (ctrlServer->initQueue(32768, sizeof(cg::input::sdlmsg_t)) < 0){
-						conf->ctrlenable = 0;
-						break;
-					}
-					//msgfunc * replayer = &(CtrlReplayer::replayCallback);
-					//ctrlServer->setReplay(&(CtrlReplayer::replayCallback));
-					if(ctrlServer->init(conf, CTRL_CURRENT_VERSION)){
-						infoRecorder->logError("[SERVER]: cannot start the input thread.\n");
-					}
 
-					cg::input::CtrlReplayer::setMsgServer(ctrlServer);
-					if (!ctrlServer->start()){
-						infoRecorder->logError("Cannot create controller thread, controller disable\n");
-						conf->ctrlenable = 0;
-						break;
-					}
-				}
-				//enableRender = conf->enableRender;
-			} while (0);
-			
-#endif  // ENABLE_CLIENT_CONTROL
 			first = 0;
 			infoRecorder->logTrace("[DllMain]: finish dll main.\n");
 			break;
