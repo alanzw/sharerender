@@ -177,27 +177,55 @@ DWORD WINAPI RenderConnectionLitener(LPVOID param){
 }
 
 DWORD WINAPI GameClientEventProc(LPVOID param){
+
+#if 0
 	infoRecorder->logTrace("[GameClientProc]: enter the event dealing thread for game client.\n");
 	// connect to loader
 	CmdController * ctrl = (CmdController *)param;
 	GameClient * gameClient = new GameClient();
 	char * name = (char *)(ctrl->getObjName().c_str() + 1);
 	gameClient->setName(name);
-	event_base * base = event_base_new();
 
 	IDENTIFIER taskId  = (IDENTIFIER)atoi(cmdCtrl->getIdentifier().c_str());
-
+	gameClient->setTaskID(taskId);
+#else
+	GameClient * gameClient = (GameClient *)param;
+#endif
+	event_base * base = event_base_new();
 	gameClient->setEventBase(base);
 	gameClient->connectToLogicServer();   // connect to logic server
+	
+#if 0
 	gameClient->getCtx()->writeCmd(GAME_READY);
 	gameClient->getCtx()->writeIdentifier(taskId);
 	gameClient->getCtx()->writeToNet();
+#else
+	//gameClient->setTaskID(taskId);
+	DWORD ret = WaitForSingleObject(gameClient->getClientEvent(), INFINITE);
+	switch(ret){
+	case WAIT_OBJECT_0:
+		infoRecorder->logTrace("[GameClientProc]: client event triggered.\n");
+		if(!gameClient->notifyGameReady()){
+			infoRecorder->logError("[GameClientProc]: notify GAME READY failed.\n");
+			return -1;
+		}
+		break;
+	case WAIT_TIMEOUT:
+		infoRecorder->logError("[GameClientProc]: client event time out.\n");
+		return -1;
+		break;
+	case WAIT_FAILED:
+		//GameClient::Release();
+		return -1;
+		break;
 
-	infoRecorder->logTrace("[DllMain]: enter the game process, task id:%p\n", taskId);
+	}
+#endif
+
+	infoRecorder->logTrace("[DllMain]: enter the game process, task id:%p\n", gameClient->getTaskID());
 	gameClient->dispatch();   // dispatch the event
 
 	infoRecorder->logTrace("[GameClientProc]: before exit the event thread, to free GameClient.\n");
-	delete gameClient;
 	return 0;
 }
 
@@ -235,14 +263,14 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 	{
 	case DLL_PROCESS_ATTACH:
 		{ 
+			char * cmdLine = GetCommandLine();
 			infoRecorder->logTrace("[Global]: ");
-			infoRecorder->logTrace(GetCommandLine());
+			infoRecorder->logTrace(cmdLine);
 			infoRecorder->logTrace("\n");
 
 			//enableRender = true;
 #if 1  // no clients
 			// get the task ID, the second argv, add a new parameter to command line, to identify the start mode for game
-			char * cmdLine = GetCommandLine();
 			string exeName;
 			bool enableBackRunning = true;
 			infoRecorder->logTrace("[DllMain]: cmd line :%s.\n", cmdLine);
@@ -304,7 +332,12 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 						// connect to local host
 						taskId = (IDENTIFIER)atoi(cmdCtrl->getIdentifier().c_str());
 						infoRecorder->logTrace("[DllMain]: task id:%p", taskId);
-						clientThreadHandle = chBEGINTHREADEX(NULL, 0, GameClientEventProc, cmdCtrl, FALSE, &clientThreadId);
+						char * name = (char *)(cmdCtrl->getObjName().c_str() + 1);
+						GameClient * gClient=  GameClient::GetGameClient();
+						gClient->setName(name);
+						gClient->setTaskID(taskId);
+
+						clientThreadHandle = chBEGINTHREADEX(NULL, 0, GameClientEventProc, gClient, FALSE, &clientThreadId);
 						cmdCtrl->setTaskId((HANDLE)taskId);
 					}
 				}
@@ -312,6 +345,9 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 					// listen to render proxy, to listen 70000 port
 					infoRecorder->logTrace("[DllMain]: to create server for render proxy.\n");
 					clientThreadHandle = chBEGINTHREADEX(NULL, 0, RenderConnectionLitener, cmdCtrl, FALSE, &clientThreadId);
+				}
+				else{
+					infoRecorder->logError("[DllMain]: invalid listen mode:%d.\n", cmdCtrl->getMode());
 				}
 				// how to set cooperate work mode, render proxy and logic server both do the rendering
 

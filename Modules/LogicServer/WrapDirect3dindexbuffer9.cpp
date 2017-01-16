@@ -277,7 +277,6 @@ STDMETHODIMP WrapperDirect3DIndexBuffer9::Lock(THIS_ UINT OffsetToLock,UINT Size
 STDMETHODIMP WrapperDirect3DIndexBuffer9::Unlock(THIS) {
 #ifdef ENABLE_INDEX_LOG
 	infoRecorder->logTrace("WrapperDirect3DIndexBuffer9::Unlock(),id:%d, UnlockSize=%d Bytes, total len:%d, start:%d.\n",id, m_LockData.SizeToLock, length, m_LockData.OffsetToLock);
-
 #endif
 
 	if(pTimer){
@@ -294,8 +293,6 @@ STDMETHODIMP WrapperDirect3DIndexBuffer9::Unlock(THIS) {
 	updateFlag = 0x8fffffff;
 	csSet->checkObj(this);
 #endif  // USE_MEM_INDEX_BUFFER
-
-
 
 #ifndef BUFFER_AND_DELAY_UPDATE
 	base = m_LockData.OffsetToLock;
@@ -401,6 +398,7 @@ int WrapperDirect3DIndexBuffer9::PrepareIndexBuffer(ContextAndCache *ctx){
 int WrapperDirect3DIndexBuffer9::UpdateIndexBuffer(ContextAndCache * ctx) {
 	if(isFirst) {
 		infoRecorder->logError("[WrapperDirect3DIndexBuffer9]: is first is true ? ERROR.\n");
+		isFirst = false;
 	}
 
 	int last = 0, cnt = 0, c_len = 0, d = 0;
@@ -414,7 +412,6 @@ int WrapperDirect3DIndexBuffer9::UpdateIndexBuffer(ContextAndCache * ctx) {
 	ctx->write_uint(flag);
 
 	int stride = (Format == D3DFMT_INDEX16) ? 2 : 4;
-
 
 	ctx->write_int(CACHE_MODE_COPY);
 	ctx->write_char(stride);

@@ -151,7 +151,8 @@ void DisManagerListenerCB(struct evconnlistener * listerner, evutil_socket_t soc
 	netctx->addr = (sockaddr_in *)malloc(sizeof(char *) * len + 10);
 	memcpy(netctx->addr , addr, len);
 
-	netctx->url = inet_ntoa(netctx->addr->sin_addr);
+	netctx->url = _strdup(inet_ntoa(netctx->addr->sin_addr));
+	cg::core::infoRecorder->logTrace("[DisManagerListernerCB]: get url, addr:%p, url:%s.\n", netctx->url, netctx->url);
 
 	DisServer * server = (DisServer *)ctx;
 	//server->addCtx(netctx);

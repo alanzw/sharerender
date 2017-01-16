@@ -151,17 +151,17 @@ namespace cg{
 			//data++;
 
 			if (!strncasecmp(data, LOGIC, strlen(LOGIC))){
-				cg::core::infoRecorder->logTrace("[DisServer]: a new Logic connected.\n");
+				cg::core::infoRecorder->logTrace("[DisServer]: a new Logic connected, id:%p, url:%s.\n", id, ctx->url);
 				logicMap[id] = ctx;
 				ctx->domainType = string("LOGIC");
 			}
 			else if (!strncasecmp(data, RENDER, strlen(RENDER))){
-				cg::core::infoRecorder->logTrace("[DisServer]: a new render connected.\n");
+				cg::core::infoRecorder->logTrace("[DisServer]: a new render connected, id:%p, url:%s.\n",id, ctx->url);
 				renderMap[id] = ctx;
 				ctx->domainType = string("RENDER");
 			}
 			else if (!strncasecmp(data, CLIENT, strlen(CLIENT))){
-				cg::core::infoRecorder->logTrace("[DisServer]: a new Client connected, ERROR.\n");
+				cg::core::infoRecorder->logTrace("[DisServer]: a new Client connected, ERROR, id:%p, url:%s.\n", id, ctx->url);
 				ctx->domainType = string("CLIENT");
 			}
 			else{
@@ -560,17 +560,27 @@ namespace cg{
 #ifdef SCHEDULE_USE_BEST_FIT
 		for (int i = size - 1; i >= 0; i++){
 			if(arr[i]->cpuUsage + cpuRe <= OVERLOAD_THRESHOLD){
-				return arr[i];}
+				ret = arr[i];
+				break;
+			}
 		}
 #endif
 		// or worst fit?
 		for (int i = 0; i < size; i++){
 			if (arr[i]->cpuUsage + cpuRe <= OVERLOAD_THRESHOLD){
 				// find the worth fit
-				return arr[i];
+				ret = arr[i];
+				break;
 			}
 		}
 		// or first fit ? no use !
+
+		if(arr){
+			free(arr);
+		}
+		if(ret){
+			cg::core::infoRecorder->logTrace("[DisServer]: get logic candidate with sock:%p, url:%s.\n",ret->sock, ret->url);
+		}
 
 		return ret;
 	}
@@ -604,7 +614,8 @@ namespace cg{
 #ifdef SCHEDULE_USE_BEST_FIT
 		for (int i = size - 1; i >= 0; i++){
 			if (arr[i]->gpuUsage + gpuRe <= OVERLOAD_THRESHOLD){
-				return arr[i];
+				ret =  arr[i];
+				break;
 			}
 		}
 #endif
@@ -612,10 +623,19 @@ namespace cg{
 		for (int i = 0; i < size; i++){
 			if (arr[i]->gpuUsage + gpuRe <= OVERLOAD_THRESHOLD){
 				// find the worth fit
+				ret = arr[i];
+				break;
 				return arr[i];
 			}
 		}
 		// or first fit ? no use !
+
+		if(arr){
+			free(arr);
+		}
+
+		if(ret)
+			cg::core::infoRecorder->logTrace("[DisServer]: get render candidate with sock:%p, url:%s.\n",ret->sock, ret->url);
 
 		return ret;
 	}
@@ -639,7 +659,7 @@ namespace cg{
 	bool DisServer::sendCmdToRender(TaskInfo * task, const char * cmd){
 		cg::core::infoRecorder->logTrace("[DisServer]: send cmd to render.\n");
 		if (task->status != ASSIGNED){
-			cg::core::infoRecorder->logTrace("[DisServer]: task is not assigned.\n");
+			cg::core::infoRecorder->logError("[DisServer]: task is not assigned.\n");
 			return false;
 		}
 
@@ -654,6 +674,7 @@ namespace cg{
 			ctx->writeData((void *)&task->portOffset, sizeof(short));
 			ctx->writeData((void *)task->logicCtx->url, strlen(task->logicCtx->url));
 			ctx->writeToNet();
+			cg::core::infoRecorder->logTrace("[DisServer]: send START TASK to render with logic url:%s.\n", task->logicCtx->url);
 		}
 		return true;
 	}

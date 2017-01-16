@@ -378,13 +378,15 @@ namespace cg{
 		}
 
 		void InfoRecorder::logTrace(char *format, ...){
-#if 0
+#if 1
 			char tem[512] = {0};
 			va_list ap;
 			va_start(ap, format);
 			int  n = vsprintf(tem, format, ap);
 			//errorRecorder->log(format, ap);
 			va_end(ap);
+
+
 #ifdef DEBUG_
 			infoRecorder->logError("[INfoRecorder]: tem:'%s', size:%d.\n", tem, n);
 #endif

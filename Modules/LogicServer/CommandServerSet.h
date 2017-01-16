@@ -60,8 +60,9 @@ using namespace cg::core;
 
 //#define ENABLE_TEXTURE_LOG
 //#define ENABLE_DEVICE_LOG
-//#define ENBALE_DEVICE_LOG
-
+#define ENBALE_DEVICE_LOG
+#define ENABLE_VERTEX_BUFFER_LOG
+#define ENABLE_INDEX_LOG
 
 enum CtxStatus{
 	CTX_INIT,   // the initial status

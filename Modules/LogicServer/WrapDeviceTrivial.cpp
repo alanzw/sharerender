@@ -20,6 +20,9 @@
 #include "KeyboardHook.h"
 #include "../LibCore/TimeTool.h"
 
+
+#include "GameClient.h"
+
 #include <MMSystem.h>
 
 //#define SCRATCH_MEMO
@@ -295,7 +298,6 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 	csSet->commit();
 
 	// deal with the initializer
-
 	Initializer * initializer = Initializer::GetInitializer();
 	// initializer contains the check for Device
 	if(initializer){
@@ -306,6 +308,17 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 	}else{
 		// context switch is done, set device's creation
 		csSet->checkObj(dynamic_cast<IdentifierBase *>(this));
+	}
+
+	if(GameClient::GetGameClient() && !GameClient::IsInitialized()){
+		// to notify the dis manager that GAME_READ
+		infoRecorder->logError("[WrapperDirect3DDevice9]: to notifier GAME READY.\n");
+		//GameClient::GetGameClient()->notifyGameReady();
+		SetEvent(GameClient::GetGameClient()->getClientEvent());
+		GameClient::SetInitialized(true);
+	}
+	else{
+		infoRecorder->logError("[WrapperDirect3DDevice9]: no need to notify GAME READY.\n");
 	}
 
 	HRESULT hh = D3D_OK;
@@ -763,7 +776,7 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateIndexBuffer(THIS_ UINT Length,DWORD U
 	infoRecorder->logTrace("WrapperDirect3DDevice9::CreateIndexBuffer invoked! Usage:%d, Format:%d, Pool:%d, ",Usage, Format, Pool);
 #endif
 	LPDIRECT3DINDEXBUFFER9 base_ib = NULL;
-
+	
 	HRESULT hr = m_device->CreateIndexBuffer(Length, Usage, Format, Pool, &base_ib, pSharedHandle);
 	WrapperDirect3DIndexBuffer9 * wib = NULL;
 
@@ -778,8 +791,11 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateIndexBuffer(THIS_ UINT Length,DWORD U
 			infoRecorder->logTrace("ret NULL, ");
 		}
 		else {
-			infoRecorder->logTrace("IndexBuffer id=%d, length=%d, ", ((WrapperDirect3DIndexBuffer9*)*ppIndexBuffer)->getId(), ((WrapperDirect3DIndexBuffer9*)*ppIndexBuffer)->GetLength());
 
+			if(wib->getId() == 169)
+				DebugBreak();
+
+			infoRecorder->logTrace("IndexBuffer id=%d, length=%d, ", ((WrapperDirect3DIndexBuffer9*)*ppIndexBuffer)->getId(), ((WrapperDirect3DIndexBuffer9*)*ppIndexBuffer)->GetLength());
 		}
 #endif
 
@@ -803,7 +819,6 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateIndexBuffer(THIS_ UINT Length,DWORD U
 	}
 	else {
 #ifdef ENBALE_DEVICE_LOG
-
 		infoRecorder->logTrace("CreateIndexBuffer Failed.\n");
 #endif
 	}
