@@ -200,10 +200,6 @@ video_quit:
 		struct pooldata * data  = NULL;
 		long long pts = -1LL;
 
-		
-		
-
-
 		if(!(data = loadFrame())){
 			infoRecorder->logTrace("[X264Encoder]: load frame failed.\n");
 			return TRUE;

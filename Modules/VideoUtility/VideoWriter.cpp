@@ -112,6 +112,11 @@ namespace cg{
 		*(pkt->data + 3) = 1;
 		// set the source id
 		*(pkt->data + 4) = ctx->getId();
+		if(specialTag){
+			*(pkt->data + 4) |= 0x80;
+			specialTag = 0;
+			specialTagValid = false;
+		}
 		*(pkt->data + 5) = (tags++) % 255;
 
 		a++;
@@ -161,6 +166,13 @@ namespace cg{
 		ReleaseMutex(this->syncMutex);
 		ret = (int)(0.000001 * us * sampleRate);
 		return ret > 0 ? ret : 0;
+	}
+
+	void VideoWriter::setSpecialTag(unsigned char val){
+		if(!specialTagValid){
+			specialTag = val;
+			specialTagValid = true;
+		}
 	}
 
 	// print the information of the writer

@@ -106,8 +106,6 @@ namespace cg{
 		// the global info recorder
 		extern InfoRecorder * infoRecorder;
 
-
-
 		//// to log the data write in the shared memory map
 		class SharedDataLogger{
 

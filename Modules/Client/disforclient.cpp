@@ -13,6 +13,9 @@
 using namespace cg;
 using namespace cg::core;
 
+///// global control client
+cg::input::CtrlMessagerClient * gCtrlClient = NULL;
+
 /////////////// UserClient /////////////
 bool UserClient::dealEvent(BaseContext * ctx){
 	ctx->readCmd();
@@ -54,12 +57,10 @@ bool UserClient::dealEvent(BaseContext * ctx){
 }
 
 bool UserClient::startRTSP(char * url, int port){
-
 	char rtspUrl[100] = {0};
 
 	infoRecorder->logTrace("[UserClient]: start rtsp thread, url:%s, port:%d.\n", url, port);
 	if (rtspCount + 1 <= MAX_RENDER_COUNT){
-		//how to create the connection  ??????????
 		// create sub game stream and start the sub game stream thread
 		infoRecorder->logTrace("[Client]: rtsp index:%d, url:%s, port:%d, name:%s.\n", rtspCount, url, port, gameName);
 		
@@ -119,78 +120,20 @@ bool UserClient::cancelRTSP(IDENTIFIER rid, char * url){
 	return true;
 }
 
-cg::input::CtrlMessagerClient * gCtrlClient = NULL;
 
-// mainly handle the control ????
+// mainly handle the control ???? (yes)
 bool UserClient::addLogic(char * url){
 	infoRecorder->logError("[UserClient]: add logic %s.\n", url);
-#ifdef ENABLE_CLIENT_CONTORL
-	ctrlConf = CtrlConfig::GetCtrlConfig(STREAM_CLIENT_CONFIG);
-	ctrlClient = new CtrlMessagerClient();
-	do{
-		if(conf->ctrlenable){
-			if(ctrlClient->initQueue(32768, sizeof(sdlmsg_t)) < 0){
-				conf->ctrlenable = 0;
-				break;
-			}
-			if(!ctrlClient->init(conf, CTRL_CURRENT_VERSION)){
-				infoRecorder->logError("[clinet]: cannot init the contorller");
-			}
-
-		}
-	}while(0);
-
-#endif
-
-#if 0
-	//connect to the logic url
-	bool ret = true;
-	evutil_socket_t ctrlSock = NULL;
-
-	//char * url = NULL;
-	unsigned short port = DIS_PORT_CTRL;   // use control port
-	sockaddr_in sin;
-
-	int sin_size = sizeof(sin);
-	sin.sin_family = AF_INET;
-	sin.sin_addr.s_addr = inet_addr(url);
-	sin.sin_port = htons(port);
-
-	struct bufferevent * bev = NULL;
-
-	ctrlSock = socket(AF_INET, SOCK_STREAM, 0);
-	evutil_make_socket_nonblocking(ctrlSock);
-
-	// connect to logic
-	if (connect(ctrlSock, (struct sockaddr*)&sin, sizeof(sin)) < 0) {
-		int e = errno;
-		if (!EVUTIL_ERR_CONNECT_RETRIABLE(e)) {
-			infoRecorder->logTrace("[UsrClient]: connect to logic server failed.\n");
-			evutil_closesocket(sock);
-			return -1;
-		}
-	}
-	// create new BaseContext
-	BaseContext * ctrlCtx = new BaseContext();
-
-	// send the CLIENT_CONNECTED cmd with identifier
-	ctrlCtx->sock = ctrlSock;
-	ctrlCtx->writeCmd(CLIENT_CONNECTED);
-	ctrlCtx->writeData((void *)&this->sock, sizeof(IDENTIFIER));
-	ctrlCtx->writeToNet();
-#endif
 
 	cg::input::CtrlConfig * ctrlConf = cg::input::CtrlConfig::GetCtrlConfig(CTRL_CLIENT_CONFIG);
 	if (!ctrlConf){
 		infoRecorder->logError("[client]: create new ctrl config failed.\n");
 	}
-	// init the ctrl messager
+	// init the ctrl message
 	//cg::input::CtrlMessagerClient * ctrlClient = new cg::input::CtrlMessagerClient();
 	ctrlClient = new cg::input::CtrlMessagerClient();
-	
-	//ctrlClient->init(rtspConf, CTRL_CURRENT_VERSION);
-	// launch controller?
 
+	// launch controller?
 	ctrlConf->ctrlenable = true;  // temp set false;
 	ctrlConf->ctrl_servername = _strdup(url);
 
@@ -217,8 +160,7 @@ bool UserClient::addLogic(char * url){
 	return true;
 }
 
-
-
+// not used
 DWORD UserClient::ClientThreadProc(LPVOID param){
 	infoRecorder->logTrace("[UserClient]: enter client thread proc.\n");
 
@@ -226,6 +168,7 @@ DWORD UserClient::ClientThreadProc(LPVOID param){
 	return 0;
 }
 
+// shutdown rtsp connection
 bool UserClient::shutdownRTSP(IDENTIFIER rid){
 	infoRecorder->logTrace("[UserClient]: shutdown the rtsp connection.\n");
 
@@ -233,6 +176,7 @@ bool UserClient::shutdownRTSP(IDENTIFIER rid){
 	return true;
 }
 
+// launch rtsp request to logic server
 bool UserClient::launchRequest(char * disServerUrl, int port, char * gameName){
 	infoRecorder->logTrace("[UserClient]: launch the request, server:%s:%d, name:%s.\n", disServerUrl, port, gameName);
 	bufferevent * bev = NULL;
@@ -277,8 +221,6 @@ bool UserClient::launchRequest(char * disServerUrl, int port, char * gameName){
 }
 
 
-
-
 // callback functions for user client
 void clientReadCB(struct bufferevent * bev, void * arg){
 	UserClient * client = (UserClient *)arg;
@@ -296,8 +238,6 @@ void clientReadCB(struct bufferevent * bev, void * arg){
 		free(data);
 		data = NULL;
 	}
-
-	// 
 	evbuffer_drain(input, n);
 }
 void clientErrorCB(struct bufferevent * bev, short what, void * arg){
@@ -316,7 +256,6 @@ void clientErrorCB(struct bufferevent * bev, short what, void * arg){
 	}
 	bufferevent_disable(bev, EV_READ | EV_WRITE);
 	bufferevent_free(bev);
-
 }
 
 DWORD WINAPI NetworkThreadProc(LPVOID param){
@@ -325,14 +264,13 @@ DWORD WINAPI NetworkThreadProc(LPVOID param){
 	infoRecorder->logTrace("[NetWorkProc]: gameStreams: %p.\n", streams);
 	char * gameName = streams->name;
 	UserClient * client = new UserClient();
-	// set the rtps name
+
+	// set the rtsp name
 	client->setName(gameName);
 	event_base * base = event_base_new();
+
 	client->setEventBase(base);
-
 	client->launchRequest(streams->getDisUrl(), DIS_PORT_DOMAIN, gameName);
-
-	// dispatch
 	client->dispatch();
 	return 0;
 }

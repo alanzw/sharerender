@@ -2012,7 +2012,7 @@ extern CRITICAL_SECTION syn_sec;
 #endif
 HRESULT FakeNullInstruct(RenderChannel * rch){
 	SYSTEMTIME sys, now;
-	char flag = rch->cc->read_char();
+	unsigned char flag = rch->cc->read_uchar();
 #if 0
 	//GetLocalTime(&now);
 	GetSystemTime(&now);
@@ -2066,6 +2066,7 @@ HRESULT FakeNullInstruct(RenderChannel * rch){
 		fromserver = true;
 	}
 #endif
+	rch->specialTag = flag;
 	return D3D_OK;
 }
 

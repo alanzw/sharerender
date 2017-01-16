@@ -224,7 +224,9 @@ namespace cg{
 			virtual void onQuit();
 			// for client
 
+#if 0
 			int init(struct cg::RTSPConf * conf, const char * ctrlid);
+   #endif
 			//int initMessager(int size, int maxunit);
 			void sendMsg(void *msg, int msglen);
 			int ctrlSocketInit(struct cg::RTSPConf * conf);
@@ -235,14 +237,12 @@ namespace cg{
 			void setCtrlConfig(cg::input::CtrlConfig * conf);
 		};
 
-
 		// the callback interface
 		class ReplayCallback{
 		public:
 			virtual void operator()(void * buf, int len) = 0;
 			virtual ~ReplayCallback(){};
 		};
-
 
 		class CtrlMessagerServer : public QueueMessager, public cg::core::CThread{
 #if 0
@@ -253,15 +253,15 @@ namespace cg{
 			CRITICAL_SECTION reslock;
 			CRITICAL_SECTION oreslock;
 
-			SOCKET ctrlSocket, sock;
-			struct sockaddr_in ctrlsin;
-			int clientaccepted;
+			SOCKET	ctrlSocket, sock;
+			struct	sockaddr_in ctrlsin;
+			int		clientaccepted;
 
 			unsigned char buf[8192];
-			int bufhead, buflen;
+			int		bufhead, buflen;
 
-			HANDLE wakeupMutex;
-			HANDLE wakeup;
+			HANDLE	wakeupMutex;
+			HANDLE	wakeup;
 			//msgfunc replay;
 			ReplayCallback * replay;
 			CtrlConfig * conf;
@@ -281,13 +281,13 @@ namespace cg{
 
 			inline void setReplay(ReplayCallback * callback){ replay = callback; }
 
-			int readNext(void *msg, int msglen);
-			int ctrlSocketInit(struct cg::RTSPConf * conf);
-			int init(CtrlConfig * conf, const char * ctrlid);
+			int		readNext(void *msg, int msglen);
+			int		ctrlSocketInit(struct cg::RTSPConf * conf);
+			int		init(CtrlConfig * conf, const char * ctrlid);
 
-			int ctrlSocketInit(CtrlConfig * conf);
-			void setCtrlConfig(CtrlConfig * conf);
-			void setRtspConf(cg::RTSPConf * conf);
+			int		ctrlSocketInit(CtrlConfig * conf);
+			void	setCtrlConfig(CtrlConfig * conf);
+			void	setRtspConf(cg::RTSPConf * conf);
 
 #if 0
 			void setOutputResolution(int width, int height);
@@ -319,12 +319,8 @@ namespace cg{
 			virtual void operator()(void * buf, int len);
 			virtual ~ReplayCallbackImp();
 		};
-
 		
 		void CreateClientControl(HWND);
-
-
 	}
 }
-
 #endif

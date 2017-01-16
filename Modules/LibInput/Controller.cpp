@@ -1353,6 +1353,7 @@ namespace cg{
 
 		////////////////////////////////////////////////////////////////////
 
+#if 0
 		int CtrlMessagerClient::init(struct RTSPConf *conf, const char *ctrlid) {
 			if (!conf){
 				infoRecorder->logError("[CtrlMessagerClient]: NULL CtrlConsfig.\n");
@@ -1395,11 +1396,10 @@ error:
 			ctrlSocket = -1;
 			return -1;
 		}
+#endif
+
 		int CtrlMessagerClient::init(CtrlConfig * conf, const char * ctrlid){
-			if (!conf){
-				infoRecorder->logError("[CtrlMessagerClient]: NULL CtrlConsfig.\n");
-				return -1;
-			}
+			
 			this->conf = conf;
 			if (ctrlSocketInit(conf) < 0) {
 				conf->ctrlenable = 0;
@@ -1408,7 +1408,7 @@ error:
 
 			//QueueMessager::init(size, maxunit);
 
-			// init the critical sectiona and the event
+			// init the critical section and the event
 			InitializeCriticalSection(&wakeupMutex);
 			wakeup = CreateEvent(NULL, FALSE, FALSE, NULL);
 			if (conf->ctrlproto == IPPROTO_TCP) {
@@ -1440,6 +1440,7 @@ error:
 			ctrlSocket = -1;
 			return -1;
 		}
+
 		BOOL CtrlMessagerClient::onThreadStart(){
 			if (conf == NULL){
 				infoRecorder->logError("CtrlMessagerClient:: NULL rtspconfig\n");
@@ -1528,7 +1529,6 @@ error:
 				delete conf;
 				conf = NULL;
 			}
-
 		}
 
 		////////////////////////////////////////////////////////////////////

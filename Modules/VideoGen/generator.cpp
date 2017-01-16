@@ -128,6 +128,7 @@ namespace cg{
 		encoder = NULL;
 		x264Encoder = NULL;
 		wrapper = NULL;
+		writer = NULL;
 
 		dxVer = DXNONE;
 		swapChain = NULL;

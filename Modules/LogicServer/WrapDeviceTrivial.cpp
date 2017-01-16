@@ -242,17 +242,17 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 #ifdef ENBALE_DEVICE_LOG
 	infoRecorder->logTrace("WrapperDirect3DDevice9::Present(), source %d, dst %d, wind %d, rgbdata %d\n", pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
 #endif
-	bool tm = false, tm1 = false;
+	bool synSign = false, tm1 = false;
 	//DebugBreak();
 
 	keyCmdHelper->lock();
-	tm = keyCmdHelper->isSynSigned();
+	synSign = keyCmdHelper->isSynSigned();
 	tm1 = keyCmdHelper->isF10Pressed();
 	keyCmdHelper->unlock();
 
-	char flag = 0;
+	unsigned char flag = 0;
 
-	if(tm){
+	if(synSign){
 		//if (tm && presented > 1){
 		DWORD tick_end = GetTickCount();
 
@@ -265,7 +265,7 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 		keyCmdHelper->unlock();
 
 		flag |= 1;
-		tm = 0;
+		synSign = 0;
 	}
 	if (tm1){
 		keyCmdHelper->lock();
@@ -276,7 +276,7 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 	if (flag){
 		// send command
 		csSet->beginCommand(NULLINSTRUCT_Opcode, id);
-		csSet->writeChar(flag);
+		csSet->writeUChar(flag);
 		csSet->endCommand();
 	}
 
