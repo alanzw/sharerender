@@ -634,7 +634,7 @@ namespace cg{
 				if (conf->ctrlenable){
 					if (ctrlServer->initQueue(32768, sizeof(cg::input::sdlmsg_t)) < 0){
 						conf->ctrlenable = 0;
-						break;
+						goto CTRL_CLEAN;
 					}
 					// create the replay callback
 
@@ -643,6 +643,7 @@ namespace cg{
 					ReplayCallbackImp * replayCallback = new ReplayCallbackImp(&windowRect, &windowRect);
 					if(ctrlServer->init(conf, CTRL_CURRENT_VERSION)){
 						cg::core::infoRecorder->logError("[SERVER]: cannot start the input thread.\n");
+						goto CTRL_CLEAN;	
 					}
 
 					ctrlServer->setReplay(replayCallback);
@@ -650,11 +651,23 @@ namespace cg{
 					if (!ctrlServer->start()){
 						cg::core::infoRecorder->logError("Cannot create controller thread, controller disable\n");
 						conf->ctrlenable = 0;
-						break;
+						goto CTRL_CLEAN;
 					}
+				}
+				else{
+					cg::core::infoRecorder->logError("[MsgServer]: client control is disabled.\n");
+					goto CTRL_CLEAN;
 				}
 				//enableRender = conf->enableRender;
 			} while (0);
+
+			return;
+
+CTRL_CLEAN:
+			if(ctrlServer){
+				delete ctrlServer;
+				ctrlServer = NULL;
+			}
 
 #endif  // ENABLE_CLIENT_CONTROL
 		}
@@ -771,7 +784,7 @@ namespace cg{
 						in.ki.dwFlags |= KEYEVENTF_KEYUP;
 					}
 					in.ki.wScan = MapVirtualKey(in.ki.wVk, MAPVK_VK_TO_VSC);
-					//infoRecorder->logError("sdl replayer: vk=%x scan=%x\n", in.ki.wVk, in.ki.wScan);
+					cg::core::infoRecorder->logError("sdl replayer: vk=%x scan=%x\n", in.ki.wVk, in.ki.wScan);
 					SendInput(1, &in, sizeof(in));
 				} else {
 					////////////////
@@ -783,7 +796,7 @@ namespace cg{
 				}
 				break;
 			case SDL_EVENT_MSGTYPE_MOUSEKEY:
-				//infoRecorder->logError("sdl replayer: button event btn=%u pressed=%d\n", msg->mousebutton, msg->is_pressed);
+				cg::core::infoRecorder->logError("sdl replayer: button event btn=%u pressed=%d\n", msg->mousebutton, msg->is_pressed);
 				bzero(&in, sizeof(in));
 				in.type = INPUT_MOUSE;
 				if(msgm->mousebutton == 1 && msgm->is_pressed != 0) {
@@ -842,7 +855,7 @@ namespace cg{
 #endif
 				break;
 			case SDL_EVENT_MSGTYPE_MOUSEMOTION:
-				//ga_error("sdl replayer: motion event x=%u y=%d\n", msgm->mousex, msgm->mousey);
+				cg::core::infoRecorder->logError("sdl replayer: motion event x=%u y=%d\n", msgm->mousex, msgm->mousey);
 				bzero(&in, sizeof(in));
 				in.type = INPUT_MOUSE;
 				// mouse x/y has to be mapped to (0,0)-(65535,65535)
@@ -1545,6 +1558,10 @@ error:
 				conf = NULL;
 				replay = NULL;
 			}
+			if(replay){
+				delete replay;
+				replay = NULL;
+			}
 		}
 
 #if 0
@@ -1651,11 +1668,11 @@ error:
 			//
 
 			if (conf == NULL){
-				infoRecorder->logError("CtrlMessagerServer: NULL rtspconfig\n");
+				infoRecorder->logError("[CtrlMessagerServer]: NULL rtspconfig\n");
 				return FALSE;
 			}
 
-			infoRecorder->logError("controller server started: tid=%ld.\n", this->getThreadId());
+			infoRecorder->logError("[CtrlMessagerServer]: controller server started: tid=%ld.\n", this->getThreadId());
 
 restart:
 			bzero(&csin, sizeof(csin));
@@ -1667,36 +1684,40 @@ restart:
 				struct ctrlhandshake *hh = (struct ctrlhandshake*) buf;
 				//
 				if ((sock = accept(ctrlSocket, (struct sockaddr*) &csin, &csinlen)) < 0) {
-					infoRecorder->logError("controller server-accept: %s.\n", strerror(errno));
+					infoRecorder->logError("[CtrlMessagerServer]: controller server-accept: %s.\n", strerror(errno));
 					goto restart;
 				}
-				infoRecorder->logError("controller server-thread: accepted TCP client from %s.%d\n",
+				infoRecorder->logError("[CtrlMessagerServer]: controller server-thread: accepted TCP client from %s.%d\n",
 					inet_ntoa(csin.sin_addr), ntohs(csin.sin_port));
 				// check initial handshake message
 				if ((buflen = recv(sock, (char*)buf, sizeof(buf), 0)) <= 0) {
-					infoRecorder->logError("controller server-thread: %s\n", strerror(errno));
+					infoRecorder->logError("[CtrlMessagerServer]: controller server-thread: %s\n", strerror(errno));
 					closesocket(sock);
 					goto restart;
 				}
 				if (hh->length > buflen) {
-					infoRecorder->logError("controller server-thread: bad handshake length (%d > %d)\n",
+					infoRecorder->logError("[CtrlMessagerServer]: controller server-thread: bad handshake length (%d > %d)\n",
 						hh->length, buflen);
 					closesocket(sock);
 					goto restart;
 				}
 				if (memcmp(myctrlid, hh->id, hh->length - 1) != 0) {
-					infoRecorder->logError("controller server-thread: mismatched protocol version (%s != %s), length = %d\n",
+					infoRecorder->logError("[CtrlMessagerServer]: controller server-thread: mismatched protocol version (%s != %s), length = %d\n",
 						hh->id, myctrlid, hh->length - 1);
 					closesocket(sock);
 					goto restart;
 				}
-				infoRecorder->logError("controller server-thread: receiving events ...\n");
+				infoRecorder->logError("[CtrlMessagerServer]: controller server-thread: receiving events ...\n");
 				clientaccepted = 1;
 			}
 
 			buflen = 0;
+
+
+			return TRUE;
 		}
 		BOOL CtrlMessagerServer::run(){
+			infoRecorder->logError("[CtrlMessagerServer]: run() called.\n");
 			int rlen, msglen;
 			struct sockaddr_in csin, xsin;
 			int csinlen, xsinlen;
@@ -1705,6 +1726,7 @@ restart:
 			//
 tcp_readmore:
 			if (conf->ctrlproto == IPPROTO_TCP) {
+				infoRecorder->logError("[CtrlMessagerServer]: run(), TCP recv.\n");
 				if ((rlen = recv(sock, (char*)buf + buflen, sizeof(buf)-buflen, 0)) <= 0) {
 					infoRecorder->logTrace("[CtrlMessagerServer]: controller server-read: %s\n", strerror(errno));
 					closesocket(sock);
@@ -1718,6 +1740,7 @@ tcp_readmore:
 				infoRecorder->logError("[CtrlMessagerServer]: recv %d bytes.\n", rlen);
 			}
 			else if (conf->ctrlproto == IPPROTO_UDP) {
+				infoRecorder->logError("[CtrlMessagerServer]: run(), UDP recv.\n");
 				bzero(&xsin, sizeof(xsin));
 				xsinlen = sizeof(xsin);
 				xsin.sin_family = AF_INET;
@@ -1731,6 +1754,10 @@ tcp_readmore:
 					bcopy(&xsin, &csin, sizeof(csin));
 					//continue;
 				}
+			}
+			else{
+				infoRecorder->logError("[CtrlMessagerServer]: invalid network protocol.\n");
+				return FALSE;
 			}
 tcp_again:
 			if (buflen < 2) {

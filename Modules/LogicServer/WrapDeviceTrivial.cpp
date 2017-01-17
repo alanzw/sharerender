@@ -21,6 +21,9 @@
 #include "../LibCore/TimeTool.h"
 
 
+#include "../LibInput/Controller.h"
+
+
 #include "GameClient.h"
 
 #include <MMSystem.h>
@@ -316,9 +319,10 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 		//GameClient::GetGameClient()->notifyGameReady();
 		SetEvent(GameClient::GetGameClient()->getClientEvent());
 		GameClient::SetInitialized(true);
+		cg::input::CreateClientControl(cmdCtrl->getHwnd());
 	}
 	else{
-		infoRecorder->logError("[WrapperDirect3DDevice9]: no need to notify GAME READY.\n");
+		infoRecorder->logTrace("[WrapperDirect3DDevice9]: no need to notify GAME READY.\n");
 	}
 
 	HRESULT hh = D3D_OK;
@@ -330,10 +334,6 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 	//infoRecorder->logError("[WrapperDirect3dDeivce9]:Present(), key cmd helper commit, is sending:%s, sending step:%d.\n", keyCmdHelper->isSending() ? "true" : "false", keyCmdHelper->getSendStep());
 
 	cmdCtrl->commitRender();
-#ifdef ENABLE_CLIENT_CONTROL
-	CreateClientControl(cmdCtrl->getHwnd());
-#endif
-
 
 
 #ifdef ENBALE_DEVICE_LOG
@@ -791,9 +791,6 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateIndexBuffer(THIS_ UINT Length,DWORD U
 			infoRecorder->logTrace("ret NULL, ");
 		}
 		else {
-
-			if(wib->getId() == 169)
-				DebugBreak();
 
 			infoRecorder->logTrace("IndexBuffer id=%d, length=%d, ", ((WrapperDirect3DIndexBuffer9*)*ppIndexBuffer)->getId(), ((WrapperDirect3DIndexBuffer9*)*ppIndexBuffer)->GetLength());
 		}

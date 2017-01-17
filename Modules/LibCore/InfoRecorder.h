@@ -19,7 +19,7 @@ namespace cg{
 		class InfoRecorder{
 
 			LARGE_INTEGER secondEnd, secondStart, freq, frameStart, frameEnd;
-			ULONGLONG timeCount;
+			LONGLONG timeCount;
 
 			// the cpu and gpu watcher
 			CpuWatch *frameCpuWatcher, *secondCpuWatcher;

@@ -42,6 +42,7 @@ using namespace cg::core;
 
 
 //#define USE_CACHE
+//#define DISABLE_SHADOW_OBJECT
 
 /// logs
 #if 0
@@ -59,10 +60,9 @@ using namespace cg::core;
 #endif
 
 //#define ENABLE_TEXTURE_LOG
-//#define ENABLE_DEVICE_LOG
-#define ENBALE_DEVICE_LOG
-#define ENABLE_VERTEX_BUFFER_LOG
-#define ENABLE_INDEX_LOG
+//#define ENBALE_DEVICE_LOG
+//#define ENABLE_VERTEX_BUFFER_LOG
+//#define ENABLE_INDEX_LOG
 
 enum CtxStatus{
 	CTX_INIT,   // the initial status

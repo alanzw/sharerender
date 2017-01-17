@@ -79,7 +79,7 @@ TIMEL1:
 				return ret;
 			}
 			virtual unsigned __int64 getOverhead(){ return m_overhead; }
-			virtual unsigned int getFreq(){ return freq.QuadPart; }
+			virtual unsigned int getFreq(){ return (int)freq.QuadPart; }
 		};
 
 		class KTimer:public BTimer{
@@ -100,7 +100,7 @@ TIMEL1:
 				return GetCycleCount() - m_startcycle - m_overhead;
 			}
 			virtual unsigned __int64 getOverhead(){ return m_overhead; }
-			virtual unsigned int getFreq(){ return freq.QuadPart; }
+			virtual unsigned int getFreq(){ return (int)freq.QuadPart; }
 		};
 
 	}

@@ -544,7 +544,7 @@ void ProcessEvent(SDL_Event *event, CtrlMessagerClient * ctrlClient) {
 			break;
 
 		case SDL_KEYDOWN:
-			infoRecorder->logTrace("[EventDeal]: key down.\n");
+			infoRecorder->logError("[EventDeal]: key down.\n");
 			if (rtspConf->ctrlenable) {
 				sdlmsg_keyboard(&m, 1, event->key.keysym.scancode, event->key.keysym.sym, event->key.keysym.mod, 0/*event->key.keysym.unicode*/);
 				if(ctrlClient)
@@ -553,7 +553,7 @@ void ProcessEvent(SDL_Event *event, CtrlMessagerClient * ctrlClient) {
 			break;
 
 		case SDL_MOUSEBUTTONUP:
-			infoRecorder->logTrace("[EventDeal]: mouse button up.\n");
+			infoRecorder->logError("[EventDeal]: mouse button up.\n");
 			if (rtspConf->ctrlenable) {
 				sdlmsg_mousekey(&m, 0, event->button.button, event->button.x, event->button.y);
 				if(ctrlClient)
@@ -570,11 +570,14 @@ void ProcessEvent(SDL_Event *event, CtrlMessagerClient * ctrlClient) {
 			}
 			break;
 		case SDL_MOUSEMOTION:
-			infoRecorder->logTrace("[EventDeal]: mouse motion.\n");
+			infoRecorder->logError("[EventDeal]: mouse motion.\n");
 			if (rtspConf->ctrlenable && rtspConf->sendmousemotion) {
 				sdlmsg_mousemotion(&m, event->motion.x, event->motion.y, event->motion.xrel, event->motion.yrel, event->motion.state, relativeMouseMode == 0 ? 0 : 1);
 				if(ctrlClient)
 					ctrlClient->sendMsg(&m, sizeof(sdlmsg_mouse_t));
+			}
+			else{
+				infoRecorder->logError("[EventDeal]: ctrl disable or send mouse motion disabled.\n");
 			}
 			break;
 #if 1	// only support SDL2
