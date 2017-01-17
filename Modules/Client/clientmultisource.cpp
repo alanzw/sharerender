@@ -780,12 +780,9 @@ char * GetConfig(){
 	sprintf(conf, "%s", "config\\client.rel.conf");
 	return conf;
 }
-static int client_init(char * config){
-	//config = conffile;
+static int ClientInit(char * config){
 	infoRecorder->logTrace("[client-init]: %s\n", config);
-
 	srand(time(0));
-	//winsockInit();
 #if 1
 	if (WSAStartup(MAKEWORD(2, 2), &wd) != 0){
 		infoRecorder->logTrace("[client]: WSAStartup failed.\n");
@@ -799,44 +796,18 @@ static int client_init(char * config){
 
 	infoRecorder->logTrace("[Client]: init av part finished, start to load config.\n");
 	cg::RTSPConf * conf = cg::RTSPConf::GetRTSPConf((char *)config);
-	if (config != NULL){
-#if 0
-		if (conf->confLoad(config) < 0){
-			infoRecorder->logError("[client]: cannot load configure file '%s'\n", config);
-			return -1;
-		}
-#endif
-		infoRecorder->logTrace("[Client]: rtsp config load succeeded.\n");
-
-	}
-	else{
+	if (config == NULL){
 		infoRecorder->logError("[client]: get rtsp config failed.\n");
 		return -1;
 	}
-#if 0
-	if (url != NULL){
-		// get the server url and port
-		// overwrite the server url and port
-		if (conf->UrlParse(url) < 0){
-			infoRecorder->logError("[client]: invalied URL '%s'\n", url);
-			return -1;
-		}
-	}
-#endif
 	return 0;
 }
-static int client_init(char * config, const char * url){
+static int ClientInit(char * config, const char * url){
 	//config = conffile;
 	infoRecorder->logTrace("[client-init]: %s %s\n", config, url);
 
 	srand(time(0));
 	winsockInit();
-
-#if 0
-	if (WSAStartup(MAKEWORD(2, 2), &wd) != 0){
-		return -1;
-	}
-#endif
 
 	av_register_all();
 	avcodec_register_all();
@@ -870,7 +841,6 @@ int main(int argc, char * argv[]){
 	int i = 0;
 	SDL_Event event;
 	HANDLE rtspthread = NULL, ctrlthread = NULL, watchdog = NULL;
-	infoRecorder->logTrace("[client]: argc: %d\n", argc);
 
 	for (int m = 0; m < argc; m++){
 		infoRecorder->logTrace("[client]: argv[%d]: %s\n", m, argv[m]);
@@ -882,15 +852,15 @@ int main(int argc, char * argv[]){
 		return -1;
 	}
 #else  // ANDROID
-	// init the sdl
+	// init the SDL to intercept everything
 	//SDL_SetMainReady();
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0){
 		infoRecorder->logError("[Client]: unable to initialize SDL: %s\n", SDL_GetError());
 		return -1;
 	}
-	//atexit(SDL_Quit);
+
 	infoRecorder->logTrace("SDL_Quit:%p.\n", SDL_Quit);
-	//atexit(SDL_Quit);
+	atexit(SDL_Quit);
 #ifdef INCLUDE_DISTRIBUTOR
 	if (argc < 4) {
 		rtsperror("usage: %s config url [game name]\n", argv[0]);
@@ -909,10 +879,9 @@ int main(int argc, char * argv[]){
 	infoRecorder->logError("[Client]: %s %s.\n", configfilename, url);
 #endif // INCLUDE_DISTRIBUTOR
 	//load the config file and set the server url
-	infoRecorder->logTrace("[client]: load config file and set the server url.\n");
 
-	if (client_init(configfilename) < 0){
-		rtsperror("[client]: cannot load configuration file '%s'\n", argv[1]);
+	if (ClientInit(configfilename) < 0){
+		rtsperror("[client]: init failed, maybe cannot load configuration file '%s'\n", argv[1]);
 		return -1;
 	}
 
@@ -933,13 +902,11 @@ int main(int argc, char * argv[]){
 	///// launch watchdog
 	// init the watchdog critical section
 	InitializeCriticalSection(&watchdogMutex);
-	//pthread_mutex_init(&watchdogMutex, NULL);
 	if (rtspConf->confReadBool("enable-watchdog", 1) == 1) {
 		// launch the watch dog thread
 		DWORD watchdog_thread_id;
 		// watchdog = chBEGINTHREADEX(NULL, 0, watchdog_thread, 0, NULL, &watchdog_thread_id);
 		if (watchdog == 0){
-			// if (pthread_create(&watchdog, NULL, watchdog_thread, NULL) != 0) {
 			rtsperror("Cannot create watchdog thread.\n");
 			infoRecorder->logError("[Client]: cannot create watchdog thread.\n");	
 		}
@@ -947,8 +914,6 @@ int main(int argc, char * argv[]){
 	else {
 		infoRecorder->logError("[Client]: watchdog disabled.\n");
 	}
-	infoRecorder->logError("[client]: to create all mutex.\n");
-
 
 	/////////// build the GameStreams and init //////////////
 	if(gameStreams == NULL){
@@ -984,11 +949,14 @@ int main(int argc, char * argv[]){
 	//TerminateThread(rtspthread, 0);
 	if (rtspConf->ctrlenable && ctrlthread){
 		TerminateThread(ctrlthread, 0);
+		ctrlthread = NULL;
 	}
-	TerminateThread(watchdog, 0);
+	if(watchdog){
+		TerminateThread(watchdog, 0);
+		watchdog = NULL;
+	}
 #endif // ANDROID
 	//SDL_WaitThread(thread, &status);
 	SDL_Quit();
-	exit(0);
 	return 0;
 }

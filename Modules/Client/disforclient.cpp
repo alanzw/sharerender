@@ -1,6 +1,4 @@
 #include "disforclient.h"
-#include "../LibCore/Log.h"
-
 //#include "../LibInput/CtrlSdl.h"
 
 #include "client.h"
@@ -124,32 +122,31 @@ bool UserClient::cancelRTSP(IDENTIFIER rid, char * url){
 // mainly handle the control ???? (yes)
 bool UserClient::addLogic(char * url){
 	infoRecorder->logError("[UserClient]: add logic %s.\n", url);
-
-	cg::input::CtrlConfig * ctrlConf = cg::input::CtrlConfig::GetCtrlConfig(CTRL_CLIENT_CONFIG);
-	if (!ctrlConf){
-		infoRecorder->logError("[client]: create new ctrl config failed.\n");
+	RTSPConf * rtspConf = RTSPConf::GetRTSPConf();
+	if (!rtspConf){
+		infoRecorder->logError("[client]: get RTSP config failed.\n");
 	}
 	// init the ctrl message
-	//cg::input::CtrlMessagerClient * ctrlClient = new cg::input::CtrlMessagerClient();
 	ctrlClient = new cg::input::CtrlMessagerClient();
 
 	// launch controller?
-	ctrlConf->ctrlenable = true;  // temp set false;
-	ctrlConf->ctrl_servername = _strdup(url);
+	// set the logic server name for controller
+	//ctrlConf->ctrl_servername = _strdup(url);
+	rtspConf->logic_servername = _strdup(url);
 
 	do{
-		if (ctrlConf->ctrlenable){
+		if (rtspConf->ctrlenable){
 			if (ctrlClient->initQueue(32768, sizeof(cg::input::sdlmsg_t)) < 0){
 				rtsperror("Cannot initialize controller queue, controller disabled.\n");
 				infoRecorder->logError("[Client]: cannot initialize controller queue, controller disable.\n");
-				ctrlConf->ctrlenable = 0;
+				rtspConf->ctrlenable = 0;
 				break;
 			}
-			ctrlClient->init(ctrlConf, CTRL_CURRENT_VERSION);
+			ctrlClient->init(rtspConf, CTRL_CURRENT_VERSION);
 			if (!ctrlClient->start()){
 				rtsperror("Cannot create controller thread, controller disabled.\n");
 				infoRecorder->logError("[Client]: cannot create controller thread, controller disabled.\n");
-				ctrlConf->ctrlenable = 0;
+				rtspConf->ctrlenable = 0;
 				break;
 			}
 		}

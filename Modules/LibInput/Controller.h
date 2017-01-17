@@ -63,6 +63,9 @@
 
 #define ENABLE_CLIENT_CONTROL
 
+
+#define USE_CONTROL_CONFIG
+
 namespace cg{
 	namespace input{
 
@@ -207,16 +210,18 @@ namespace cg{
 		class CtrlMessagerClient : public QueueMessager, public cg::core::CThread{
 			SOCKET ctrlSocket;
 			struct sockaddr_in ctrlsin;
-			CtrlConfig * conf;
+			RTSPConf *conf;
 			CRITICAL_SECTION wakeupMutex;
 			HANDLE wakeup;
+
+
+			int ctrlSocketInit(struct cg::RTSPConf * conf);
 
 		public:
 			CtrlMessagerClient();
 			~CtrlMessagerClient();
 
 			// from CThread
-
 			virtual BOOL stop();
 			virtual BOOL run();
 			virtual void onThreadMsg(UINT msg, WPARAM wParam, LPARAM lParam);
@@ -224,17 +229,9 @@ namespace cg{
 			virtual void onQuit();
 			// for client
 
-#if 0
-			int init(struct cg::RTSPConf * conf, const char * ctrlid);
-   #endif
 			//int initMessager(int size, int maxunit);
 			void sendMsg(void *msg, int msglen);
-			int ctrlSocketInit(struct cg::RTSPConf * conf);
-			void setRtspConf(cg::RTSPConf * conf);
-
-			int init(cg::input::CtrlConfig * conf, const char * ctrlid);
-			int ctrlSocketInit(cg::input::CtrlConfig * conf);
-			void setCtrlConfig(cg::input::CtrlConfig * conf);
+			int init(struct cg::RTSPConf * conf, const char * ctrlid);
 		};
 
 		// the callback interface
@@ -245,10 +242,7 @@ namespace cg{
 		};
 
 		class CtrlMessagerServer : public QueueMessager, public cg::core::CThread{
-#if 0
-			int currWidth, currHeight;
-			int outputWidth, outputHeight;
-#endif
+
 			//double scaleFactorX, scaleFactorY;
 			CRITICAL_SECTION reslock;
 			CRITICAL_SECTION oreslock;
@@ -264,7 +258,9 @@ namespace cg{
 			HANDLE	wakeup;
 			//msgfunc replay;
 			ReplayCallback * replay;
-			CtrlConfig * conf;
+			struct RTSPConf* conf;
+
+			int		ctrlSocketInit(struct cg::RTSPConf * conf);
 
 		public:
 			CtrlMessagerServer();
@@ -282,22 +278,7 @@ namespace cg{
 			inline void setReplay(ReplayCallback * callback){ replay = callback; }
 
 			int		readNext(void *msg, int msglen);
-			int		ctrlSocketInit(struct cg::RTSPConf * conf);
-			int		init(CtrlConfig * conf, const char * ctrlid);
-
-			int		ctrlSocketInit(CtrlConfig * conf);
-			void	setCtrlConfig(CtrlConfig * conf);
-			void	setRtspConf(cg::RTSPConf * conf);
-
-#if 0
-			void setOutputResolution(int width, int height);
-			void getOutputResolution(int *widht, int *height);
-
-			void setResolution(int width, int height);
-			void getResolution(int * width, int * height);
-			void getScaleFactor(double * fx, double *fy);
-#endif
-			inline CtrlConfig * getCtrlConfig(){ return conf; }
+			int		init(struct RTSPConf* conf, const char * ctrlid);
 		};
 
 		class ReplayCallbackImp: public ReplayCallback{

@@ -705,7 +705,7 @@ FILE * outfile = NULL;
 //the buffer contains the header data, include the frame index
 void SubGameStream::playVideoPriv(unsigned char * buffer, int bufSize, struct timeval pts){
 	AVPacket avpkt;
-	int gotPicture, len;
+	int gotPicture = 0 , len = 0;
 #ifndef ANDROID
 	union SDL_Event evt;
 #endif
@@ -734,8 +734,9 @@ void SubGameStream::playVideoPriv(unsigned char * buffer, int bufSize, struct ti
 
 	while(avpkt.size > 0){
 		// the vframe is the destination frame(decoded), the avpkt is the source frame)
-		if(!(decodedFrame = this->videoDecoder->decodeVideo(&gotPicture, &avpkt))){
-			infoRecorder->logError("[SubGameStream]: decode failed, return NULL frome VideoDecoder::decodeVideo.\n");
+		decodedFrame = this->videoDecoder->decodeVideo(&gotPicture, &len, &avpkt);
+		if(!decodedFrame || len < 0){
+			infoRecorder->logError("[SubGameStream]: decode failed, return NULL frome VideoDecoder::decodeVideo or get a len <0.\n");
 			break;
 		}
 #if 1
@@ -1684,14 +1685,14 @@ int VideoDecoder::init(const char * sprop){
 
 	return 0;
 }
-AVFrame * VideoDecoder::decodeVideo(int * got_picture, AVPacket * pkt){
+AVFrame * VideoDecoder::decodeVideo(int * got_picture, int * step_len, AVPacket * pkt){
 	AVFrame * ret = NULL;
 	if((ret = avcodec_alloc_frame()) == NULL){
 		rtsperror("[VideoDecoder]: video decoder: allocate frame failed.]n" );
 		cg::core::infoRecorder->logError("[VideoDecoder]: video decoder: allocate frame failed.]n");
 		return NULL;
 	}
-	int len = avcodec_decode_video2(vDecoder, ret, got_picture, pkt);
+	*step_len = avcodec_decode_video2(vDecoder, ret, got_picture, pkt);
 	return ret;
 }
 

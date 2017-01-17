@@ -627,8 +627,13 @@ namespace cg{
 			memset(&windowRect, 0, sizeof(RECT));
 
 
+#if 0
 			cg::input::CtrlConfig * conf = NULL;
 			conf = cg::input::CtrlConfig::GetCtrlConfig(STREAM_SERVER_CONFIG);
+#else
+
+			cg::RTSPConf *conf = cg::RTSPConf::GetRTSPConf(STREAM_SERVER_CONFIG);
+#endif
 			cg::input::CtrlMessagerServer * ctrlServer = new cg::input::CtrlMessagerServer();
 			do{
 				if (conf->ctrlenable){
@@ -708,17 +713,8 @@ CTRL_CLEAN:
 
 			// compute scale factor
 			do {
-				int resolution[2];
 				int baseX, baseY;
-
-#if 0
-				if (conf->confReadInts("output-resolution", resolution, 2) != 2)
-					break;
-				//
-				int outputW = resolution[0];
-				int outputH = resolution[1];
-#else
-				int outputW = 0; int outputH = 0;
+				float outputW = 0; int outputH = 0;
 				if(pOutputWindowRect == NULL){
 					cg::core::infoRecorder->logError("[Callback]: NULL output window rect.\n");
 					outputW = cxsize;
@@ -726,7 +722,6 @@ CTRL_CLEAN:
 				}
 				outputW = pOutputWindowRect->right - pOutputWindowRect->left + 1;
 				outputH = pOutputWindowRect->bottom - pOutputWindowRect->top + 1;
-#endif
 				//
 				if (prect == NULL) {
 					baseX = cxsize;
@@ -737,7 +732,7 @@ CTRL_CLEAN:
 					baseY = prect->bottom - prect->top + 1;
 				}
 
-				double rx, ry;
+				float rx, ry;
 				rx = 1.0 * baseX / outputW;
 				ry = 1.0 * baseY / outputH;
 
@@ -1233,6 +1228,7 @@ CTRL_CLEAN:
 		}
 
 		////////////////////////////////////////////////////////////////////
+#if 0
 		int CtrlMessagerClient::ctrlSocketInit(CtrlConfig *conf) {
 			//
 			if (conf->ctrlproto == IPPROTO_TCP) {
@@ -1247,6 +1243,7 @@ CTRL_CLEAN:
 			}
 			if (ctrlSocket < 0) {
 				infoRecorder->logError("[CtrlMessagerClient]:Controller socket-init: %s\n", strerror(errno));
+				return -1;
 			}
 			//
 			bzero(&ctrlsin, sizeof(struct sockaddr_in));
@@ -1264,6 +1261,8 @@ CTRL_CLEAN:
 			//
 			return ctrlSocket;
 		}
+		
+
 		int CtrlMessagerServer::ctrlSocketInit(CtrlConfig *conf) {
 			//
 			infoRecorder->logError("[CstrlMessagerServer]: port:%d.\n", conf->ctrlport);
@@ -1299,7 +1298,7 @@ CTRL_CLEAN:
 			//
 			return ctrlSocket;
 		}
-
+#endif
 		int CtrlMessagerClient::ctrlSocketInit(struct cg::RTSPConf *conf) {
 			//
 			if(conf->ctrlproto == IPPROTO_TCP) {
@@ -1366,60 +1365,13 @@ CTRL_CLEAN:
 
 		////////////////////////////////////////////////////////////////////
 
-#if 0
-		int CtrlMessagerClient::init(struct RTSPConf *conf, const char *ctrlid) {
-			if (!conf){
-				infoRecorder->logError("[CtrlMessagerClient]: NULL CtrlConsfig.\n");
-				return -1;
-			}
-			//this->conf = conf;
-			if (ctrlSocketInit(conf) < 0) {
-				conf->ctrlenable = 0;
-				return -1;
-			}
-
-			//QueueMessager::init(size, maxunit);
-
-			// init the critical sectiona and the event
-			InitializeCriticalSection(&wakeupMutex);
-			wakeup = CreateEvent(NULL, FALSE, FALSE, NULL);
-			if(conf->ctrlproto == IPPROTO_TCP) {
-				struct ctrlhandshake hh;
-				// connect to the server
-				if(connect(ctrlSocket, (struct sockaddr*) &ctrlsin, sizeof(ctrlsin)) < 0) {
-					infoRecorder->logError("controller client-connect: %s\n", strerror(errno));
-					goto error;
-				}
-				// send handshake
-				hh.length = 1+strlen(ctrlid)+1;	// msg total len, id, null-terminated
-				if(hh.length > sizeof(hh))
-					hh.length = sizeof(hh);
-				strncpy(hh.id, ctrlid, sizeof(hh.id));
-				if(send(ctrlSocket, (char*) &hh, hh.length, 0) <= 0) {
-					infoRecorder->logError("controller client-send(handshake): %s\n", strerror(errno));
-					goto error;
-				}
-			}
-			return 0;
-error:
-			conf->ctrlenable = 0;
-			ctrlenabled = false;
-			infoRecorder->logError("controller client: controller disabled.\n");
-			closesocket(ctrlSocket);
-			ctrlSocket = -1;
-			return -1;
-		}
-#endif
-
-		int CtrlMessagerClient::init(CtrlConfig * conf, const char * ctrlid){
+		int CtrlMessagerClient::init(cg::RTSPConf* rtspConf, const char * ctrlid){
 			
-			this->conf = conf;
+			conf = rtspConf;
 			if (ctrlSocketInit(conf) < 0) {
 				conf->ctrlenable = 0;
 				return -1;
 			}
-
-			//QueueMessager::init(size, maxunit);
 
 			// init the critical section and the event
 			InitializeCriticalSection(&wakeupMutex);
@@ -1462,6 +1414,7 @@ error:
 
 			infoRecorder->logError("controller client-thread started: tid=%ld.\n", getThreadId());
 
+			return TRUE;
 		}
 		BOOL CtrlMessagerClient::run(){
 			struct queuemsg *qm;
@@ -1473,7 +1426,7 @@ error:
 			while ((qm = readMsg()) != NULL) {
 				int wlen;
 				if (qm->msgsize == 0) {
-					infoRecorder->logError("controller client: null messgae received, terminate the thread.\n");
+					infoRecorder->logError("controller client: null messagae received, terminate the thread.\n");
 					return FALSE;
 				}
 #ifdef ANDROID
@@ -1506,6 +1459,7 @@ error:
 				}
 				releaseMsg(qm);
 				//ga_error("controller client-debug: send msg (%d bytes)\n", wlen);
+				return TRUE;
 			}
 		}
 		BOOL CtrlMessagerClient::stop(){
@@ -1538,10 +1492,7 @@ error:
 
 		}
 		CtrlMessagerClient::~CtrlMessagerClient(){
-			if (conf){
-				delete conf;
-				conf = NULL;
-			}
+			
 		}
 
 		////////////////////////////////////////////////////////////////////
@@ -1564,7 +1515,7 @@ error:
 			}
 		}
 
-#if 0
+#if 1
 		int CtrlMessagerServer::init(struct RTSPConf *conf, const char *ctrlid) {
 			if (ctrlSocketInit(conf) < 0){
 				infoRecorder->logError("[CtrlMessagerServer]:init socket failed\n");
@@ -1573,10 +1524,6 @@ error:
 			// init the msg queue
 			//QueueMessager::initQueue(size, maxunit);
 			// init the critical sections
-			currWidth = -1;
-			currHeight = -1;
-			outputWidth = -1;
-			outputHeight = -1;
 			InitializeCriticalSection(&reslock);
 			InitializeCriticalSection(&oreslock);
 
@@ -1610,9 +1557,8 @@ error:
 			ctrlSocket = -1;
 			return -1;
 		}
-#endif
 
-
+#else
 		int CtrlMessagerServer::init(CtrlConfig *conf, const char *ctrlid) {
 			if (!conf){
 				infoRecorder->logError("[CtrlMessagerServer]: NULL CtrlConsfig.\n");
@@ -1660,7 +1606,7 @@ error:
 			ctrlSocket = -1;
 			return -1;
 		}
-
+#endif
 		
 		BOOL CtrlMessagerServer::onThreadStart(){
 			struct sockaddr_in csin, xsin;
@@ -1668,7 +1614,7 @@ error:
 			//
 
 			if (conf == NULL){
-				infoRecorder->logError("[CtrlMessagerServer]: NULL rtspconfig\n");
+				infoRecorder->logError("[CtrlMessagerServer]: NULL rtsp config\n");
 				return FALSE;
 			}
 
@@ -1841,52 +1787,9 @@ again:
 			return 0;
 		}
 
-#if 0
-		void CtrlMessagerServer::setOutputResolution(int width, int height) {
-			EnterCriticalSection(&oreslock);
-			outputWidth = width;
-			outputHeight = height;
-			LeaveCriticalSection(&oreslock);
-			return;
-		}
-		void CtrlMessagerServer::setResolution(int width, int height) {
-			EnterCriticalSection(&reslock);
-			currWidth = width;
-			currHeight = height;
-			LeaveCriticalSection(&reslock);
-			return;
-		}
-		void CtrlMessagerServer::getResolution(int *width, int *height) {
-			EnterCriticalSection(&reslock);
-			*width = currWidth;
-			*height = currHeight;
-			LeaveCriticalSection(&reslock);
-			return;
-		}
-		void CtrlMessagerServer::getScaleFactor(double *fx, double *fy) {
-			double rx, ry;
-			EnterCriticalSection(&reslock);
-			EnterCriticalSection(&oreslock);
-			rx = 1.0 * currWidth / outputWidth;
-			ry = 1.0 * currHeight / outputHeight;
-			LeaveCriticalSection(&oreslock);
-			LeaveCriticalSection(&reslock);
-			if(rx <= 0.0)	rx = 1.0;
-			if(ry <= 0.0)	ry = 1.0;
-			*fx = rx;
-			*fy = ry;
-			return;
-		}
-#endif
-
 		CtrlMessagerServer::CtrlMessagerServer(){
-#if 0
-			currHeight = 0, currWidth = 0;
-			outputHeight = 0, outputWidth = 0;
-#endif
 			 ctrlSocket = NULL, sock = NULL;
 			 clientaccepted = 0;
-			 
 
 			 bufhead = 0, buflen = 0;
 			 wakeupMutex = NULL;

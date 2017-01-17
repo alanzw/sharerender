@@ -65,23 +65,18 @@ namespace cg{
 #endif
 		if(conf == NULL){
 			if (filename == NULL){
-				// error
-
-				conf = new RTSPConf(DEAULT_CONFIG_NAME);
-				myname = std::string(DEAULT_CONFIG_NAME);
-
+				conf = new RTSPConf(DEFAULT_CLIENT_CONFIG_FILE);
+				myname = std::string(DEFAULT_CLIENT_CONFIG_FILE);
 			}else{
 				// return a new one 
-				#ifdef ENABLE_RTSOCONF_LOG
+#ifdef ENABLE_RTSOCONF_LOG
 				cg::core::infoRecorder->logTrace("[RTSPConf]:create new rtsp config\n");
 #endif
+				myname = std::string(filename);
 				conf = new RTSPConf(filename);
 			}
-			//load the config
 		}
-		else{
-			return conf;
-		}
+		
 		return conf;
 	}
 
@@ -150,9 +145,6 @@ namespace cg{
 	}
 
 	RTSPConf::RTSPConf(char * filename):ccgConfig(filename){
-
-		//initialized = 1;
-		//	configMap[id] = this;
 		rtspConfInit();
 		confLoad(filename);
 		rtspConfParse();
@@ -232,8 +224,6 @@ namespace cg{
 #ifdef ENABLE_RTSOCONF_LOG
 			cg::core::infoRecorder->logError("[RTSPConf]: rtsp config parse called.\n");
 #endif
-			//
-			//rtspConfInit();
 			//read the distributor server name
 			if ((ptr = confReadV("distributor-name", buf, sizeof(buf))) != NULL){
 				distributorname = _strdup(ptr);
@@ -310,32 +300,32 @@ namespace cg{
 				cg::core::infoRecorder->logError("# RTSP[config]: using 'tcp' for RTP flows.\n");
 #endif
 			}
-			//
+			// read control enable value
 			ctrlenable = confReadBool("control-enabled", 0);
-			//
+
 			if (ctrlenable != 0) {
-				//
+				// read the control connection port
 				v = confReadInt("control-port");
 				if (v <= 0 || v >= 65536) {
 					cg::core::infoRecorder->logError("# RTSP[config]: invalid control port %d\n", v);
 					return -1;
 				}
 				ctrlport = v;
-				#ifdef ENABLE_RTSOCONF_LOG
+#ifdef ENABLE_RTSOCONF_LOG
 				cg::core::infoRecorder->logError("# RTSP[config]: controller port = %d\n", ctrlport);
 #endif
-				//
+				// read the protocol for control connection, default use TCP
 				ptr = confReadV("control-proto", buf, sizeof(buf));
-				if (ptr == NULL || strcmp(ptr, "tcp") != 0) {
-					ctrlproto = IPPROTO_UDP;
-					#ifdef ENABLE_RTSOCONF_LOG
-					cg::core::infoRecorder->logError("# RTSP[config]: controller via 'udp' protocol.\n");
+				if (ptr == NULL || strcmp(ptr, "tcp") == 0) {
+					ctrlproto = IPPROTO_TCP;
+#ifdef ENABLE_RTSOCONF_LOG
+					cg::core::infoRecorder->logError("# RTSP[config]: controller via 'tcp' protocol.\n");
 #endif
 				}
 				else {
-					ctrlproto = IPPROTO_TCP;
-					#ifdef ENABLE_RTSOCONF_LOG
-					cg::core::infoRecorder->logError("# RTSP[config]: controller via 'tcp' protocol.\n");
+					ctrlproto = IPPROTO_UDP;
+#ifdef ENABLE_RTSOCONF_LOG
+					cg::core::infoRecorder->logError("# RTSP[config]: controller via 'udp' protocol.\n");
 #endif
 				}
 				//

@@ -27,6 +27,7 @@ extern "C" {
 
 
 #define DEAULT_CONFIG_NAME "config/server.renderpool.conf"
+#define DEFAULT_CLIENT_CONFIG_FILE "config/client.rel.conf"
 namespace cg{
 	struct RTSPConf : ccgConfig{
 		static std::map<std::string, int> initialized;

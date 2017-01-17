@@ -159,7 +159,7 @@ public:
 #endif
 
 	int init(const char * sprop);
-	AVFrame *decodeVideo(int * got_picture, AVPacket * pkt);
+	AVFrame *decodeVideo(int * got_picture, int * step_len, AVPacket * pkt);
 
 
 
