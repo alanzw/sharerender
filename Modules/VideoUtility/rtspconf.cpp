@@ -65,8 +65,8 @@ namespace cg{
 #endif
 		if(conf == NULL){
 			if (filename == NULL){
-				conf = new RTSPConf(DEFAULT_CLIENT_CONFIG_FILE);
-				myname = std::string(DEFAULT_CLIENT_CONFIG_FILE);
+				cg::core::infoRecorder->logError("[RTSPConf]: NULL config file name and NO instance.\n");
+				return NULL;
 			}else{
 				// return a new one 
 #ifdef ENABLE_RTSOCONF_LOG
@@ -354,9 +354,9 @@ namespace cg{
 #if 1
 			if ((ptr = confReadV("video-decoder", buf, sizeof(buf))) != NULL) {
 				if (rtspConfLoadCodec("video-decoder", ptr,
-					(const char**)conf->video_decoder_name,
-					&conf->video_decoder_codec,
-					AVCodecCommon::AVCodecFindEncoder) < 0)
+					(const char**)video_decoder_name,
+					&video_decoder_codec,
+					AVCodecCommon::AVCodecFindDecoder) < 0)
 					return -1;
 			}
 #endif
@@ -371,8 +371,8 @@ namespace cg{
 			}
 			if ((ptr = confReadV("audio-decoder", buf, sizeof(buf))) != NULL) {
 				if (rtspconfLoadCodec("audio-decoder", ptr,
-					(const char**)conf->audio_decoder_name,
-					&conf->audio_decoder_codec,
+					(const char**)audio_decoder_name,
+					&audio_decoder_codec,
 					ga_avcodec_find_decoder) < 0)
 					return -1;
 			}

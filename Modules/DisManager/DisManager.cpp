@@ -281,7 +281,7 @@ int main(int argc, char ** argv){
 	char * rtspConfigDefault = "config/server.distributor.conf";
 	char * rtspConfig = NULL;
 	if(argc > 1){
-		rtspConfig = _strdup(argv[2]);  // get the config file
+		rtspConfig = _strdup(argv[1]);  // get the config file
 	}else{
 		rtspConfig = rtspConfigDefault;
 	}
