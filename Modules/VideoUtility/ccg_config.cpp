@@ -6,6 +6,7 @@
 #include "videocommon.h"
 #include "../LibCore/MemOp.h"
 #include "../LibCore/InfoRecorder.h"
+#include <iostream>
 
 #define PATH_MAX 128
 
@@ -14,6 +15,22 @@
 
 /////////////////////////////////////////////////////////////////////
 namespace cg{
+	void ccgConfig::print(){
+		std::map<std::string, ConfVar>::iterator it;
+		for(it = _confVars.begin(); it != _confVars.end(); it++){
+			std::string key = it->first;
+			if(confIsMap(key.c_str())){
+
+				std::cout << "Map: " << key << ": " << std::endl;
+				it->second.print();
+			}
+			else{
+				std::cout << "option: " << key << " val: " << it->second.value() << std::endl;
+			}
+
+		}
+	}
+
 	ccgConfig::ccgConfig(char * filename){
 		configFileName = std::string(filename);
 	}
@@ -123,25 +140,22 @@ namespace cg{
 		if ((leftbracket = strchr(option, '[')) != NULL) {
 			rightbracket = strchr(leftbracket + 1, ']');
 			if (rightbracket == NULL) {
-				#ifdef ENABLE_CCGCONFIG_LOG
-				cg::core::infoRecorder->logTrace("# %s:%d: malformed option (%s without right bracket).\n",
-					filename, lineno, option);
+#ifdef ENABLE_CCGCONFIG_LOG
+				cg::core::infoRecorder->logTrace("# %s:%d: malformed option (%s without right bracket).\n", filename, lineno, option);
 #endif
 				return -1;
 			}
 			// no key specified
 			if (leftbracket + 1 == rightbracket) {
-				#ifdef ENABLE_CCGCONFIG_LOG
-				cg::core::infoRecorder->logTrace("# %s:%d: malformed option (%s without a key).\n",
-					filename, lineno, option);
+#ifdef ENABLE_CCGCONFIG_LOG
+				cg::core::infoRecorder->logTrace("# %s:%d: malformed option (%s without a key).\n", filename, lineno, option);
 #endif
 				return -1;
 			}
 			// garbage after rightbracket?
 			if (*(rightbracket + 1) != '\0') {
-				#ifdef ENABLE_CCGCONFIG_LOG
-				cg::core::infoRecorder->logTrace("# %s:%d: malformed option (%s?).\n",
-					filename, lineno, option);
+#ifdef ENABLE_CCGCONFIG_LOG
+				cg::core::infoRecorder->logTrace("# %s:%d: malformed option (%s?).\n", filename, lineno, option);
 #endif
 				return -1;
 			}
@@ -151,13 +165,13 @@ namespace cg{
 		}
 		// its a map
 		if (leftbracket != NULL) {
-			#ifdef ENABLE_CCGCONFIG_LOG
+#ifdef ENABLE_CCGCONFIG_LOG
 			cg::core::infoRecorder->logError("[ccgConfig]: %s[%s] = %s\n", option, leftbracket, token);
 #endif
 			_confVars[option][leftbracket] = token;
 		}
 		else {
-			#ifdef ENABLE_CCGCONFIG_LOG
+#ifdef ENABLE_CCGCONFIG_LOG
 			cg::core::infoRecorder->logError("[ccgConfig]: %s = %s\n", option, token);
 #endif
 			_confVars[option] = token;
@@ -419,6 +433,13 @@ namespace cg{
 
 
 	///////// for Class ConfVar ////////////////////
+	void ConfVar::print(){
+		std::map<std::string, std::string>::iterator it;
+		for(it = mapdata.begin(); it != mapdata.end(); it ++){
+			std::cout << "\toption: " << it->first << " value: " << it->second << std::endl; 
+		}
+	}
+
 	void ConfVar::clear(){
 		this->data = "";
 		this->mapdata.clear();

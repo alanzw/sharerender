@@ -324,7 +324,7 @@ namespace cg{
 			// copy data
 			src = (char *)lockedRect.pBits;
 
-			for(int i = 0; i < desc.Height; i++){
+			for(UINT i = 0; i < desc.Height; i++){
 				CopyMemory(buf, src, sframe->realStride);
 				src+= lockedRect.Pitch;
 				buf+=sframe->realStride;
@@ -357,8 +357,6 @@ namespace cg{
 			image->width = bmpInfo.bmiHeader.biWidth;
 			image->height = bmpInfo.bmiHeader.biHeight;
 			image->bytes_per_line = (BITSPERPIXEL >> 3) * image->width;
-			//screenWidth = image->width;
-			//screenHeight = image->height;
 		}
 
 		// add capture window code here
@@ -371,6 +369,7 @@ namespace cg{
 
 		if (captureCompatibaleDC == NULL || captureCompatibleBitmap == NULL){
 			cg::core::infoRecorder->logError("[WindowWrapper]: unable to create compatitable DC/Bitmap.\n");
+			goto initErrorQuit;
 			return -1;
 		}
 		HBITMAP oldBitMap = (HBITMAP)SelectObject(captureCompatibaleDC, captureCompatibleBitmap);

@@ -111,7 +111,7 @@ HRESULT FakedClear(RenderChannel * rch) {
 	DWORD count = rch->cc->read_uint();
 	D3DRECT pRects;
 
-	bool is_null = rch->cc->read_char();
+	bool is_null = (bool)rch->cc->read_char();
 	if(!is_null) {
 		rch->cc->read_byte_arr((char*)(&pRects), sizeof(pRects));
 	}
@@ -444,6 +444,8 @@ char * RenderStateToString(D3DRENDERSTATETYPE state){
 		return _strdup("D3DTS_BLENDOPALPHA");
 	case 0x7fffffff:
 		return _strdup("D3DTS_FORCE_DWORD");
+	default:
+		return _strdup("D3DTS_UNKNOWN_STATE");
 	}
 }
 #endif
@@ -519,6 +521,8 @@ char * PrimitiveTypeToString(D3DPRIMITIVETYPE type){
 		return _strdup("D3DPT_TRIANGLELEFAN");
 	case 0x7fffffff:
 		return _strdup("D3DPT_FROCE_DWORD");
+	default:
+		return _strdup("D3DPT_KNOWN_TYPE");
 	}
 }
 
@@ -766,6 +770,8 @@ char * TypeToString(BYTE type){
 		return _strdup("D3DDECLTYPE_FLOAT16_4");
 	case D3DDECLTYPE_UNUSED:
 		return _strdup("D3DDECLTYPE_UNUSED");
+	default:
+		return _strdup("D3DDECLTYPE_UNKNOWN");
 	}
 }
 char * MethodToString(BYTE method){
@@ -784,7 +790,10 @@ char * MethodToString(BYTE method){
 		return _strdup("D3DDECLMETHOD_LOOKUP");
 	case D3DDECLMETHOD_LOOKUPPRESAMPLED:
 		return _strdup("D3DDECLMETHOD_LOOKUPPRESAMPLED");
+	default:
+		return _strdup("D3D_UNKNOWN_ERROR");
 	}
+
 }
 char * UsageToString(BYTE usage){
 	switch(usage){
@@ -816,6 +825,8 @@ char * UsageToString(BYTE usage){
 		return _strdup("D3DDECLUSAGE_DEPTH");
 	case D3DDECLUSAGE_SAMPLE:
 		return _strdup("D3DDECLUSAGE_SAMPLE");
+	default:
+		return _strdup("D3DECULUSAGE_UNKNOWN");
 	}
 }
 
@@ -1032,7 +1043,7 @@ HRESULT FakedSetPixelShaderConstantF(RenderChannel * rch) {
 	UINT StartRegister = rch->cc->read_uint();
 	UINT Vector4fcount = rch->cc->read_uint();
 
-	for(int i=0; i<Vector4fcount; ++i) {
+	for(UINT i=0; i<Vector4fcount; ++i) {
 		rch->cc->read_vec(vs_data + (i * 4));
 	}
 
@@ -1597,9 +1608,9 @@ HRESULT FakedSetCubeTexture(RenderChannel * rch) {
 	cube_tex = (ClientCubeTexture9*)(rch->ctex_list[id]);
 
 	if(cube_tex == NULL) {
-		cg::core::infoRecorder->logTrace("FakedSetCubeTexture(), cube_tex is NULL\,id:%dn", id);
+		cg::core::infoRecorder->logTrace("FakedSetCubeTexture(), cube_tex is NULL,id:%d\n", id);
 	}else{
-		cg::core::infoRecorder->logTrace("FakedSetCubeTexture(), cube_tex:%p ,id:%dn", cube_tex, id);
+		cg::core::infoRecorder->logTrace("FakedSetCubeTexture(), cube_tex:%p ,id:%d\n", cube_tex, id);
 	}
 
 	return rch->curDevice->SetTexture(Stage, cube_tex->GetCubeTex9());
@@ -2011,9 +2022,9 @@ extern bool synPress;
 extern CRITICAL_SECTION syn_sec;
 #endif
 HRESULT FakeNullInstruct(RenderChannel * rch){
-	SYSTEMTIME sys, now;
 	unsigned char flag = rch->cc->read_uchar();
 #if 0
+	SYSTEMTIME sys, now;
 	//GetLocalTime(&now);
 	GetSystemTime(&now);
 	time(&end_t);

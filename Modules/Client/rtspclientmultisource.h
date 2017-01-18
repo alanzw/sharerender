@@ -144,7 +144,7 @@ public:
 	VideoDecoder(){ 
 		inited = false;
 		videoCodecName = NULL; 
-		videoCodecId = AVCodecID::AV_CODEC_ID_NONE;
+		videoCodecId = AV_CODEC_ID_NONE;
 		vDecoder = NULL;
 #ifdef USE_TEMPLATE_FRAME_POOL
 		frame = NULL;

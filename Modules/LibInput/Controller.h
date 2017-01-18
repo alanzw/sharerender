@@ -213,6 +213,7 @@ namespace cg{
 			RTSPConf *conf;
 			CRITICAL_SECTION wakeupMutex;
 			HANDLE wakeup;
+			char * ctrlServerUrl;
 
 
 			int ctrlSocketInit(struct cg::RTSPConf * conf);
@@ -231,7 +232,8 @@ namespace cg{
 
 			//int initMessager(int size, int maxunit);
 			void sendMsg(void *msg, int msglen);
-			int init(struct cg::RTSPConf * conf, const char * ctrlid);
+			int init(struct cg::RTSPConf * conf,char * url, const char * ctrlid);
+
 		};
 
 		// the callback interface

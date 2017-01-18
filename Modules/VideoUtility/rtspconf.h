@@ -29,41 +29,39 @@ extern "C" {
 #define DEAULT_CONFIG_NAME "config/server.renderpool.conf"
 #define DEFAULT_CLIENT_CONFIG_FILE "config/client.rel.conf"
 namespace cg{
-	struct RTSPConf : ccgConfig{
+	class RTSPConf : public ccgConfig{
+		public:
 		static std::map<std::string, int> initialized;
 		static HANDLE rtspConfMutex;
 		static std::map<std::string, RTSPConf *> rtspConfMap;
 		static std::string myname;
 
-		static int do_register(const char * provider, RTSPConf * conf);
-		static void do_unregister(const char * provider);
-		static RTSPConf * lookup(const char * provider);
-		static const char * name(){
-			return myname.c_str();
-		}
-
 		char object[RTSPCONF_OBJECT_SIZE];
 		char title[RTSPCONF_TITLE_SIZE];
 		char display[RTSPCONF_DISPLAY_SIZE];
 
-		char * servername;  // render server name
-		char * distributorname;   // the distributor
-		char * logic_servername; // the logic server
+		char * disServerName;   // the distributor server name
 
 		struct sockaddr_in dis_sin;
 		struct sockaddr_in sin;
 		struct sockaddr_in logic_sin;   // sockaddr for the logic connection
-		int logic_serverport;
-		int dis_port;
-		int serverport;
 
-		char proto; // transport layer tcp = 6; udp = 17
+		int disPort;		// for dis manager
+		int serverPort;		// for rtsp
+		int graphicPort;	// for graphic connection
+
+		char proto; // transport layer tcp = 6; udp = 17, for rtsp
+		char graphicProto; 
+		char ctrlProto;		// transport layer tcp = 6; udp = 17
 
 		// for controller
-		int ctrlenable;
-		int ctrlport;
-		char ctrlproto;		// transport layer tcp = 6; udp = 17
-		int sendmousemotion;
+		int ctrlEnable;
+		int ctrlPort;
+		int sendMouseMotion;
+
+
+		// for loader and game process
+		int loaderPort;
 
 		char *video_encoder_name[RTSPCONF_CODECNAME_SIZE + 1];
 		AVCodec *video_encoder_codec;
@@ -85,33 +83,41 @@ namespace cg{
 		int64_t audio_codec_channel_layout;
 
 		std::vector<std::string> *vso;	// video specific options
+		static std::map<int , RTSPConf *> configMap;
+
+	public:
+
+		char * getDisUrl(){ return disServerName; }
+		int	getRTSPPort(){ return serverPort; }
 
 		int rtspConfInit();
+#if 0
+		int configParseLogic();
+		int configParseRender();
+		int configParseDisServer();
+		int configParseClient();
+#endif
+
 		int rtspConfParse();
 		void rtspConfResolveServer(const char * serverName);
 
 		int rtspConfLoadCodec(const char *key, const char * value,
 			const char **names, AVCodec **codec, AVCodec *(*finder)(const char **, enum AVCodecID));
-		static std::map<int , RTSPConf *> configMap;
+		
 
 		//static RTSPConf * getRtspConf(int id);
 		static RTSPConf * conf;
+		RTSPConf(char *filename);
 
-		void setLogicAddr(struct sockaddr_in * s){
-			memcpy(&logic_sin, s, sizeof(struct sockaddr_in));
-		}
-		void setLogicPort(int p){
-			logic_serverport = p;
-		}
-		void setLogicServerName(char * name){
-			logic_servername = _strdup(name);
-		}
+
+		static int do_register(const char * provider, RTSPConf * conf);
+		static void do_unregister(const char * provider);
+		static RTSPConf * lookup(const char * provider);
+		static const char * name(){return myname.c_str(); }
 
 		static void Release();
 		static RTSPConf * GetRTSPConf(char * filename = NULL);
-
-		RTSPConf(char *filename);
-		~RTSPConf();
+		virtual ~RTSPConf();
 	};
 }
 

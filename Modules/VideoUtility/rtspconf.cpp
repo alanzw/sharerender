@@ -82,17 +82,10 @@ namespace cg{
 
 
 	RTSPConf::~RTSPConf(){
-		if (servername){
-			free(servername);
-			servername = NULL;
-		}
-		if (distributorname){
-			free(distributorname);
-			distributorname = NULL;
-		}
-		if (logic_servername){
-			free(logic_servername);
-			logic_servername = NULL;
+		
+		if (disServerName){
+			free(disServerName);
+			disServerName = NULL;
 		}
 	}
 
@@ -155,13 +148,13 @@ namespace cg{
 		strncpy(object, RTSP_DEF_OBJECT, RTSPCONF_OBJECT_SIZE);
 		strncpy(title, RTSP_DEF_TITLE, RTSPCONF_TITLE_SIZE);
 		strncpy(display, RTSP_DEF_DISPLAY, RTSPCONF_DISPLAY_SIZE);
-		serverport = RTSP_DEF_SERVERPORT;
+		serverPort = RTSP_DEF_SERVERPORT;
 		proto = RTSP_DEF_PROTO;
 		// controller
-		ctrlenable = RTSP_DEF_CONTROL_ENABLED;
-		ctrlport = RTSP_DEF_CONTROL_PORT;
-		ctrlproto = RTSP_DEF_CONTROL_PROTO;
-		sendmousemotion = RTSP_DEF_SEND_MOUSE_MOTION;
+		ctrlEnable = RTSP_DEF_CONTROL_ENABLED;
+		ctrlPort = RTSP_DEF_CONTROL_PORT;
+		ctrlProto = RTSP_DEF_CONTROL_PROTO;
+		sendMouseMotion = RTSP_DEF_SEND_MOUSE_MOTION;
 		//
 		video_fps = RTSP_DEF_VIDEO_FPS;
 		audio_bitrate = RTSP_DEF_AUDIO_BITRATE;
@@ -217,32 +210,40 @@ namespace cg{
 			return 0;
 	}
 
+
+#if 0
+	int RTSPConf::configParseClient(){
+		char *ptr = NULL, buf[1024] = {0};
+		int value = 0;
+
+	}
+
+	int RTSPConf::configParseDisServer(){
+		char *ptr = NULL, buf[1024] = {0};
+		int value = 0;
+	}
+	int RTSPConf::configParseLogic(){
+		char *ptr = NULL, buf[1024] = {0};
+		int value = 0;
+	}
+	int RTSPConf::configParseRender(){
+		char *ptr = NULL, buf[1024] = {0};
+		int value = 0;
+	}
+#endif
+
 	int RTSPConf::
 		rtspConfParse() {
-			char *ptr, buf[1024];
+			char *ptr = NULL, buf[1024] = {0};
 			int v;
 #ifdef ENABLE_RTSOCONF_LOG
 			cg::core::infoRecorder->logError("[RTSPConf]: rtsp config parse called.\n");
 #endif
 			//read the distributor server name
-			if ((ptr = confReadV("distributor-name", buf, sizeof(buf))) != NULL){
-				distributorname = _strdup(ptr);
+			if ((ptr = confReadV("dis-server-name", buf, sizeof(buf))) != NULL){
+				disServerName = _strdup(ptr);
 			}
 
-			// read the server render server name
-			if ((ptr = confReadV("server-name", buf, sizeof(buf))) != NULL) {
-				servername = _strdup(ptr);
-				#ifdef ENABLE_RTSOCONF_LOG
-				cg::core::infoRecorder->logError("[RTSPConf]: server name:%s\n.", servername);
-#endif
-			}
-			// read the logic server name
-			if ((ptr = confReadV("logic-server-name", buf, sizeof(buf))) != NULL) {
-				logic_servername = _strdup(ptr);
-				#ifdef ENABLE_RTSOCONF_LOG
-				cg::core::infoRecorder->logError("[RTSPConf]: logic server name:%s\n.", logic_servername);
-#endif
-			}
 			//
 			if ((ptr = confReadV("base-object", buf, sizeof(buf))) != NULL) {
 				strncpy(object, ptr, RTSPCONF_OBJECT_SIZE);
@@ -256,38 +257,43 @@ namespace cg{
 				strncpy(display, ptr, RTSPCONF_DISPLAY_SIZE);
 			}
 			//
-			v = confReadInt("server-port");
+			v = confReadInt("rtsp-port");
 			if (v <= 0 || v >= 65536) {
-				cg::core::infoRecorder->logError("# RTSP[config]: invalid server port %d\n", v);
-				return -1;
+				cg::core::infoRecorder->logError("# RTSP[config]: invalid rtsp server port %d, use default: 8554\n", v);
+				serverPort = 8554;
 			}
+			else{
 #ifdef ENABLE_RTSOCONF_LOG
 			cg::core::infoRecorder->logError("[RTSPConf]: server port:%d.\n", v);
 #endif
-			serverport = v;
+			serverPort = v;
+			}
+			v = confReadInt("loader-port");
+			if(v <= 0 || v >= 65536){
+				cg::core::infoRecorder->logError("# RTSP[config]: invalied loader port %d, use default: 8556.\n", v);
+				loaderPort = 8556;
+			}
+			else{
+				loaderPort = v;
+			}
+			v = confReadInt("graphic-port");
+			if(v <= 0 || v >= 65535){
+				cg::core::infoRecorder->logError("# RTSP[config]: invalid graphic port %d, use default: 60000.\n");
+				graphicPort = 60000;
+			}
 
 			// read the distributor server port
-			v = confReadInt("distributor-port");
+			v = confReadInt("dis-port");
 			if (v <= 0 || v >= 65535){
-				cg::core::infoRecorder->logError("# RTSP[config]: invalid distributor server port %d\n", v);
-				return -1;
-			}
-			dis_port = v;
-			#ifdef ENABLE_RTSOCONF_LOG
+				cg::core::infoRecorder->logError("# RTSP[config]: invalid distributor server port %d, use default: 8557\n", v);
+				disPort = 8557;
+			}else
+				disPort = v;
+#ifdef ENABLE_RTSOCONF_LOG
 			cg::core::infoRecorder->logError("[RTSPConf]: distributor port:%d.\n", v);
 #endif
-
-			v = confReadInt("logic-server-port");
-			if (v <= 0 || v >= 65535){
-				cg::core::infoRecorder->logError("# RTSP[config]: invalid logic server port %d\n", v);
-				return -1;
-			}
-#ifdef ENABLE_RTSOCONF_LOG
-			cg::core::infoRecorder->logError("[RTSPConf]: logic server port:%d.\n", v);
-#endif
-			logic_serverport = v;
-			//
-			ptr = confReadV("proto", buf, sizeof(buf));
+			// read rtsp proto
+			ptr = confReadV("rtsp-proto", buf, sizeof(buf));
 			if (ptr == NULL || strcmp(ptr, "tcp") != 0) {
 				proto = IPPROTO_UDP;
 #ifdef ENABLE_RTSOCONF_LOG
@@ -296,40 +302,40 @@ namespace cg{
 			}
 			else {
 				proto = IPPROTO_TCP;
-				#ifdef ENABLE_RTSOCONF_LOG
+#ifdef ENABLE_RTSOCONF_LOG
 				cg::core::infoRecorder->logError("# RTSP[config]: using 'tcp' for RTP flows.\n");
 #endif
 			}
 			// read control enable value
-			ctrlenable = confReadBool("control-enabled", 0);
+			ctrlEnable = confReadBool("control-enabled", 0);
 
-			if (ctrlenable != 0) {
+			if (ctrlEnable != 0) {
 				// read the control connection port
 				v = confReadInt("control-port");
 				if (v <= 0 || v >= 65536) {
-					cg::core::infoRecorder->logError("# RTSP[config]: invalid control port %d\n", v);
-					return -1;
-				}
-				ctrlport = v;
+					cg::core::infoRecorder->logError("# RTSP[config]: invalid control port %d, use default: 8555\n", v);
+					ctrlPort = 8555;
+				}else
+					ctrlPort = v;
 #ifdef ENABLE_RTSOCONF_LOG
 				cg::core::infoRecorder->logError("# RTSP[config]: controller port = %d\n", ctrlport);
 #endif
 				// read the protocol for control connection, default use TCP
 				ptr = confReadV("control-proto", buf, sizeof(buf));
 				if (ptr == NULL || strcmp(ptr, "tcp") == 0) {
-					ctrlproto = IPPROTO_TCP;
+					ctrlProto = IPPROTO_TCP;
 #ifdef ENABLE_RTSOCONF_LOG
 					cg::core::infoRecorder->logError("# RTSP[config]: controller via 'tcp' protocol.\n");
 #endif
 				}
 				else {
-					ctrlproto = IPPROTO_UDP;
+					ctrlProto = IPPROTO_UDP;
 #ifdef ENABLE_RTSOCONF_LOG
 					cg::core::infoRecorder->logError("# RTSP[config]: controller via 'udp' protocol.\n");
 #endif
 				}
 				//
-				sendmousemotion = confReadBool("control-send-mouse-motion", 1);
+				sendMouseMotion = confReadBool("control-send-mouse-motion", 1);
 			}
 			// video-encoder, audio-encoder, video-decoder, and audio-decoder
 			if ((ptr = confReadV("video-encoder", buf, sizeof(buf))) != NULL) {
@@ -345,7 +351,7 @@ namespace cg{
 			else{
 				cg::core::infoRecorder->logError("[RTSPConf]: config parse, NULL video-encoder.\n");
 			}
-#if 0
+#if 1
 			if ((ptr = confReadV("video-decoder", buf, sizeof(buf))) != NULL) {
 				if (rtspConfLoadCodec("video-decoder", ptr,
 					(const char**)conf->video_decoder_name,
@@ -354,16 +360,17 @@ namespace cg{
 					return -1;
 			}
 #endif
+			
+#if 0
 			if ((ptr = confReadV("audio-encoder", buf, sizeof(buf))) != NULL) {
-				/*if (rtspConfLoadCodec("audio-encoder", ptr,
+				if (rtspConfLoadCodec("audio-encoder", ptr,
 				(const char**)audio_encoder_name,
 				&audio_encoder_codec,
 				AVCodecCommon::AVO) < 0)
-				return -1;*/
+				return -1;
 			}
-#if 0
 			if ((ptr = confReadV("audio-decoder", buf, sizeof(buf))) != NULL) {
-				if (rtspconf_load_codec("audio-decoder", ptr,
+				if (rtspconfLoadCodec("audio-decoder", ptr,
 					(const char**)conf->audio_decoder_name,
 					&conf->audio_decoder_codec,
 					ga_avcodec_find_decoder) < 0)
@@ -374,9 +381,11 @@ namespace cg{
 			v = confReadInt("video-fps");
 			if (v <= 0 || v > 120) {
 				cg::core::infoRecorder->logError("# RTSP[conf]: video-fps out-of-range %d (valid: 1-120)\n", v);
-				return -1;
+				//return -1;
+				video_fps = 24;
 			}
-			video_fps = v;
+			else
+				video_fps = v;
 			//
 			ptr = confReadV("video-renderer", buf, sizeof(buf));
 			if (ptr != NULL && strcmp(ptr, "software") == 0) {
@@ -458,7 +467,7 @@ namespace cg{
 							continue;
 						vso->push_back(ptr);
 						vso->push_back(val);
-						#ifdef ENABLE_RTSOCONF_LOG
+#ifdef ENABLE_RTSOCONF_LOG
 						cg::core::infoRecorder->logError("# RTSP[config]: video specific option: %s = %s\n",
 							ptr, val);
 #endif

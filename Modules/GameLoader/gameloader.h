@@ -13,6 +13,7 @@
 #include "../LibCore/GpuWatch.h"
 #include "../LibCore/CThread.h"
 #include "../LibCore/InfoRecorder.h"
+#include "../VideoUtility/rtspconf.h"
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -232,7 +233,7 @@ class LogicFactory: public DisClient{
 	CtrlManager * cmgr;
 	struct event_base * base;   // the event base
 
-
+	cg::RTSPConf * conf;
 	map<IDENTIFIER, LogicTask *> taskMap;
 
 	struct evconnlistener * processListener;
@@ -247,6 +248,7 @@ class LogicFactory: public DisClient{
 		base = NULL;
 		processListener = NULL;
 		renderListener = NULL;
+		conf = NULL;
 	}
 
 
@@ -262,6 +264,9 @@ class LogicFactory: public DisClient{
 	static DWORD WINAPI RegulatorProc(LPVOID param);
 
 public:
+
+	inline void setRTSPConf(cg::RTSPConf * c){ conf = c; }
+
 	inline void setEncoderOption(int option){ encoderOption = option;}
 	inline int getEncoderOption(){ return encoderOption; }
 	// for hardware adaption

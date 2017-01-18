@@ -93,7 +93,7 @@ int WrapperDirect3DVertexBuffer9::sendUpdate(void * ctx){
 	if(pTimer) pTimer->Start();
 	ret = UpdateVertexBuffer(c);
 	if(pTimer){
-		unsigned int interval = pTimer->Stop();
+		unsigned int interval = (UINT)pTimer->Stop();
 		infoRecorder->logError("[WrapperDirect3DVertexBuffer9]: update vertex buffer %d use %f ms.\n", id, interval * 1000.0 /pTimer->getFreq());
 	}
 	return ret;
@@ -516,7 +516,7 @@ int WrapperDirect3DVertexBuffer9::UpdateVertexBuffer(ContextAndCache * ctx){
 	compressSize = 1;
 	UCHAR * src = (UCHAR *)(cache_buffer + base);
 	UCHAR * dst = (UCHAR *)((UCHAR *)(m_LockData.pRAMBuffer) + base);
-	for(int i = 0; i< size; ++i){
+	for(UINT i = 0; i< size; ++i){
 		if((*src) ^ (*dst)){
 			d = i - last;
 			last = i;

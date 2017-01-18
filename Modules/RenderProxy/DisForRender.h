@@ -22,6 +22,7 @@ class RenderChannel;
 class RenderProxy : public cg::DisClient{
 	cg::IDENTIFIER renderId;  // render id in DisServer
 	//add render task manage
+	cg::RTSPConf * conf;
 
 	// for rtsp
 	static DWORD WINAPI RTSPThreadProc(LPVOID param);
@@ -45,7 +46,9 @@ public:
 	}
 	inline void setEncodeOption(int option){ encodeOption = option; }
 	inline int getEncodeOption(){ return encodeOption; }
-	virtual bool start(char * DisUrl = NULL); // star the render proxy
+	inline void setRTSPConf(cg::RTSPConf * c){ conf = c; }
+
+	virtual bool start(char * DisUrl); // star the render proxy
 	virtual bool dealEvent(cg::BaseContext * ctx);
 	virtual bool startRTSP(evutil_socket_t sock);
 

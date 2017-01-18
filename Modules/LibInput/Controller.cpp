@@ -636,9 +636,9 @@ namespace cg{
 #endif
 			cg::input::CtrlMessagerServer * ctrlServer = new cg::input::CtrlMessagerServer();
 			do{
-				if (conf->ctrlenable){
+				if (conf->ctrlEnable){
 					if (ctrlServer->initQueue(32768, sizeof(cg::input::sdlmsg_t)) < 0){
-						conf->ctrlenable = 0;
+						conf->ctrlEnable = 0;
 						goto CTRL_CLEAN;
 					}
 					// create the replay callback
@@ -655,7 +655,7 @@ namespace cg{
 
 					if (!ctrlServer->start()){
 						cg::core::infoRecorder->logError("Cannot create controller thread, controller disable\n");
-						conf->ctrlenable = 0;
+						conf->ctrlEnable = 0;
 						goto CTRL_CLEAN;
 					}
 				}
@@ -1301,9 +1301,9 @@ CTRL_CLEAN:
 #endif
 		int CtrlMessagerClient::ctrlSocketInit(struct cg::RTSPConf *conf) {
 			//
-			if(conf->ctrlproto == IPPROTO_TCP) {
+			if(conf->ctrlProto == IPPROTO_TCP) {
 				ctrlSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-			} else if(conf->ctrlproto == IPPROTO_UDP) {
+			} else if(conf->ctrlProto == IPPROTO_UDP) {
 				ctrlSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 			} else {
 				infoRecorder->logError("[CtrlMessagerServer]:Controller socket-init: not supported protocol.\n");
@@ -1315,11 +1315,11 @@ CTRL_CLEAN:
 			//
 			bzero(&ctrlsin, sizeof(struct sockaddr_in));
 			ctrlsin.sin_family = AF_INET;
-			ctrlsin.sin_port = htons(conf->ctrlport);
-			if (conf->logic_servername != NULL) {
-				ctrlsin.sin_addr.s_addr = name_resolve(conf->logic_servername);
+			ctrlsin.sin_port = htons(conf->ctrlPort);
+			if (ctrlServerUrl != NULL) {
+				ctrlsin.sin_addr.s_addr = name_resolve(ctrlServerUrl);
 				if(ctrlsin.sin_addr.s_addr == INADDR_NONE) {
-					infoRecorder->logError("[CtrlMessagerServer]:Name resolution failed: %s\n", conf->logic_servername);
+					infoRecorder->logError("[CtrlMessagerServer]:Name resolution failed: %s\n", ctrlServerUrl);
 					return -1;
 				}
 			}
@@ -1330,14 +1330,14 @@ CTRL_CLEAN:
 		}
 		int CtrlMessagerServer::ctrlSocketInit(struct RTSPConf *conf) {
 			//
-			if (conf->ctrlproto == IPPROTO_TCP) {
+			if (conf->ctrlProto == IPPROTO_TCP) {
 				ctrlSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 			}
-			else if (conf->ctrlproto == IPPROTO_UDP) {
+			else if (conf->ctrlProto == IPPROTO_UDP) {
 				ctrlSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 			}
 			else {
-				infoRecorder->logError("[CtrlMessagerServer]:Controller socket-init: not supported protocol. configured protocol:%d\n", conf->ctrlproto);
+				infoRecorder->logError("[CtrlMessagerServer]:Controller socket-init: not supported protocol. configured protocol:%d\n", conf->ctrlProto);
 				return -1;
 			}
 			if (ctrlSocket < 0) {
@@ -1346,7 +1346,7 @@ CTRL_CLEAN:
 			//
 			bzero(&ctrlsin, sizeof(struct sockaddr_in));
 			ctrlsin.sin_family = AF_INET;
-			ctrlsin.sin_port = htons(conf->ctrlport);
+			ctrlsin.sin_port = htons(conf->ctrlPort);
 
 #if 0
 			if (conf->servername != NULL) {
@@ -1365,18 +1365,21 @@ CTRL_CLEAN:
 
 		////////////////////////////////////////////////////////////////////
 
-		int CtrlMessagerClient::init(cg::RTSPConf* rtspConf, const char * ctrlid){
+		int CtrlMessagerClient::init(cg::RTSPConf* rtspConf,char * url, const char * ctrlid){
 			
 			conf = rtspConf;
+
+			ctrlServerUrl = _strdup(url);
+
 			if (ctrlSocketInit(conf) < 0) {
-				conf->ctrlenable = 0;
+				conf->ctrlEnable = 0;
 				return -1;
 			}
 
 			// init the critical section and the event
 			InitializeCriticalSection(&wakeupMutex);
 			wakeup = CreateEvent(NULL, FALSE, FALSE, NULL);
-			if (conf->ctrlproto == IPPROTO_TCP) {
+			if (conf->ctrlProto == IPPROTO_TCP) {
 				struct ctrlhandshake hh;
 				// connect to the server
 				if (connect(ctrlSocket, (struct sockaddr*) &ctrlsin, sizeof(ctrlsin)) < 0) {
@@ -1398,7 +1401,7 @@ CTRL_CLEAN:
 			}
 			return 0;
 error:
-			conf->ctrlenable = 0;
+			conf->ctrlEnable = 0;
 			ctrlenabled = false;
 			infoRecorder->logError("controller client: controller disabled.\n");
 			closesocket(ctrlSocket);
@@ -1426,14 +1429,14 @@ error:
 			while ((qm = readMsg()) != NULL) {
 				int wlen;
 				if (qm->msgsize == 0) {
-					infoRecorder->logError("controller client: null messagae received, terminate the thread.\n");
+					infoRecorder->logError("controller client: null message received, terminate the thread.\n");
 					return FALSE;
 				}
 #ifdef ANDROID
 				if (drop > 0)
 					continue;
 #endif
-				if (conf->ctrlproto == IPPROTO_TCP) {
+				if (conf->ctrlProto == IPPROTO_TCP) {
 					if ((wlen = send(ctrlSocket, (char*)qm->msg, qm->msgsize, 0)) < 0) {
 						infoRecorder->logError("controller client-send(tcp): %s, sock:%p\n", strerror(errno), ctrlSocket);
 #ifdef ANDROID
@@ -1447,7 +1450,7 @@ error:
 						infoRecorder->logError("[controller client]: send(tcp) size:%d, msgsize:%d.\n", wlen, ms);
 					}
 				}
-				else if (conf->ctrlproto == IPPROTO_UDP) {
+				else if (conf->ctrlProto == IPPROTO_UDP) {
 					if ((wlen = sendto(ctrlSocket, (char*)qm->msg, qm->msgsize, 0, (struct sockaddr*) &ctrlsin, sizeof(ctrlsin))) < 0) {
 						infoRecorder->logError("controller client-send(udp): %s\n", strerror(errno));
 #ifdef ANDROID
@@ -1504,11 +1507,7 @@ error:
 
 		}
 		CtrlMessagerServer::~CtrlMessagerServer(){
-			if (conf){
-				delete conf;
-				conf = NULL;
-				replay = NULL;
-			}
+			
 			if(replay){
 				delete replay;
 				replay = NULL;
@@ -1545,7 +1544,7 @@ error:
 				goto error;
 			}
 			// TCP listen
-			if(conf->ctrlproto == IPPROTO_TCP) {
+			if(conf->ctrlProto == IPPROTO_TCP) {
 				if (listen(ctrlSocket, 16) < 0) {
 					infoRecorder->logError("[CtrlMessagerServer]:controller server-listen: %s\n", strerror(errno));
 					goto error;
@@ -1626,7 +1625,7 @@ restart:
 			csin.sin_family = AF_INET;
 			clientaccepted = 0;
 			// handle only one client
-			if (conf->ctrlproto == IPPROTO_TCP) {
+			if (conf->ctrlProto == IPPROTO_TCP) {
 				struct ctrlhandshake *hh = (struct ctrlhandshake*) buf;
 				//
 				if ((sock = accept(ctrlSocket, (struct sockaddr*) &csin, &csinlen)) < 0) {
@@ -1671,7 +1670,7 @@ restart:
 			bufhead = 0;
 			//
 tcp_readmore:
-			if (conf->ctrlproto == IPPROTO_TCP) {
+			if (conf->ctrlProto == IPPROTO_TCP) {
 				infoRecorder->logError("[CtrlMessagerServer]: run(), TCP recv.\n");
 				if ((rlen = recv(sock, (char*)buf + buflen, sizeof(buf)-buflen, 0)) <= 0) {
 					infoRecorder->logTrace("[CtrlMessagerServer]: controller server-read: %s\n", strerror(errno));
@@ -1685,7 +1684,7 @@ tcp_readmore:
 				buflen += rlen;
 				infoRecorder->logError("[CtrlMessagerServer]: recv %d bytes.\n", rlen);
 			}
-			else if (conf->ctrlproto == IPPROTO_UDP) {
+			else if (conf->ctrlProto == IPPROTO_UDP) {
 				infoRecorder->logError("[CtrlMessagerServer]: run(), UDP recv.\n");
 				bzero(&xsin, sizeof(xsin));
 				xsinlen = sizeof(xsin);
@@ -1707,7 +1706,7 @@ tcp_readmore:
 			}
 tcp_again:
 			if (buflen < 2) {
-				if (conf->ctrlproto == IPPROTO_TCP)
+				if (conf->ctrlProto == IPPROTO_TCP)
 					goto tcp_readmore;
 				else
 					return TRUE;
@@ -1722,13 +1721,13 @@ tcp_again:
 				infoRecorder->logError("[CtrlMessagerServer]: controller receive msglen :%d.\n", msglen);
 			}
 			// buffer checks for TCP - not sufficient?
-			if (conf->ctrlproto == IPPROTO_TCP) {
+			if (conf->ctrlProto == IPPROTO_TCP) {
 				if (buflen < msglen) {
 					bcopy(buf + bufhead, buf, buflen);
 					goto tcp_readmore;
 				}
 			}
-			else if (conf->ctrlproto == IPPROTO_UDP) {
+			else if (conf->ctrlProto == IPPROTO_UDP) {
 				if (buflen != msglen) {
 					infoRecorder->logError("[CtrlMessagerServer]: controller server: UDP msg size matched (expected %d, got %d).\n",
 						msglen, buflen);
@@ -1747,7 +1746,7 @@ tcp_again:
 				//pthread_cond_signal(&wakeup);
 			}
 			// handle buffers for TCP
-			if (conf->ctrlproto == IPPROTO_TCP && buflen > msglen) {
+			if (conf->ctrlProto == IPPROTO_TCP && buflen > msglen) {
 				bufhead += msglen;
 				buflen -= msglen;
 				goto tcp_again;
@@ -1796,8 +1795,6 @@ again:
 			 wakeup = NULL;
 			 replay = NULL;
 			 conf = NULL;
-
 		}
-
 	}
 }

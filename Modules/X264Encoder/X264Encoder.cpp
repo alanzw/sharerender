@@ -27,12 +27,14 @@ namespace cg{
 		:Encoder(0, _height, _width, /*IMAGE,*/ X264_ENCODER, _pipe, _writer), 
 		rtp_id(_rtp_id), avcodecOpenMutex(NULL), pic_data(NULL), codecContext(NULL), pic_in(NULL), pic_in_buf(NULL), nalbuf(NULL), nalbuf_a(NULL), nalbuf_size(0)
 	{
-		rtspConf = RTSPConf::GetRTSPConf(DEAULT_CONFIG_NAME);
+		//rtspConf = RTSPConf::GetRTSPConf();
 	}
 
 	void X264Encoder::InitEncoder(){
 		if(inited)
 			return;
+
+		struct RTSPConf * rtspConf = RTSPConf::GetRTSPConf();
 
 		avcodecOpenMutex = CreateMutex(NULL, FALSE, NULL);
 		codecContext = InitEncoder(NULL, rtspConf->video_encoder_codec, encoderWidth, encoderHeight, rtspConf->video_fps, rtspConf->vso);
@@ -176,10 +178,10 @@ video_quit:
 			unsigned i, n = vso->size();
 			for(i = 0; i< n; i += 2){
 				av_dict_set(&opts, (*vso)[i].c_str(), (*vso)[i + 1].c_str(), 0);
-				infoRecorder->logTrace("[X264Encoder]: vencoder-init: option %s = %s.\n", (*vso)[i].c_str(), (*vso)[i + 1].c_str());
+				infoRecorder->logTrace("[X264Encoder]: initEncoder: option %s = %s.\n", (*vso)[i].c_str(), (*vso)[i + 1].c_str());
 			}
 		}else{
-			infoRecorder->logTrace("[X264Encoder]: vencoder-init: using default video encoder parameter.\n");
+			infoRecorder->logTrace("[X264Encoder]: initEncoder: using default video encoder parameter.\n");
 		}
 
 		// lock
@@ -248,7 +250,7 @@ video_quit:
 			pkt.stream_index = 0;
 			infoRecorder->logTrace("[X264Encoder]: to send frame packet. pkt size:%d.\n", pkt.size);
 			// send the nal data
-			encodeTime = pTimer->Stop();
+			encodeTime = (UINT)pTimer->Stop();
 
 			infoRecorder->addEncodeTime(getEncodeTime());
 
@@ -257,7 +259,7 @@ video_quit:
 			//packTime = pTimer->Stop();
 
 			if(refIntraMigrationTimer){
-				UINT intramigration = refIntraMigrationTimer->Stop();
+				UINT intramigration = (UINT)refIntraMigrationTimer->Stop();
 				infoRecorder->logError("[Global]: intra-migration: %f (ms), in x264 encoder.\n", 1000.0 * intramigration / refIntraMigrationTimer->getFreq());
 				refIntraMigrationTimer = NULL;
 			}
@@ -317,7 +319,6 @@ video_quit:
 		if(pic_in)		av_free(pic_in);
 		if(nalbuf)		free(nalbuf);
 		if(codecContext)AVCodecCommon::AVCodecClose(codecContext);
-
 
 		Encoder::onQuit();
 	}

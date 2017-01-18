@@ -311,6 +311,10 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 				// for 2D games
 			}
 			// disable rendering
+			// init the rtsp config here
+			cg::RTSPConf * config = cg::RTSPConf::GetRTSPConf("config/server.logic.conf");
+
+
 			//cmdCtrl->setFrameStep(0);
 			infoRecorder->logTrace("[DllMain]: render step:%d.\n", cmdCtrl->getFrameStep());
 

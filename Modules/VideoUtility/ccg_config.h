@@ -26,6 +26,7 @@ namespace cg{
 		std::string mkey();
 		std::string mvalue();
 		std::string mnextkey();
+		void print();
 	};
 
 	class ccgConfig{
@@ -68,6 +69,8 @@ namespace cg{
 		void confReset();
 		const char * confKey();
 		const char * confNextKey();
+
+		void print();
 	};
 }
 

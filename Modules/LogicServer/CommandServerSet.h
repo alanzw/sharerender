@@ -461,7 +461,7 @@ public:
 		return _ctx_cache ? readUShort(_ctx_cache) : 0;
 	}
 	inline float	readFloat(){
-		return _ctx_cache ? readFloat(_ctx_cache) : -1.0;
+		return _ctx_cache ? readFloat(_ctx_cache) : (float)-1.0;
 	}
 	inline void		readByteArr(char * dst, int length){
 		if(_ctx_cache)

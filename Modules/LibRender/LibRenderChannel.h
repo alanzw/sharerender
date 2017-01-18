@@ -25,6 +25,7 @@ public:
 	cg::IDENTIFIER				taskId;
 	char * rtspObject;  // the rtsp service name
 	cg::VideoGen * generator;	
+	cg::RTSPConf * rtspConf;
 
 	cg::VideoItem * videoItem;
 	IDirect3DDevice9 *		curDevice;

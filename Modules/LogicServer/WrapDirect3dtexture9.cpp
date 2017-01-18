@@ -130,7 +130,7 @@ int WrapperDirect3DTexture9::sendUpdate(void *ctx){
 		ret = 0;
 	}
 	if(pTimer){
-		unsigned int interval_ = pTimer->Stop();
+		unsigned int interval_ = (UINT)pTimer->Stop();
 		infoRecorder->logError("[WrapperDriect3DTexture9]: send texture %d use: %f.\n", id, interval_ * 1000.0 / pTimer->getFreq());
 	}
 
@@ -190,7 +190,6 @@ HRESULT WrapperDirect3DTexture9::SendTextureData() {
 #endif
 			continue;
 		}
-		D3DLOCKED_RECT rect;
 #ifdef ENABLE_TEXTURE_LOG
 		infoRecorder->logTrace("WrapperDirect3DTexture9::SendTextureData(), start lock %d level\n", level);
 #endif
@@ -201,6 +200,7 @@ HRESULT WrapperDirect3DTexture9::SendTextureData() {
 		//infoRecorder->logTrace("WrapperDirect3DTexture9::SendTextureData(), id=%d, height=%d, width=%d, pitch=%d, size=%d\n", this->id, desc.Height, desc.Width, rect.Pitch,  desc.Height * desc.Width * byte_per_pixel);
 		//WRITE_DATA(int, desc.Height * desc.Width * byte_per_pixel);
 #ifdef MEM_FILE_TEX
+		D3DLOCKED_RECT rect;
 		top_surface->LockRect(&rect, 0, D3DLOCK_READONLY);
 		D3DSURFACE_DESC desc;
 		top_surface->GetDesc(&desc);
@@ -341,7 +341,7 @@ HRESULT WrapperDirect3DTexture9::SendTextureData(ContextAndCache *ctx){
 	}
 	else{
 		// creation for each surface
-		for(int i = 0; i < Levels; i++){
+		for(UINT i = 0; i < Levels; i++){
 			surHelper = texHelper->getSurfaceHelper(i);
 			if(!surHelper || !surHelper->isAquired()){
 				// not aquired yet
@@ -611,7 +611,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DTexture9::Release(THIS) {
 #if 1
 	if(hr <= 0){
 		infoRecorder->logTrace("[WrapperDirect3DTexture9]: m_tex id:%d ref:%d, ref count:%d, buffer size%d.\n",id, refCount, hr, bufferSize);
-		for(int i = 0; i < Levels; i++){
+		for(UINT i = 0; i < Levels; i++){
 			if(surfaceArray[i]){
 				surfaceArray[i]->releaseData();
 				surfaceArray[i] = NULL;
@@ -759,7 +759,6 @@ STDMETHODIMP WrapperDirect3DTexture9::GetSurfaceLevel(THIS_ UINT Level,IDirect3D
 	infoRecorder->logTrace("WrapperDirect3DTexture9::GetSurfaceLevel() called, Level:%d, tex id:%d, autogen:%s\n",Level, id, texHelper->isAutoGenable() ? "true":"false");
 #endif
 	IDirect3DSurface9* base_surface = NULL;
-	D3DSURFACE_DESC desc;
 
 	HRESULT hr = m_tex->GetSurfaceLevel(Level, &base_surface);//ppSurfaceLevel);
 	//infoRecorder->logError("WrapperDirect3DTexture9::GetSurfaceLevel() called, Level:%d, tex id:%d, autogen:%s, base surface:0x%p\n",Level, id, texHelper->isAutoGenable() ? "true":"false", base_surface);

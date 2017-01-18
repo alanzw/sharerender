@@ -62,7 +62,7 @@ ContextAndCache::ContextAndCache(int _index){
 	obj_id = -1;
 	func_count_ = 0;
 
-	status = CtxStatus::CTX_INIT;
+	status = CTX_INIT;
 	op_code = -1;
 	sv_obj_id = -1;
 	sv_ptr = NULL;
@@ -90,7 +90,7 @@ ContextAndCache::ContextAndCache(){
 	obj_id = -1;
 	func_count_ = 0;
 
-	status = CtxStatus::CTX_INIT;
+	status = CTX_INIT;
 	op_code = -1;
 	sv_obj_id = -1;
 	sv_ptr = NULL;
@@ -469,12 +469,12 @@ bool ContextManager::switchCtx(){
 
 	for(int i = 0; i < ctx_init.getCtxCount(); i++){
 		cur_ctx = ctx_init.getCtx(i);
-		if(cur_ctx->status == CtxStatus::CTX_INIT){
+		if(cur_ctx->status == CTX_INIT){
 			// the next frame to prepare data
 			cur_ctx->status = CTX_PREPARE;
 			cur_ctx->taskQueue->setStatus(QUEUE_CREATE);
 		}
-		else if(cur_ctx->status == CtxStatus::CTX_READY && cur_ctx->taskQueue->isDone()){
+		else if(cur_ctx->status == CTX_READY && cur_ctx->taskQueue->isDone()){
 			infoRecorder->logError("[ContextManager]: context is ready for switching.\n");
 			// add to the ctx_pool
 			// remove from init pool
@@ -488,7 +488,7 @@ bool ContextManager::switchCtx(){
 			cur_ctx->preperationEnd();
 			//addCtxToPool(cur_ctx);   // available to switch
 		}
-		else if(cur_ctx->status == CtxStatus::CTX_PREPARE && cur_ctx->taskQueue->isDone()){
+		else if(cur_ctx->status == CTX_PREPARE && cur_ctx->taskQueue->isDone()){
 			// the next frame to render
 			cur_ctx->status = CTX_READY;
 			cur_ctx->taskQueue->setStatus(QUEUE_UPDATE);  // now, only update

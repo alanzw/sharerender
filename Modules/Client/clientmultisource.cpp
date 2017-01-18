@@ -141,7 +141,7 @@ static RTSPThreadParam rtspThreadParam;
 GameStreams * gameStreams = NULL;
 #endif
 
-static char logic_servername[100];
+//static char logic_servername[100];
 int relativeMouseMode = 0;
 int showCursor = 1;
 int windowSizeX;
@@ -512,7 +512,7 @@ void ProcessEvent(SDL_Event *event, CtrlMessagerClient * ctrlClient) {
 						SDL_SetRelativeMouseMode(SDL_TRUE);
 			}
 
-			if (rtspConf->ctrlenable) {
+			if (rtspConf->ctrlEnable) {
 				infoRecorder->logTrace("[EventDeal]: key up, should never be here.\n");
 				// for test response delay
 				if(event->key.keysym.sym == SDLK_HOME){
@@ -545,7 +545,7 @@ void ProcessEvent(SDL_Event *event, CtrlMessagerClient * ctrlClient) {
 
 		case SDL_KEYDOWN:
 			infoRecorder->logError("[EventDeal]: key down.\n");
-			if (rtspConf->ctrlenable) {
+			if (rtspConf->ctrlEnable) {
 				sdlmsg_keyboard(&m, 1, event->key.keysym.scancode, event->key.keysym.sym, event->key.keysym.mod, 0/*event->key.keysym.unicode*/);
 				if(ctrlClient)
 					ctrlClient->sendMsg(&m, sizeof(sdlmsg_keyboard_t));
@@ -554,7 +554,7 @@ void ProcessEvent(SDL_Event *event, CtrlMessagerClient * ctrlClient) {
 
 		case SDL_MOUSEBUTTONUP:
 			infoRecorder->logError("[EventDeal]: mouse button up.\n");
-			if (rtspConf->ctrlenable) {
+			if (rtspConf->ctrlEnable) {
 				sdlmsg_mousekey(&m, 0, event->button.button, event->button.x, event->button.y);
 				if(ctrlClient)
 					ctrlClient->sendMsg(&m, sizeof(sdlmsg_mouse_t));
@@ -563,7 +563,7 @@ void ProcessEvent(SDL_Event *event, CtrlMessagerClient * ctrlClient) {
 
 		case SDL_MOUSEBUTTONDOWN:
 			infoRecorder->logTrace("[EventDeal]: mouse button down.\n");
-			if (rtspConf->ctrlenable) {
+			if (rtspConf->ctrlEnable) {
 				sdlmsg_mousekey(&m, 1, event->button.button, event->button.x, event->button.y);
 				if(ctrlClient)
 					ctrlClient->sendMsg(&m, sizeof(sdlmsg_mouse_t));
@@ -571,7 +571,7 @@ void ProcessEvent(SDL_Event *event, CtrlMessagerClient * ctrlClient) {
 			break;
 		case SDL_MOUSEMOTION:
 			infoRecorder->logError("[EventDeal]: mouse motion.\n");
-			if (rtspConf->ctrlenable && rtspConf->sendmousemotion) {
+			if (rtspConf->ctrlEnable && rtspConf->sendMouseMotion) {
 				sdlmsg_mousemotion(&m, event->motion.x, event->motion.y, event->motion.xrel, event->motion.yrel, event->motion.state, relativeMouseMode == 0 ? 0 : 1);
 				if(ctrlClient)
 					ctrlClient->sendMsg(&m, sizeof(sdlmsg_mouse_t));
@@ -583,7 +583,7 @@ void ProcessEvent(SDL_Event *event, CtrlMessagerClient * ctrlClient) {
 #if 1	// only support SDL2
 		case SDL_MOUSEWHEEL:
 			infoRecorder->logTrace("[EventDeal]: mouse wheel.\n");
-			if (rtspConf->ctrlenable && rtspConf->sendmousemotion) {
+			if (rtspConf->ctrlEnable && rtspConf->sendMouseMotion) {
 				sdlmsg_mousewheel(&m, event->motion.x, event->motion.y);
 				if(ctrlClient)
 					ctrlClient->sendMsg(&m, sizeof(sdlmsg_mouse_t));
@@ -598,7 +598,7 @@ void ProcessEvent(SDL_Event *event, CtrlMessagerClient * ctrlClient) {
 			if (windowSizeX[0] == 0)
 				break;
 			//DEBUG_FINGER(event->tfinger);
-			if (rtspConf->ctrlenable) {
+			if (rtspConf->ctrlEnable) {
 				unsigned short mapx, mapy;
 				mapx = (unsigned short)(1.0 * (windowSizeX[0] - 1) * event->tfinger.x / 32767.0);
 				mapy = (unsigned short)(1.0 * (windowSizeY[0] - 1) * event->tfinger.y / 32767.0);
@@ -614,7 +614,7 @@ void ProcessEvent(SDL_Event *event, CtrlMessagerClient * ctrlClient) {
 			if (windowSizeX[0] == 0)
 				break;
 			//DEBUG_FINGER(event->tfinger);
-			if (rtspConf->ctrlenable) {
+			if (rtspConf->ctrlEnable) {
 				unsigned short mapx, mapy;
 				mapx = (unsigned short)(1.0 * (windowSizeX[0] - 1) * event->tfinger.x / 32767.0);
 				mapy = (unsigned short)(1.0 * (windowSizeY[0] - 1) * event->tfinger.y / 32767.0);
@@ -630,7 +630,7 @@ void ProcessEvent(SDL_Event *event, CtrlMessagerClient * ctrlClient) {
 			if (windowSizeX[0] == 0)
 				break;
 			//DEBUG_FINGER(event->tfinger);
-			if (rtspConf->ctrlenable) {
+			if (rtspConf->ctrlEnable) {
 				unsigned short mapx, mapy;
 				mapx = (unsigned short)(1.0 * (windowSizeX[0] - 1) * event->tfinger.x / 32767.0);
 				mapy = (unsigned short)(1.0 * (windowSizeY[0] - 1) * event->tfinger.y / 32767.0);
@@ -832,8 +832,36 @@ static int ClientInit(char * config, const char * url){
 }
 //int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow){
 
+#if 0
+void TestRTSPFiles(){
+	string fileNames[] ={
+		string("client.abs.conf"),
+		string("client.rel.conf"),
+		string("server.controller.conf"),
+		string("server.distributor.conf"),
+		string("server.logic.conf"),
+		string("server.render.conf")
+	};
+	string path = "config/";
+	for each(std::string file in fileNames){
+		string fullPath = path + file;
+		std::cout << "load config file " << fullPath<< std::endl;
+		ccgConfig * conf = new ccgConfig((char *)fullPath.c_str());
+		conf->confLoad(fullPath.c_str());
+		conf->print();
+		delete conf;
+	}
+}
+#endif
+
+
 // the main function for multi-soruces game client, event based
 int main(int argc, char * argv[]){
+#if 0
+	TestRTSPFiles();
+	return 0;
+#endif
+
 	if(infoRecorder == NULL){
 		infoRecorder = new InfoRecorder("client");
 	}
@@ -869,17 +897,14 @@ int main(int argc, char * argv[]){
 #endif  // INCLUDE_DISTRIBUTOR
 
 	char * configfilename = _strdup(argv[1]);
-	char * url = _strdup(argv[2]); // the url is the distributor's
 
 #ifdef INCLUDE_DISTRIBUTOR
-	char * gameName = _strdup(argv[3]);
-	infoRecorder->logTrace("%s %s %s\n", configfilename, url, gameName);
+	char * gameName = _strdup(argv[2]);
+	infoRecorder->logTrace("%s %s\n", configfilename, gameName);
 #else  // INCLUDE_DISTRIBUTOR
-	infoRecorder->logTrace("%s %s\n", configfilename, url);
-	infoRecorder->logError("[Client]: %s %s.\n", configfilename, url);
+	infoRecorder->logError("[Client]: %s.\n", configfilename);
 #endif // INCLUDE_DISTRIBUTOR
 	//load the config file and set the server url
-
 	if (ClientInit(configfilename) < 0){
 		rtsperror("[client]: init failed, maybe cannot load configuration file '%s'\n", argv[1]);
 		return -1;
@@ -923,7 +948,7 @@ int main(int argc, char * argv[]){
 	gameStreams->init();
 	gameStreams->setRunning(true);
 	gameStreams->name = _strdup(gameName);
-	gameStreams->setDisUrl(url);
+	gameStreams->setDisUrl(rtspConf->getDisUrl());
 	free(gameName);
 
 	// create a thread to deal with network event
@@ -947,7 +972,7 @@ int main(int argc, char * argv[]){
 	//
 #ifndef ANDROID
 	//TerminateThread(rtspthread, 0);
-	if (rtspConf->ctrlenable && ctrlthread){
+	if (rtspConf->ctrlEnable && ctrlthread){
 		TerminateThread(ctrlthread, 0);
 		ctrlthread = NULL;
 	}

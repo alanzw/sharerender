@@ -132,21 +132,21 @@ bool UserClient::addLogic(char * url){
 	// launch controller?
 	// set the logic server name for controller
 	//ctrlConf->ctrl_servername = _strdup(url);
-	rtspConf->logic_servername = _strdup(url);
+	_strdup(url);
 
 	do{
-		if (rtspConf->ctrlenable){
+		if (rtspConf->ctrlEnable){
 			if (ctrlClient->initQueue(32768, sizeof(cg::input::sdlmsg_t)) < 0){
 				rtsperror("Cannot initialize controller queue, controller disabled.\n");
 				infoRecorder->logError("[Client]: cannot initialize controller queue, controller disable.\n");
-				rtspConf->ctrlenable = 0;
+				rtspConf->ctrlEnable = 0;
 				break;
 			}
-			ctrlClient->init(rtspConf, CTRL_CURRENT_VERSION);
+			ctrlClient->init(rtspConf, url, CTRL_CURRENT_VERSION);
 			if (!ctrlClient->start()){
 				rtsperror("Cannot create controller thread, controller disabled.\n");
 				infoRecorder->logError("[Client]: cannot create controller thread, controller disabled.\n");
-				rtspConf->ctrlenable = 0;
+				rtspConf->ctrlEnable = 0;
 				break;
 			}
 		}
@@ -266,8 +266,10 @@ DWORD WINAPI NetworkThreadProc(LPVOID param){
 	client->setName(gameName);
 	event_base * base = event_base_new();
 
+	struct RTSPConf * rtspConf = RTSPConf::GetRTSPConf();
+
 	client->setEventBase(base);
-	client->launchRequest(streams->getDisUrl(), DIS_PORT_DOMAIN, gameName);
+	client->launchRequest(streams->getDisUrl(), rtspConf->getRTSPPort(), gameName);
 	client->dispatch();
 	return 0;
 }

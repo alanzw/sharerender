@@ -37,7 +37,7 @@ namespace cg{
 		////////////////// public functions /////////////////
 	public:
 
-		inline float getWriteTime(){ return 1000.0 * writeTime / pTimer->getFreq(); }
+		inline float getWriteTime(){ return (float)1000.0 * writeTime / pTimer->getFreq(); }
 
 		// help changing encoder
 		inline void setChanged(bool val){ isChanged = val; encodeStart = GetTickCount(); }

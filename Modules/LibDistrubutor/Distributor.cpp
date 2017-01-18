@@ -176,7 +176,7 @@ namespace cg{
 			clientMap[ctx->sock] = ctx;
 			//data++;
 			// get the game name
-			cg::core::infoRecorder->logTrace("[DisServer]: REQ_GAME, get game name '%s' from client '%s'.\n", data, ctx->toString().c_str());
+			cg::core::infoRecorder->logError("[DisServer]: REQ_GAME, get game name '%s' from client '%s'.\n", data, ctx->toString().c_str());
 
 			// TODO, determine the rtsp service is on logic server or render server
 			TaskInfo * task = buildTask(string(data), ctx);
@@ -646,11 +646,15 @@ namespace cg{
 			return false;
 		}
 		cg::core::infoRecorder->logTrace("[DisServer]: send to render, task id: %p, render id: %p, port:%d, logic url:%s.\n", task->id, render->sock, task->portOffset, task->logicCtx->url);
+		short nameLen = task->taskName.length();
 		// send cmd to given server
 		render->writeCmd(cmd);
 		render->writeIdentifier(task->id);
 		render->writeIdentifier(render->sock);
 		render->writeData((void *)&task->portOffset, sizeof(short));
+		
+		render->writeData((void *)&nameLen, sizeof(short));
+		render->writeData((void *)task->taskName.c_str(), nameLen);
 		render->writeData((void *)&task->logicCtx->url, strlen(task->logicCtx->url));
 		render->writeToNet(0);
 		return true;
@@ -663,6 +667,7 @@ namespace cg{
 			return false;
 		}
 
+		short nameLen = task->taskName.length();
 		// cmd format: START_TASK+pid+renderId(render socket in dis server)+ port offset + [Logic url]
 		BaseContext * ctx = NULL;
 		for(int i = 0;i< task->renderCount; i++){
@@ -672,6 +677,10 @@ namespace cg{
 			ctx->writeIdentifier(task->id);
 			ctx->writeIdentifier(ctx->sock);
 			ctx->writeData((void *)&task->portOffset, sizeof(short));
+
+			ctx->writeData((void *)&nameLen, sizeof(short));
+			ctx->writeData((void *)task->taskName.c_str(), nameLen);
+
 			ctx->writeData((void *)task->logicCtx->url, strlen(task->logicCtx->url));
 			ctx->writeToNet();
 			cg::core::infoRecorder->logTrace("[DisServer]: send START TASK to render with logic url:%s.\n", task->logicCtx->url);
@@ -679,7 +688,7 @@ namespace cg{
 		return true;
 	}
 
-	// send the given command to render those are assigned to given task
+	// NOT USED. send the given command to render those are assigned to given task
 	bool DisServer::sendCmdToRender(TaskInfo * task, char * cmddata, int len){
 		cg::core::infoRecorder->logTrace("[DisServer]: send given cmd to render.\n");
 		if (task->status != ASSIGNED){

@@ -1,5 +1,6 @@
 #include "gameloader.h"
 #include "../LibCore/InfoRecorder.h"
+#include "../VideoUtility/rtspconf.h"
 //#include "../VideoUtility/videocommon.h"
 //#define INCLUDE_DIS_CLIENT   // include the dis client for game loader, the game loader will connect the dis server and start the game, otherwise, start a given game, wait render to connect
 
@@ -119,19 +120,27 @@ int main(int argc, char ** argv){
 		// debug the logic factory
 		LogicFactory * factory = LogicFactory::GetFactory();
 		factory->init();
+		cg::RTSPConf * conf = NULL;
+		// if argc == 2, means that argv[1] is the config file
 		if(argc == 2){
 			// set encoder option
+			conf = cg::RTSPConf::GetRTSPConf(argv[1]);
+			factory->setRTSPConf(conf);
 			factory->setEncoderOption(1);
-			factory->connectDis(argv[1], DIS_PORT_DOMAIN);
+			//factory->connectDis(argv[1], DIS_PORT_DOMAIN);
+			factory->connectDis(conf->getDisUrl(), conf->disPort);
 			factory->registerLogic();
 			// enter the network dealing loop
 			factory->startListen();
 		}
 		else if(argc == 3){
 			// set encoder option
-
+			// argv[1] is config file
+			conf = cg::RTSPConf::GetRTSPConf(argv[1]);
+			factory->setRTSPConf(conf);
 			factory->setEncoderOption(atoi(argv[2]));
-			factory->connectDis(argv[1], DIS_PORT_DOMAIN);
+			//factory->connectDis(argv[1], DIS_PORT_DOMAIN);
+			factory->connectDis(conf->getDisUrl(), conf->disPort);
 			factory->registerLogic();
 			// enter the network dealing loop
 			factory->startListen();

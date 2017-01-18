@@ -146,6 +146,7 @@ bool dealCmd(int argc, char ** argv){
 	int rtspPort = 0;
 	RENDERMODE mode = DIS_MODE;
 	bool enableEncoding = false;
+	char * rtspConfFile = NULL;
 	
 	for(int i = 0; i < argc; i++){
 		if(!strcmp(argv[i], "-v") || ! strcmp(argv[1], "-V")){
@@ -175,10 +176,23 @@ bool dealCmd(int argc, char ** argv){
 		else if(!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h")){
 			printHelp();
 		}
+		else if(!strcmp(argv[i], "-c") || !strcmp(argv[i], "-C")){
+			rtspConfFile = _strdup(argv[i+1]);
+		}
 		else{
 			// invalid arguments, ignore
 		}
 	}
+	if(rtspConfFile == NULL && url == NULL){
+		std::cout << "[RenderProxy]: should add param for url via -u [url] or add param for rtsp config file via -c [filename]." << std::endl;
+		return -1;
+	}
+	cg::RTSPConf *conf = NULL;
+	if(rtspConfFile){
+		conf = cg::RTSPConf::GetRTSPConf(rtspConfFile);
+
+	}
+
 
 	// build the render proxy with given arguments
 	RenderProxy * proxy = RenderProxy::GetProxy();
@@ -198,11 +212,13 @@ bool dealCmd(int argc, char ** argv){
 				proxy->setEncodeOption(encoderOption);
 			}
 			// use the url if any
-			if(url){
-				proxy->start(url);
+			
+			if(conf){
+				proxy->setRTSPConf(conf);
+				proxy->start(conf->getDisUrl());
 			}
-			else{
-				proxy->start();
+			else if(url){
+				proxy->start(url);
 			}
 			// start to listen to RTSP port
 			proxy->dispatch();
@@ -237,6 +253,9 @@ bool dealCmd(int argc, char ** argv){
 		break;
 	case REQ_PROCESS:
 		{
+			if(!url){
+				std::cout << "[RenderProxy]: missing URL for logic server." << std::endl;
+			}
 			socketForCmd = connectToGraphic(url, requestPort);
 			ch = new RenderChannel();
 

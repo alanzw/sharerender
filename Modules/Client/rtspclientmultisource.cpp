@@ -219,7 +219,7 @@ SubGameStream::SubGameStream(char * url){
 	}
 	else{
 		// form the rtsp url
-		sprintf(rtspUrl, "rtsp://%s:%d/desktop", url, cg::RTSPConf::GetRTSPConf()->serverport);
+		sprintf(rtspUrl, "rtsp://%s:%d/desktop", url, cg::RTSPConf::GetRTSPConf()->serverPort);
 		cg::core::infoRecorder->logError("[SubGameStream]: construct game stream with url '%s'.\n", rtspUrl);
 		this->url = _strdup(rtspUrl);
 	}
@@ -229,7 +229,7 @@ SubGameStream::SubGameStream(char * url){
 
 SubGameStream::SubGameStream(char * url, int port){
 	char rtspUrl[100] = {0};
-	sprintf(rtspUrl, "rtsp://%d:%d/desktop", url, cg::RTSPConf::GetRTSPConf()->serverport);
+	sprintf(rtspUrl, "rtsp://%d:%d/desktop", url, cg::RTSPConf::GetRTSPConf()->serverPort);
 	this->url = strdup(rtspUrl);
 
 	init();
@@ -247,7 +247,7 @@ bool SubGameStream::openUrl(UsageEnvironment * env, char * url){
 		//cg::core::infoRecorder->logError("[SubGameStream]: openUrl '%s'.\n", this->url);
 	}
 	else{
-		sprintf(rtspUrl, "rtsp://%s:%d/desktop", url, cg::RTSPConf::GetRTSPConf()->serverport);
+		sprintf(rtspUrl, "rtsp://%s:%d/desktop", url, cg::RTSPConf::GetRTSPConf()->serverPort);
 		this->url = _strdup(rtspUrl);
 		rtsperror("open url, %s\n", this->url);
 		//cg::core::infoRecorder->logError("[SubGameStream]: openURL '%s'.\n", this->url);
@@ -1199,6 +1199,7 @@ bool GameStreams::createOverlay(){
 	//pipeline
 	if(pipe != NULL){
 		cg::core::infoRecorder->logError("[GameStreams]: pipe already exist. FATAL ERROR.\n");
+
 		return false;
 	}
 
@@ -1613,6 +1614,7 @@ Boolean
 }
 
 
+
 //////////////////// game decoder /////////////////////////
 
 int VideoDecoder::init(const char * sprop){
@@ -1850,6 +1852,7 @@ int AudioDecoder::audioBufferDecode(AVPacket * pkt, unsigned char *dstBuf, int d
 		av_free_packet(pkt);
 		return filled;
 	}
+	return filled;
 }
 
 int AudioDecoder::audioBufferFillSDL(void * userdata, unsigned char * stream, int ssize){
@@ -1967,7 +1970,6 @@ DWORD WINAPI RTSPDisplayThread(LPVOID param){
 
 	GameStreams *streams = (GameStreams *)((void **)param)[0];
 
-
 	// connect to the temp distributor, get the substream count, construct the sub streams
 	// get the temp distributor url from rtspConf
 	SOCKET disSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -1979,18 +1981,17 @@ DWORD WINAPI RTSPDisplayThread(LPVOID param){
 	// fill the remote addr information
 	sockaddr_in servAddr;
 	servAddr.sin_family = AF_INET;
-	servAddr.sin_port = htons(rtspConf->dis_port);
-	servAddr.sin_addr.S_un.S_addr = inet_addr(rtspConf->distributorname);
+	servAddr.sin_port = htons(rtspConf->disPort);
+	servAddr.sin_addr.S_un.S_addr = inet_addr(rtspConf->disServerName);
 
 	// connect to dis
 	if(connect(disSocket, (sockaddr *)&servAddr, sizeof(servAddr)) == -1){
 		// connect failed
-		cg::core::infoRecorder->logError("[RTSPDisplay]: connect to dis '%s', port:%d failed.\n", rtspConf->distributorname, rtspConf->dis_port);
+		cg::core::infoRecorder->logError("[RTSPDisplay]: connect to dis '%s', port:%d failed.\n", rtspConf->disServerName, rtspConf->disPort);
 		return 0;
 	}
 
 	//recv the urls
-
 
 	char addCmd[1024] = {0};
 	char * p = addCmd;
@@ -2003,8 +2004,8 @@ DWORD WINAPI RTSPDisplayThread(LPVOID param){
 	*p = '+';
 	p++;
 	for(int i = 0; i< 3; i++){
-		sprintf(p, "%s", rtspConf->servername);
-		p+= strlen(rtspConf->servername);
+		sprintf(p, "%s", rtspConf->disServerName);
+		p+= strlen(rtspConf->disServerName);
 		*p= '+';
 		p++;
 	}
@@ -2090,4 +2091,5 @@ DWORD WINAPI RTSPDisplayThread(LPVOID param){
 			break;
 		}
 	}
+	return 0;
 }

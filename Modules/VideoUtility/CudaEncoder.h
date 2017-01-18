@@ -85,7 +85,7 @@ namespace cg{
 
 			inline void setRefIntraMigrationTimer(cg::core::PTimer * pTimer){ refIntraMigrationTimer = pTimer; }
 			inline void setRefCudaEncodingTimer(cg::core::PTimer * pTimer){ refCudaEncodingTimer = pTimer; }
-			inline float getEncodeTime(){ return 1000.0 * encodeTime / refCudaEncodingTimer->getFreq(); }
+			inline float getEncodeTime(){ return (float)1000.0 * encodeTime / refCudaEncodingTimer->getFreq(); }
 
 		private:
 			bool									isKeyFrame_;

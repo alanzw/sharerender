@@ -222,7 +222,6 @@ namespace cg{
 
 		BaseContext * client;
 
-
 		BaseContext * logicCtx;
 		bool logicReady;   // set true when recv logic ready cmd
 		bool ctrlReady;    // whether the controller of the task is solved

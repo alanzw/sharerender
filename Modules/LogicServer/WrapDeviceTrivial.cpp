@@ -418,9 +418,9 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 		infoRecorder->logTrace("[WrapperDirect3DDevice9]:Present(), not render.\n");
 	}
 
-	int frameTime = pPresentTimer->Stop();
+	int frameTime = (float)pPresentTimer->Stop();
 	infoRecorder->setRenderStep(cmdCtrl->getFrameStep());
-	infoRecorder->onFrameEnd(frameTime * 1000.0 / pPresentTimer->getFreq(), true);
+	infoRecorder->onFrameEnd((float)frameTime * 1000.0 / pPresentTimer->getFreq(), true);
 
 	/////////////////////////////////
 	//limit it to max_fps
@@ -1973,7 +1973,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetVertexShaderConstantF(THIS_ UINT StartRe
 
 	memcpy((char*)vs_data, (char*)pConstantData, Vector4fCount * 16);
 
-	int i = 0;
+	UINT i = 0;
 	// send command
 	if(keyCmdHelper->isSending()){
 		csSet->beginCommand(SetVertexShaderConstantF_Opcode, id);
@@ -2251,7 +2251,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetPixelShaderConstantF(THIS_ UINT StartReg
 		csSet->writeUInt(StartRegister);
 		csSet->writeUInt(Vector4fCount);
 
-		for(int i = 0; i< Vector4fCount; i++){
+		for(UINT i = 0; i< Vector4fCount; i++){
 			csSet->writeVec(SetPixelShaderConstantF_Opcode, vs_data + ( i * 4));
 		}
 		csSet->endCommand();
@@ -2260,7 +2260,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetPixelShaderConstantF(THIS_ UINT StartReg
 		stateRecorder->BeginCommand(SetPixelShaderConstantF_Opcode, id);
 		stateRecorder->WriteUInt(StartRegister);
 		stateRecorder->WriteUInt(Vector4fCount);
-		for(int i = 0; i < Vector4fCount; i++){
+		for(UINT i = 0; i < Vector4fCount; i++){
 			stateRecorder->WriterVec(SetPixelShaderConstantF_Opcode, vs_data + (i * 4) , 16);
 		}
 		stateRecorder->EndCommand();
