@@ -796,7 +796,7 @@ static int ClientInit(char * config){
 
 	infoRecorder->logTrace("[Client]: init av part finished, start to load config.\n");
 	cg::RTSPConf * conf = cg::RTSPConf::GetRTSPConf((char *)config);
-	if (config == NULL){
+	if (conf == NULL){
 		infoRecorder->logError("[client]: get rtsp config failed.\n");
 		return -1;
 	}
