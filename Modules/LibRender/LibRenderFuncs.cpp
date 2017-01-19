@@ -33,6 +33,9 @@ extern VideoGen * gGenerator;
 
 extern SmallHash<HWND, HWND> serverToClient;
 
+
+extern BTimer * encodeTimer;
+
 // global functions
 
 #define GET_DEVICE() \
@@ -836,7 +839,7 @@ HRESULT FakedCreateVertexDeclaration(RenderChannel * rch) {
 	D3DVERTEXELEMENT9 dt[100];
 	rch->cc->read_byte_arr((char*)dt, cnt * sizeof(D3DVERTEXELEMENT9));
 
-	cg::core::infoRecorder->logError("FakedCreateVertexDeclaration(), id=%d, cnt=%d, ", id, cnt);
+	cg::core::infoRecorder->logTrace("FakedCreateVertexDeclaration(), id=%d, cnt=%d, ", id, cnt);
 
 	LPDIRECT3DVERTEXDECLARATION9 vd = NULL;
 
@@ -2077,7 +2080,18 @@ HRESULT FakeNullInstruct(RenderChannel * rch){
 		fromserver = true;
 	}
 #endif
+	
 	rch->specialTag = flag;
+	if(encodeTimer){
+		encodeTimer->Start();
+
+	}
+	else{
+		encodeTimer = new PTimer();
+	}
+	if(flag){
+		infoRecorder->logError("NullInstruction, get special tag: %d.\n", flag);
+	}
 	return D3D_OK;
 }
 

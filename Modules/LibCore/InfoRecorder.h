@@ -94,6 +94,8 @@ namespace cg{
 			void logFrame(char * format, ...);
 			void logSecond(char * format, ...);
 
+			void logExtra(char *format, ...);
+
 			// log the trace to file
 			void logTrace(char * foramt, ...);
 			inline void setLimitFps(int _maxFps){

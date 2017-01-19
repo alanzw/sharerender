@@ -24,6 +24,9 @@
     <ClInclude Include="CtrlConfig.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="interception.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Controller.cpp">

@@ -42,6 +42,46 @@
 #include "../LibCore/MemOp.h"
 #include "../LibCore/InfoRecorder.h"
 #include "Controller.h"
+#include "../LibCore/TimeTool.h"
+
+#define USE_INTERCEPTION
+
+
+#ifdef USE_INTERCEPTION
+#include "interception.h"
+
+#pragma comment(lib, "interception.lib")
+
+
+bool interceptionInited = false;
+InterceptionDevice keyboard = INTERCEPTION_KEYBOARD(1);
+InterceptionContext context;
+
+
+void InitInterception(){
+	if(!interceptionInited){
+		SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
+		context = interception_create_context();
+		interceptionInited = true;
+	}
+
+}
+
+void generateKey(InterceptionDevice device, int up){
+	InterceptionKeyStroke kstroke;
+	memset(&kstroke, 0, sizeof(InterceptionKeyStroke));
+
+	//InterceptionKeyStroke &kstroke = *(InterceptionKeyStroke *) &stroke;
+	kstroke.code = 87;
+	kstroke.state = up;  // 0 press, 1 up
+	kstroke.information = 0;
+
+	//print_key_info((InterceptionKeyStroke*)&stroke);
+	interception_send(context, device, (InterceptionStroke*)&kstroke, 1);
+}
+
+
+#endif
 
 using namespace std;
 using namespace cg;
@@ -94,6 +134,9 @@ static bool keymap_initialized = false;
 //#define SDLK_PRINT
 #define SDLK_BREAK	SDLK_PRINTSCREEN
 #endif
+
+
+cg::core::BTimer * ctrlTimer = NULL;
 namespace cg{
 
 	namespace input{
@@ -632,7 +675,7 @@ namespace cg{
 			conf = cg::input::CtrlConfig::GetCtrlConfig(STREAM_SERVER_CONFIG);
 #else
 
-			cg::RTSPConf *conf = cg::RTSPConf::GetRTSPConf(STREAM_SERVER_CONFIG);
+			cg::RTSPConf *conf = cg::RTSPConf::GetRTSPConf();
 #endif
 			cg::input::CtrlMessagerServer * ctrlServer = new cg::input::CtrlMessagerServer();
 			do{
@@ -651,6 +694,7 @@ namespace cg{
 						goto CTRL_CLEAN;	
 					}
 
+					cg::core::infoRecorder->logError("[MsgServer]: to set callback:%p.\n", replayCallback);
 					ctrlServer->setReplay(replayCallback);
 
 					if (!ctrlServer->start()){
@@ -687,6 +731,7 @@ CTRL_CLEAN:
 				pOutputWindowRect = new RECT;
 				memcpy(pOutputWindowRect, pOutputRect, sizeof(RECT));
 			}
+			initKeyMap();
 		}
 
 		ReplayCallbackImp::~ReplayCallbackImp(){
@@ -742,7 +787,7 @@ CTRL_CLEAN:
 				scaleFactorX = rx;
 				scaleFactorY = ry;
 
-				cg::core::infoRecorder->logTrace("[Callback]: sdl replayer: mouse coordinate scale factor = (%.3f,%.3f)\n",
+				cg::core::infoRecorder->logError("[Callback]: sdl replayer: mouse coordinate scale factor = (%.3f,%.3f)\n",
 					scaleFactorX, scaleFactorY);
 			} while (0);
 
@@ -765,10 +810,17 @@ CTRL_CLEAN:
 
 #ifdef WIN32
 
+		
+
 		void ReplayCallbackImp::replayNative(sdlmsg_t *msg){
 			INPUT				in;
 			sdlmsg_keyboard_t *	msgk = (sdlmsg_keyboard_t*) msg;
 			sdlmsg_mouse_t *	msgm = (sdlmsg_mouse_t*) msg;
+
+
+			if(!ctrlTimer){
+				ctrlTimer = new cg::core::PTimer();
+			}
 
 			switch(msg->msgtype) {
 			case SDL_EVENT_MSGTYPE_KEYBOARD:
@@ -779,11 +831,22 @@ CTRL_CLEAN:
 						in.ki.dwFlags |= KEYEVENTF_KEYUP;
 					}
 					in.ki.wScan = MapVirtualKey(in.ki.wVk, MAPVK_VK_TO_VSC);
-					cg::core::infoRecorder->logError("sdl replayer: vk=%x scan=%x\n", in.ki.wVk, in.ki.wScan);
+
+					if(in.ki.wVk == VK_F11 && msgk->is_pressed == 0){
+						ctrlTimer->Start();
+					}
+
+					cg::core::infoRecorder->logError("sdl replayer: vk=%x scan=%x, is press:%d\n", in.ki.wVk, in.ki.wScan, msgk->is_pressed);
+#ifndef USE_INTERCEPTION
 					SendInput(1, &in, sizeof(in));
+
+#else
+					InitInterception();
+					generateKey(keyboard, msgk->is_pressed == 0 ? 1 : 0);
+#endif
 				} else {
 					////////////////
-					cg::core::infoRecorder->logTrace("sdl replayer: undefined key scan=%u(%04x) key=%u(%04x) mod=%u(%04x) pressed=%d\n",
+					cg::core::infoRecorder->logError("sdl replayer: undefined key scan=%u(%04x) key=%u(%04x) mod=%u(%04x) pressed=%d\n",
 						msgk->scancode, msgk->scancode,
 						msgk->sdlkey, msgk->sdlkey, msgk->sdlmod, msgk->sdlmod,
 						msgk->is_pressed);
@@ -850,7 +913,7 @@ CTRL_CLEAN:
 #endif
 				break;
 			case SDL_EVENT_MSGTYPE_MOUSEMOTION:
-				cg::core::infoRecorder->logError("sdl replayer: motion event x=%u y=%d\n", msgm->mousex, msgm->mousey);
+				cg::core::infoRecorder->logError("sdl replayer: motion event x=%u y=%d, is relative: %s\n", msgm->mousex, msgm->mousey, msgm->relativeMouseMode !=0 ? "true" : "false");
 				bzero(&in, sizeof(in));
 				in.type = INPUT_MOUSE;
 				// mouse x/y has to be mapped to (0,0)-(65535,65535)
@@ -1516,6 +1579,9 @@ error:
 
 #if 1
 		int CtrlMessagerServer::init(struct RTSPConf *conf, const char *ctrlid) {
+
+			this->conf = conf;
+
 			if (ctrlSocketInit(conf) < 0){
 				infoRecorder->logError("[CtrlMessagerServer]:init socket failed\n");
 				return -1;
@@ -1610,7 +1676,6 @@ error:
 		BOOL CtrlMessagerServer::onThreadStart(){
 			struct sockaddr_in csin, xsin;
 			clientaccepted = 0;
-			//
 
 			if (conf == NULL){
 				infoRecorder->logError("[CtrlMessagerServer]: NULL rtsp config\n");

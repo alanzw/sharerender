@@ -300,6 +300,8 @@ namespace cg{
 			if(v <= 0 || v >= 65535){
 				cg::core::infoRecorder->logError("# RTSP[config]: invalid graphic port %d, use default: 60000.\n");
 				graphicPort = 60000;
+			}else{
+				graphicPort = v;
 			}
 
 			// read the distributor server port

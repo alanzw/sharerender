@@ -262,13 +262,28 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 		//if (tm && presented > 1){
 		DWORD tick_end = GetTickCount();
 
-#ifdef ENBALE_DEVICE_LOG
 		DWORD tick_start = keyCmdHelper->getSynSignedTime();
-		infoRecorder->logTrace("deal input total use:%d \tqueue time:%d \tsystem to now:%d\n", tick_end - serverInputArrive, tick_start - serverInputArrive, tick_end - tick_start);
+
+#if 1
+		extern BTimer * ctrlTimer;
+		int renderCost = 0;
+		if(ctrlTimer){
+			renderCost = ctrlTimer->Stop();
+
+		}
+		else{
+			ctrlTimer = new PTimer();
+		}
+		infoRecorder->logError("[Device]: render cost: %f.\n", renderCost * 1000.0 / ctrlTimer->getFreq());
+
 #endif
+		//infoRecorder->logError("deal input total use:%d \tqueue time:%d \tsystem to now:%d\n", tick_end - serverInputArrive, tick_start - serverInputArrive, tick_end - tick_start);
+
 		keyCmdHelper->lock();
 		keyCmdHelper->setSynSigin(false);
 		keyCmdHelper->unlock();
+
+		
 
 		flag |= 1;
 		synSign = 0;
@@ -315,11 +330,14 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 
 	if(GameClient::GetGameClient() && !GameClient::IsInitialized()){
 		// to notify the dis manager that GAME_READ
-		infoRecorder->logError("[WrapperDirect3DDevice9]: to notifier GAME READY.\n");
 		//GameClient::GetGameClient()->notifyGameReady();
 		SetEvent(GameClient::GetGameClient()->getClientEvent());
 		GameClient::SetInitialized(true);
 		cg::input::CreateClientControl(cmdCtrl->getHwnd());
+		RTSPConf * conf = RTSPConf::GetRTSPConf();
+		cmdCtrl->setMaxFps(conf->video_fps);
+
+		infoRecorder->logError("[WrapperDirect3DDevice9]: to notifier GAME READY, set fps: %d.\n", cmdCtrl->getMaxFps());
 	}
 	else{
 		infoRecorder->logTrace("[WrapperDirect3DDevice9]: no need to notify GAME READY.\n");

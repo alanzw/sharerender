@@ -161,9 +161,9 @@ bool RenderProxy::dealEvent(cg::BaseContext * ctx){
 			infoRecorder->logError("[RenderProxy]: the video generator for '%d' is not created yet.\n", id);
 			return false;
 		}else{
-			infoRecorder->logError("[RenderProxy]: the video generator for '%p' is '%p'.\nto listen port.\n", id, gen);
+			infoRecorder->logError("[RenderProxy]: the video generator for '%p' is '%p'.\nto listen port: %d.\n", id, gen, conf->serverPort + portOff);
 		}
-		evconnlistener * rtspListener = listenPort(DIS_PORT_RTSP + portOff, _base, gen->getContext());
+		evconnlistener * rtspListener = listenPort(conf->serverPort + portOff, _base, gen->getContext());
 
 		// TODO , manage the listener
 		// notify manager to start rtsp connection
@@ -214,8 +214,11 @@ bool RenderProxy::dealEvent(cg::BaseContext * ctx){
 bool RenderProxy::start(char * disUrl){
 	// start the render proxy
 	// connect to dis and register
-	
-	if(!connectToServer(disUrl, DIS_PORT_DOMAIN)){
+	int disPort = DIS_PORT_DOMAIN;
+	if(conf){
+		disPort = conf->disPort;
+	}
+	if(!connectToServer(disUrl, disPort)){
 		return false;
 	}
 

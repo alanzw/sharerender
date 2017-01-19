@@ -184,7 +184,7 @@ namespace cg{
 		// intra-migration function
 		int changeEncodeDevice(ENCODER_TYPE dstEncoderType);
 		void setVideoTag(unsigned int tag){ if(writer)writer->setTags(tag); }
-		void setVideoSpecialTag(unsigned char tag){ if(writer)writer->setSpecialTag(tag); }
+		void setVideoSpecialTag(unsigned char tag);
 		inline void setEncoderType(ENCODER_TYPE type){ 
 			encoderType = type; 
 			if(encoderType == ADAPTIVE_CUDA){
