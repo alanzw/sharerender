@@ -214,8 +214,11 @@ bool RenderProxy::dealEvent(cg::BaseContext * ctx){
 bool RenderProxy::start(char * disUrl){
 	// start the render proxy
 	// connect to dis and register
-	
-	if(!connectToServer(disUrl, DIS_PORT_DOMAIN)){
+	int disPort = DIS_PORT_DOMAIN;
+	if(conf){
+		disPort = conf->disPort;
+	}
+	if(!connectToServer(disUrl, disPort)){
 		return false;
 	}
 

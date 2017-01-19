@@ -356,6 +356,7 @@ namespace cg{
 				}
 				//
 				sendMouseMotion = confReadBool("control-send-mouse-motion", 1);
+				relativeMouse = confReadBool("control-relative-mouse-mode", 0);
 			}
 			// video-encoder, audio-encoder, video-decoder, and audio-decoder
 			if ((ptr = confReadV("video-encoder", buf, sizeof(buf))) != NULL) {

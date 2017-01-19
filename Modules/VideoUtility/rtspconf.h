@@ -58,6 +58,7 @@ namespace cg{
 		int ctrlEnable;
 		int ctrlPort;
 		int sendMouseMotion;
+		int relativeMouse;
 
 
 		// for loader and game process

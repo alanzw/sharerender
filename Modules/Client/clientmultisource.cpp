@@ -498,6 +498,7 @@ static void OpenAudio(GameStreams * gameStreams, AVCodecContext * adecoder){
 }
 #endif
 
+
 void ProcessEvent(SDL_Event *event, CtrlMessagerClient * ctrlClient) {
 		sdlmsg_t m;
 
@@ -524,15 +525,13 @@ void ProcessEvent(SDL_Event *event, CtrlMessagerClient * ctrlClient) {
 					if(!globalTimer){
 						globalTimer = new PTimer();
 					}
+					
 					if(!responseTickStarted){
 						globalTimer->Start();
 						responseTickStarted = true;
 					}
-					else{
-						break;
-					}
+					
 				}
-
 
 				sdlmsg_keyboard(&m, 0, 
 					event->key.keysym.scancode, 
@@ -570,7 +569,7 @@ void ProcessEvent(SDL_Event *event, CtrlMessagerClient * ctrlClient) {
 			}
 			break;
 		case SDL_MOUSEMOTION:
-			infoRecorder->logError("[EventDeal]: mouse motion.\n");
+			infoRecorder->logTrace("[EventDeal]: mouse motion, (x, y): (%d, %d), (relx, rely):(%d, %d).\n", event->motion.x, event->motion.y, event->motion.xrel, event->motion.yrel);
 			if (rtspConf->ctrlEnable && rtspConf->sendMouseMotion) {
 				sdlmsg_mousemotion(&m, event->motion.x, event->motion.y, event->motion.xrel, event->motion.yrel, event->motion.state, relativeMouseMode == 0 ? 0 : 1);
 				if(ctrlClient)
@@ -959,7 +958,7 @@ int main(int argc, char * argv[]){
 	while(gameStreams->isRunning()){
 		if(SDL_WaitEvent(&event)){
 		//if(SDL_WaitEvent(&event)){
-			infoRecorder->logError("process event, ctrl client:%p.\n", gCtrlClient);
+			//infoRecorder->logError("process event, ctrl client:%p.\n", gCtrlClient);
 			ProcessEvent(&event, gCtrlClient);
 		}else{
 			infoRecorder->logTrace("[main]: no event.\n");

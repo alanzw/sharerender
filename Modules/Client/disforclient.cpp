@@ -26,8 +26,13 @@ bool UserClient::dealEvent(BaseContext * ctx){
 		// get the render url, and start the slave thread to receive RTSP stream
 		short portOff = *(short *)data;
 		char * renderUrl = data + sizeof(short);
+		RTSPConf * conf = RTSPConf::GetRTSPConf();
+		int port = DIS_PORT_RTSP;
+		if(conf){
+			port = conf->serverPort;
+		}
 
-		startRTSP(renderUrl, DIS_PORT_RTSP + portOff);
+		startRTSP(renderUrl, port+ portOff);
 
 	}
 	else if (!strncasecmp(cmd, DECLINE_RENDER, strlen(DECLINE_RENDER))){
@@ -182,7 +187,7 @@ bool UserClient::launchRequest(char * disServerUrl, int port, char * gameName){
 
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = inet_addr(disServerUrl);
-	sin.sin_port = htons(DIS_PORT_DOMAIN);
+	sin.sin_port = htons(port);
 	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0){
 		infoRecorder->logTrace("[UserClient]: create socket failed.\n");
 		return false;
@@ -267,9 +272,12 @@ DWORD WINAPI NetworkThreadProc(LPVOID param){
 	event_base * base = event_base_new();
 
 	struct RTSPConf * rtspConf = RTSPConf::GetRTSPConf();
-
+	int disPort = DIS_PORT_DOMAIN;
+	if(rtspConf){
+		disPort = rtspConf->disPort;
+	}
 	client->setEventBase(base);
-	client->launchRequest(streams->getDisUrl(), rtspConf->getRTSPPort(), gameName);
+	client->launchRequest(streams->getDisUrl(), disPort, gameName);
 	client->dispatch();
 	return 0;
 }

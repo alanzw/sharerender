@@ -1179,7 +1179,7 @@ CTRL_CLEAN:
 			int nextpos;
 			struct queuemsg *qmsg;
 			//
-			infoRecorder->logError("[QueueMessager]: write msg, size:%d.\n", msgsize);
+			infoRecorder->logTrace("[QueueMessager]: write msg, size:%d.\n", msgsize);
 			if ((msgsize + sizeof(struct queuemsg)) > qunit) {
 				infoRecorder->logError("[QueueMessager]:controller queue msg size exceeded (%d > %d).\n",
 					msgsize + sizeof(struct queuemsg), qunit);
@@ -1447,7 +1447,7 @@ error:
 					}
 					else{
 						unsigned short ms = ntohs(*((unsigned short *)qm->msg));
-						infoRecorder->logError("[controller client]: send(tcp) size:%d, msgsize:%d.\n", wlen, ms);
+						infoRecorder->logTrace("[controller client]: send(tcp) size:%d, msgsize:%d.\n", wlen, ms);
 					}
 				}
 				else if (conf->ctrlProto == IPPROTO_UDP) {
