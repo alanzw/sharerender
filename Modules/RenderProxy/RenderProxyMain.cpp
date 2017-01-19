@@ -1,6 +1,6 @@
 #include "../libCore/CommonNet.h"
 #include <process.h>
-#include "../LibVideo/Config.h"
+//#include "../LibVideo/Config.h"
 #include <WinSock2.h>
 #include "../LibRender/LibRenderAPI.h"
 #include "../LibCore/DisNetwork.h"
@@ -187,12 +187,10 @@ bool dealCmd(int argc, char ** argv){
 		std::cout << "[RenderProxy]: should add param for url via -u [url] or add param for rtsp config file via -c [filename]." << std::endl;
 		return -1;
 	}
-	cg::RTSPConf *conf = NULL;
+	cg::RTSPConf *rtspConf = NULL;
 	if(rtspConfFile){
-		conf = cg::RTSPConf::GetRTSPConf(rtspConfFile);
-
+		rtspConf= cg::RTSPConf::GetRTSPConf(rtspConfFile);
 	}
-
 
 	// build the render proxy with given arguments
 	RenderProxy * proxy = RenderProxy::GetProxy();
@@ -213,9 +211,12 @@ bool dealCmd(int argc, char ** argv){
 			}
 			// use the url if any
 			
-			if(conf){
-				proxy->setRTSPConf(conf);
-				proxy->start(conf->getDisUrl());
+			if(rtspConf){
+				proxy->setRTSPConf(rtspConf);
+				//char * surl = rtspConf->getDisUrl();
+				//char * s1url = rtspConf->disServerName;
+				//char * dups = _strdup(rtspConf->disServerName);
+				proxy->start(rtspConf->getDisUrl());
 			}
 			else if(url){
 				proxy->start(url);

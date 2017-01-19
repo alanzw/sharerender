@@ -890,7 +890,7 @@ int main(int argc, char * argv[]){
 	infoRecorder->logTrace("SDL_Quit:%p.\n", SDL_Quit);
 	atexit(SDL_Quit);
 #ifdef INCLUDE_DISTRIBUTOR
-	if (argc < 4) {
+	if (argc < 3) {
 		rtsperror("usage: %s config url [game name]\n", argv[0]);
 		return -1;
 	}

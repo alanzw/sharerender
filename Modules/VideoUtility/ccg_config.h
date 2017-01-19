@@ -30,6 +30,7 @@ namespace cg{
 	};
 
 	class ccgConfig{
+	protected:
 		std::string configFileName;
 		std::map<std::string, ConfVar> _confVars;
 		std::map<std::string, ConfVar>::iterator vmi;

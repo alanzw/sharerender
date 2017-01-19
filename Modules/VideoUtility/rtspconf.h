@@ -87,16 +87,10 @@ namespace cg{
 
 	public:
 
-		char * getDisUrl(){ return disServerName; }
+		inline char * getDisUrl(){ return disServerName; }
 		int	getRTSPPort(){ return serverPort; }
 
 		int rtspConfInit();
-#if 0
-		int configParseLogic();
-		int configParseRender();
-		int configParseDisServer();
-		int configParseClient();
-#endif
 
 		int rtspConfParse();
 		void rtspConfResolveServer(const char * serverName);

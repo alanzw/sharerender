@@ -52,10 +52,10 @@
 namespace cg{
 
 	std::map<std::string, int>RTSPConf::initialized;
-	RTSPConf * RTSPConf::conf;
+	RTSPConf * RTSPConf::conf = NULL;
 	std::map<int, RTSPConf *> RTSPConf::configMap;
 	std::map<std::string, RTSPConf *>RTSPConf::rtspConfMap;
-	HANDLE RTSPConf::rtspConfMutex;
+	HANDLE RTSPConf::rtspConfMutex = NULL;
 
 	std::string RTSPConf::myname;
 
@@ -144,8 +144,28 @@ namespace cg{
 	}
 
 	int RTSPConf::rtspConfInit() {
+		// set 0
+
+		memset(object, 0, RTSPCONF_OBJECT_SIZE);
+		memset(title, 0, RTSPCONF_TITLE_SIZE);
+		memset(display, 0, RTSPCONF_DISPLAY_SIZE);
+		
+		memset(video_encoder_name, 0, RTSPCONF_CODECNAME_SIZE + 1);
+		memset(video_decoder_name, 0, RTSPCONF_CODECNAME_SIZE + 1);
+		video_encoder_codec = NULL;
+		video_decoder_codec = NULL;
+
+
+		memset(audio_encoder_name, 0, RTSPCONF_CODECNAME_SIZE + 1);
+		memset(audio_decoder_name, 0, RTSPCONF_CODECNAME_SIZE + 1);
+
+		audio_encoder_codec = NULL;
+		audio_decoder_codec = NULL;
+
+		disServerName = NULL;
+
 		//initialized = 1;
-		strncpy(object, RTSP_DEF_OBJECT, RTSPCONF_OBJECT_SIZE);
+		strncpy(object, RTSP_DEF_OBJECT, strlen(RTSP_DEF_OBJECT));
 		strncpy(title, RTSP_DEF_TITLE, RTSPCONF_TITLE_SIZE);
 		strncpy(display, RTSP_DEF_DISPLAY, RTSPCONF_DISPLAY_SIZE);
 		serverPort = RTSP_DEF_SERVERPORT;
