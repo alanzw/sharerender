@@ -102,6 +102,89 @@ TIMEL1:
 			virtual unsigned __int64 getOverhead(){ return m_overhead; }
 			virtual unsigned int getFreq(){ return (int)freq.QuadPart; }
 		};
+		class DelayRecorder{
+			PTimer * timer;
+
+			// for server
+			float systemProcessDelay;
+			float encodingDelay;
+			bool inputArrived;
+
+			// for client
+			bool sign;   // if F11 is pressed
+			float totalDelay;
+			float beforeDisplay;
+			float displayDelay;  // set from outside
+
+
+			DelayRecorder(): systemProcessDelay(0.0), encodingDelay(0.0), inputArrived(false), sign(false), totalDelay(0.0), displayDelay(0.0){
+				timer = new PTimer();
+			}
+
+			static DelayRecorder * delayRecorder;
+		public:
+			~DelayRecorder(){
+				if(timer){
+					delete timer;
+					timer = NULL;
+				}
+			}
+
+			inline float getSystemProcessDelay(){ return systemProcessDelay; }
+			inline float getEncodingDelay(){ return encodingDelay; }
+			inline float getTotalDelay(){ return totalDelay; }
+			inline float getDisplayDelay(){ return displayDelay; }
+			inline float getBeforeDisplay(){ return beforeDisplay; }
+
+			inline bool isInputArrive(){ return inputArrived; }
+			inline bool isSigned(){ return sign; }
+
+			static DelayRecorder * GetDelayRecorder(){
+				if(!delayRecorder){
+					delayRecorder = new DelayRecorder();
+				}
+				return delayRecorder;
+			}
+
+			// for server
+			void setInputArrive(){
+				inputArrived = true;
+				timer->Start();
+			}
+
+			// for server
+			void keyTriggered(){
+				int systemInterval = timer->Stop();
+				systemProcessDelay = (1000.0 * systemInterval)/ timer->getFreq();
+			}
+
+			// for server
+			void encodeEnd(){
+				int encodeInterval = timer->Stop();
+				encodingDelay = 1000.0 * encodeInterval / timer->getFreq();
+				inputArrived = false;
+			}
+			// for client
+			void setDisplayDelay(float val){ displayDelay = val; }
+
+			// for client, start to count when get F11 in clinet ctrl
+			void startDelayCount(){ sign = true; timer->Start(); }
+			// for client, to query time before display
+			void startToDisplay(){
+				int delayInterval = timer->Stop();
+				beforeDisplay = delayInterval * 1000.0 / timer->getFreq();
+			}
+
+			void displayed(){
+				int delayInterval = timer->Stop();
+				displayDelay = delayInterval * 1000.0 / timer->getFreq();
+
+				totalDelay = beforeDisplay + displayDelay;
+
+				sign = false;
+			}
+
+		};
 
 	}
 }

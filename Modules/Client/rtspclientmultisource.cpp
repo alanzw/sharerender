@@ -718,6 +718,7 @@ void SubGameStream::playVideoPriv(unsigned char * buffer, int bufSize, struct ti
 
 #ifdef USE_TEMPLATE_FRAME_POOL
 	TaggedFrame * taggedFrame = NULL;
+	DelayRecorder * delayRecorder = DelayRecorder::GetDelayRecorder();
 #endif
 
 	av_init_packet(&avpkt);
@@ -731,8 +732,9 @@ void SubGameStream::playVideoPriv(unsigned char * buffer, int bufSize, struct ti
 
 	unsigned char specialTag = frameIndex & 0xc0;
 	if(specialTag){
+		delayRecorder->startToDisplay();
 		displayTimer->Start();
-		infoRecorder->logError("[SubGameStream]: get special tag, frame index:%x.\n", specialTag);
+		infoRecorder->logTrace("[SubGameStream]: get special tag, frame index:%x.\n", specialTag);
 	}
 	//infoRecorder->logError("[SubGameStreams]: frame index: %x.\n", frameIndex);
 
@@ -1389,6 +1391,7 @@ bool GameStreams::renderImage(long long special){
 	struct pooldata *data;
 	AVPicture *vframe;
 	SDL_Rect rect;
+	DelayRecorder * delayRecorder = DelayRecorder::GetDelayRecorder();
 
 	cg::core::infoRecorder->logTrace("[GameStreams]: render image.\n");
 
@@ -1492,6 +1495,11 @@ bool GameStreams::renderImage(long long special){
 		long interval = globalTimer->Stop();
 
 		int displayTime = displayTimer->Stop();
+		if(delayRecorder->isSigned()){
+			delayRecorder->displayed();
+		}
+		cg::core::infoRecorder->logError("[Delay]: before + display = total -> %f %f %f\n", delayRecorder->getBeforeDisplay(), delayRecorder->getDisplayDelay(), delayRecorder->getTotalDelay());
+
 		cg::core::infoRecorder->logTrace("[delay]: %f, display: %f.\n", interval * 1000.0 / globalTimer->getFreq(), displayTime * 1000.0 / displayTimer->getFreq());
 	}
 

@@ -501,7 +501,7 @@ static void OpenAudio(GameStreams * gameStreams, AVCodecContext * adecoder){
 
 void ProcessEvent(SDL_Event *event, CtrlMessagerClient * ctrlClient) {
 		sdlmsg_t m;
-
+		DelayRecorder * delayRecorder = DelayRecorder::GetDelayRecorder();
 		switch (event->type) {
 		case SDL_KEYUP:
 			infoRecorder->logTrace("[EventDeal]: key up.\n");
@@ -514,7 +514,6 @@ void ProcessEvent(SDL_Event *event, CtrlMessagerClient * ctrlClient) {
 			}
 
 			if (rtspConf->ctrlEnable) {
-				infoRecorder->logTrace("[EventDeal]: key up, should never be here.\n");
 				// for test response delay
 				if(event->key.keysym.sym == SDLK_HOME){
 					// to send special key
@@ -530,7 +529,7 @@ void ProcessEvent(SDL_Event *event, CtrlMessagerClient * ctrlClient) {
 						globalTimer->Start();
 						responseTickStarted = true;
 					}
-					
+					delayRecorder->startDelayCount();
 				}
 
 				sdlmsg_keyboard(&m, 0, 
@@ -543,7 +542,7 @@ void ProcessEvent(SDL_Event *event, CtrlMessagerClient * ctrlClient) {
 			break;
 
 		case SDL_KEYDOWN:
-			infoRecorder->logError("[EventDeal]: key down.\n");
+			infoRecorder->logTrace("[EventDeal]: key down.\n");
 			if (rtspConf->ctrlEnable) {
 				sdlmsg_keyboard(&m, 1, event->key.keysym.scancode, event->key.keysym.sym, event->key.keysym.mod, 0/*event->key.keysym.unicode*/);
 				if(ctrlClient)
@@ -860,6 +859,7 @@ int main(int argc, char * argv[]){
 	TestRTSPFiles();
 	return 0;
 #endif
+	DelayRecorder * delayRecorder = DelayRecorder::GetDelayRecorder();
 
 	if(infoRecorder == NULL){
 		infoRecorder = new InfoRecorder("client");

@@ -41,6 +41,7 @@
 
 #include "../LibCore/MemOp.h"
 #include "../LibCore/InfoRecorder.h"
+#include "../LibCore/TimeTool.h"
 #include "Controller.h"
 
 using namespace std;
@@ -769,6 +770,7 @@ CTRL_CLEAN:
 			INPUT				in;
 			sdlmsg_keyboard_t *	msgk = (sdlmsg_keyboard_t*) msg;
 			sdlmsg_mouse_t *	msgm = (sdlmsg_mouse_t*) msg;
+			cg::core::DelayRecorder * delayRecorder = cg::core::DelayRecorder::GetDelayRecorder();
 
 			switch(msg->msgtype) {
 			case SDL_EVENT_MSGTYPE_KEYBOARD:
@@ -779,7 +781,7 @@ CTRL_CLEAN:
 						in.ki.dwFlags |= KEYEVENTF_KEYUP;
 					}
 					in.ki.wScan = MapVirtualKey(in.ki.wVk, MAPVK_VK_TO_VSC);
-					cg::core::infoRecorder->logError("sdl replayer: vk=%x scan=%x\n", in.ki.wVk, in.ki.wScan);
+					cg::core::infoRecorder->logTrace("sdl replayer: vk=%x scan=%x\n", in.ki.wVk, in.ki.wScan);
 					SendInput(1, &in, sizeof(in));
 				} else {
 					////////////////
@@ -791,7 +793,7 @@ CTRL_CLEAN:
 				}
 				break;
 			case SDL_EVENT_MSGTYPE_MOUSEKEY:
-				cg::core::infoRecorder->logError("sdl replayer: button event btn=%u pressed=%d\n", msg->mousebutton, msg->is_pressed);
+				cg::core::infoRecorder->logTrace("sdl replayer: button event btn=%u pressed=%d\n", msg->mousebutton, msg->is_pressed);
 				bzero(&in, sizeof(in));
 				in.type = INPUT_MOUSE;
 				if(msgm->mousebutton == 1 && msgm->is_pressed != 0) {
