@@ -300,7 +300,7 @@ namespace cg{
 				return bufLen;
 			bcopy(&client, &sin, sizeof(sin));
 #ifdef ENABLE_RTSP_LOG
-			infoRecorder->logTrace("[RTSPContext]: rtp write data client:%s\n", inet_ntoa(sin.sin_addr));
+			infoRecorder->logTrace("[RTSPContext]: rtp write data client:%s: %d\n", inet_ntoa(sin.sin_addr), rtpPeerPort[streamId * 2]);
 #endif
 			sin.sin_port = rtpPeerPort[streamId * 2];
 			// XXX: buffer is the result from avio_open_dyn_buf.
@@ -623,6 +623,9 @@ readmore:
 		}
 
 		void RTSPContext::rtspReplyError(enum RTSPStatusCode error_number) {
+#ifdef ENABLE_RTSP_LOG
+			infoRecorder->logError("[RTSPContext]: ReplayError, error num: %d.\n", error_number);
+#endif
 			rtspReplyHeader(error_number);
 			rtspPrintf("\r\n");
 		}
@@ -948,8 +951,7 @@ readmore:
 			// create session id?
 			if (sessionId == NULL) {
 				if (h->session_id[0] == '\0') {
-					snprintf(h->session_id, sizeof(h->session_id), "%04x%04x",
-						rand() % 0x0ffff, rand() % 0x0ffff);
+					snprintf(h->session_id, sizeof(h->session_id), "%04x%04x", rand() % 0x0ffff, rand() % 0x0ffff);
 					sessionId = _strdup(h->session_id);
 					infoRecorder->logError("New session created (id = %s)\n", sessionId);
 				}
@@ -1029,6 +1031,7 @@ readmore:
 					streamid,
 					th->client_port_min, th->client_port_max,
 					rtp_port, rtcp_port);
+
 				rtspPrintf("Transport: RTP/AVP/UDP;unicast;client_port=%d-%d;server_port=%d-%d\r\n",
 					th->client_port_min, th->client_port_max,
 					rtp_port, rtcp_port);
@@ -1250,7 +1253,7 @@ error_setup:
 				to.tv_sec = 0;
 				to.tv_usec = 500000;
 				if((active = select(fdmax + 1, &rfds, NULL, NULL, &to)) < 0){
-					infoRecorder->logError("[RTSPServer]: select failed: %s\n",strerror(errno));
+					infoRecorder->logError("[RTSPServer]: select failed: %s, TO QUIT\n",strerror(errno));
 					goto quit;
 				}
 				if(active == 0){
@@ -1288,6 +1291,7 @@ error_setup:
 				}
 #endif  // HOlLE_PUNCHING
 				if((rlen = ctx->rtspGetNext(buf, sizeof(buf)))< 0){
+					infoRecorder->logError("[RTSPServer]: GetNext failed. TO QUIT.\n");
 					goto quit;
 				}
 				// Interleaved binary data?
@@ -1305,7 +1309,7 @@ error_setup:
 				GetWord(protocal, sizeof(protocal), &p);
 				// check protocal
 				if(strcmp(protocal, "RTSP/1.0")!= 0){
-					infoRecorder->logError("[RTSPServer]: protocol not supported.\n");
+					infoRecorder->logError("[RTSPServer]: protocol not supported, TO QUIT.\n");
 					ctx->rtspReplyError(RTSP_STATUS_VERSION);
 					goto quit;
 				}
@@ -1314,10 +1318,15 @@ error_setup:
 				do{
 					int myseq = -1;
 					char mysession[sizeof(header->session_id)] = "";
-					if((rlen = ctx->rtspGetNext(buf, sizeof(buf))) < 0)
+					if((rlen = ctx->rtspGetNext(buf, sizeof(buf))) < 0){
+						infoRecorder->logError("[RTSPServer]: GetNext fialed. TO QUIT\n");
 						goto quit;
-					if(buf[0] == '\n' || (buf[0] == '\r' && buf[1] == '\n'))
+
+					}
+					if(buf[0] == '\n' || (buf[0] == '\r' && buf[1] == '\n')){
+						infoRecorder->logError("[RTSPSever]: get NULL buf, break.\n");
 						break;
+					}
 
 #ifdef ENABLE_RTSP_LOG
 					infoRecorder->logTrace("[RTPSServer]: HEADER: %s.\n", buf);
@@ -1369,10 +1378,8 @@ error_setup:
 					ctx->rtspCmdDescribe(url);
 				else if(!strcmp(cmd, "OPTIONS")){
 					ctx->rtspCmdOptions(url);
-
 				}
 				else if(!strcmp(cmd, "SETUP")){
-					//DebugBreak();
 					ctx->rtspCmdSetup(url, header, 0);
 				}
 				else if(!strcmp(cmd, "PLAY")){
@@ -1396,6 +1403,7 @@ error_setup:
 				else
 					ctx->rtspReplyError(RTSP_STATUS_METHOD);
 				if(ctx->state == SERVER_STATE_TEARDOWN){
+					infoRecorder->logError("[RTSPServer]: STATUS si TEARDOWN.\n");
 					//gen->stop();
 					//gen->setEnableWriteToNet(false);
 					closesocket(ctx->fd);

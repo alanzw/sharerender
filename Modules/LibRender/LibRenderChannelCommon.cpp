@@ -395,7 +395,10 @@ void RenderChannel::onPresent(unsigned int tags){
 	}
 	if(generator){
 		generator->setVideoTag(tags);
-		generator->setVideoSpecialTag(this->specialTag);
+		if(this->specialTag){
+			generator->setVideoSpecialTag(this->specialTag);
+			specialTag = 0;
+		}
 		SetEvent(generator->getPresentEvent());
 		generator->run();
 	}

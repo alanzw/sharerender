@@ -2,18 +2,26 @@
 #include "../LibCore/CmdHelper.h"
 #include "KeyboardHook.h"
 #include "../VideoGen/generator.h"
-
-
-
+#include "../LibInput/Controller.h"
 extern bool toRecorde;
+
 namespace cg{
 	namespace core{
+		
+		//extern BTimer * ctrlTimer;
+
+		float getSysProcessTime(){
+			float ret = 0.0;
+
+			int interval = 0;
+			if(ctrlTimer) interval = ctrlTimer->Stop();
+			return 1000.0 * interval / ctrlTimer->getFreq();
+			
+		}
 
 		KeyCommandHelper * keyCmdHelper = NULL;
 
-
 		LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam){
-
 			KeyCommandHelper * keyHelper = KeyCommandHelper::GetKeyCmdHelper();
 			infoRecorder->logTrace("[Global]: key event, WPARAM: %x, LPARAM:%x.\n", wParam, lParam);
 			if (lParam & 0x80000000) // released
@@ -32,6 +40,11 @@ namespace cg{
 #endif
 				}
 				else if (wParam == VK_F11){
+					//infoRecorder->logError("[Global]: F11 triggered. to SYN.\n");
+#if 1
+					infoRecorder->logError("[Global]: system process input time: %f.\n", getSysProcessTime());
+
+#endif
 					keyHelper->lock();
 					keyHelper->setSynSigin(true);
 					keyHelper->unlock();

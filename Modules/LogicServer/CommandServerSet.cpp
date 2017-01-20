@@ -208,8 +208,9 @@ void ContextAndCache::write_packed_byte_arr(char * src, int length){
 		//infoRecorder->logError("[ContextAndCache]: send packed byte arr, idx:%d, total count: %d, data len:%d, succ send:%d.\n", index, packetCount, sizeToSend, ret);
 	}
 
-	
+#ifdef ENABLE_SET_LOG
 	infoRecorder->logError("[ContextAndCache]: write_packed_byte_arr, total packet:%d, total send:%d.\n",packetCount, totalSend);
+#endif
 	// unlock the context
 	get_cur_ptr(2);
 	unlock();

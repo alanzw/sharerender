@@ -327,6 +327,10 @@ namespace cg{
 			return true;
 		}
 
+		void InfoRecorder::logExtra(char *format, ...){
+
+		}
+
 		// log the error to file
 		void InfoRecorder::logError(char * format, ...){
 			char tem[512] = {0};

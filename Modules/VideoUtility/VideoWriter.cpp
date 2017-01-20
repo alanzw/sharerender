@@ -4,6 +4,8 @@
 #include "../LibCore/TimeTool.h"
 #define ENABLE_WRITER_LOG
 
+cg::core::BTimer * encodeTimer = NULL;
+
 namespace cg{
 
 	HANDLE VideoWriter::syncMutex;
@@ -42,6 +44,7 @@ namespace cg{
 	}
 
 	// for VideoWriter
+
 	int VideoWriter::sendPacket(int channelId, rtsp::RTSPContext * rtsp, AVPacket * pkt, int64_t encoderPts){
 		
 #ifdef ENABLE_WRITER_LOG
@@ -79,7 +82,6 @@ namespace cg{
 
 		rq.den = 90000;
 		rq.num = 1;
-		//DebugBreak();
 		if(encoderPts != (int64_t)AV_NOPTS_VALUE){
 			//cg::core::infoRecorder->logError("[VideoWriter]: send packet, encoder pts: %lld, encoder time_base(num:%d, den:%d), stream time_base(num:%d, den:%d), tmp rq:(num:%d, den:%d).\n", encoderPts, rtsp->encoder[channelId]->time_base.num, rtsp->encoder[channelId]->time_base.den, rtsp->stream[channelId]->time_base.num, rtsp->stream[channelId]->time_base.den, rq.num, rq.den);
 			//DebugBreak();
@@ -106,16 +108,25 @@ namespace cg{
 		//infoRecorder->logError("[X264Encoder]: original buf addr:0x%p, cur:0x%p.\n", pkt->data, nalbuf_a - 2);
 		pkt->data = pkt->data - 2;
 
+		if(!encodeTimer){
+			encodeTimer = new cg::core::PTimer();
+		}
+
 		*pkt->data = 0;
 		*(pkt->data + 1) = 0;
 		*(pkt->data + 2) = 0;
 		*(pkt->data + 3) = 1;
 		// set the source id
 		*(pkt->data + 4) = ctx->getId();
-		if(specialTag){
-			*(pkt->data + 4) |= 0x80;
+		if(specialTag && specialTagValid){
+			*(pkt->data + 4) |= 0x40;
 			specialTag = 0;
 			specialTagValid = false;
+			unsigned char tmp = *(pkt->data + 4);
+			int encodeInterval = 0;
+			if(encodeTimer)
+				encodeInterval = encodeTimer->Stop();
+			cg::core::infoRecorder->logError("[VideoWriter]: special tag is %d, mean special frame, frame idx org:%x, tagged:%x, encode time:%f.\n", specialTag, ctx->getId(), tmp, 1000.0 * encodeInterval / encodeTimer->getFreq());
 		}
 		*(pkt->data + 5) = (tags++) % 255;
 
@@ -170,8 +181,12 @@ namespace cg{
 
 	void VideoWriter::setSpecialTag(unsigned char val){
 		if(!specialTagValid){
+			cg::core::infoRecorder->logError("[VideoWriter]: special tag set: %d.\n", val);
 			specialTag = val;
 			specialTagValid = true;
+		}
+		else{
+			cg::core::infoRecorder->logError("[VideoWriter]: tag NOT send.\n");
 		}
 	}
 

@@ -44,6 +44,7 @@
 #include "SDL2/SDL_version.h"
 #include "SDL2/SDL_keycode.h"
 #include "../VideoUtility/videocommon.h"
+#include "../LibCore/TimeTool.h"
 
 #define	SDL_EVENT_MSGTYPE_NULL		0
 #define	SDL_EVENT_MSGTYPE_KEYBOARD	1
@@ -232,7 +233,7 @@ namespace cg{
 
 			//int initMessager(int size, int maxunit);
 			void sendMsg(void *msg, int msglen);
-			int init(struct cg::RTSPConf * conf,char * url, const char * ctrlid);
+			int init(cg::RTSPConf * conf,char * url, const char * ctrlid);
 
 		};
 
@@ -260,9 +261,9 @@ namespace cg{
 			HANDLE	wakeup;
 			//msgfunc replay;
 			ReplayCallback * replay;
-			struct RTSPConf* conf;
+			RTSPConf* conf;
 
-			int		ctrlSocketInit(struct cg::RTSPConf * conf);
+			int		ctrlSocketInit(cg::RTSPConf * conf);
 
 		public:
 			CtrlMessagerServer();
@@ -280,7 +281,7 @@ namespace cg{
 			inline void setReplay(ReplayCallback * callback){ replay = callback; }
 
 			int		readNext(void *msg, int msglen);
-			int		init(struct RTSPConf* conf, const char * ctrlid);
+			int		init(RTSPConf* conf, const char * ctrlid);
 		};
 
 		class ReplayCallbackImp: public ReplayCallback{
@@ -306,4 +307,6 @@ namespace cg{
 		void CreateClientControl(HWND);
 	}
 }
+extern cg::core::BTimer * ctrlTimer;
+
 #endif
