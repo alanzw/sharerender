@@ -41,10 +41,14 @@ int WrapperDirect3DVertexBuffer9::sendCreation(void * ctx){
 	}
 #else
 	int interval = t_timer->Stop();
+#ifdef ENABLE_VERTEX_BUFFER_LOG
 	infoRecorder->logError("[WrpaperDirect3DVertexBuffer9]: prepare vertex buffer use: %f ms.\n", interval * 1000.0 / t_timer->getFreq());
+#endif
 	if(pTimer){
 		int gInterval = pTimer->Stop();
+#ifdef ENABLE_VERTEX_BUFFER_LOG
 		infoRecorder->logError("[CheckCreation]: return time:%f.\n", gInterval *1000.0 / pTimer->getFreq());
+#endif
 	}
 #endif
 
@@ -431,7 +435,6 @@ STDMETHODIMP WrapperDirect3DVertexBuffer9::GetDesc(THIS_ D3DVERTEXBUFFER_DESC *p
 }
 // prepare the vertex buffer
 int WrapperDirect3DVertexBuffer9::PrepareVertexBuffer(ContextAndCache *ctx){
-	infoRecorder->logError("[WrapperDirect3DVertexBuffer9]: Prepare vertex buffer for %d, len:%d.\n", id, Length);
 
 	cg::core::PTimer * t_timer = new cg::core::PTimer();
 
@@ -439,7 +442,9 @@ int WrapperDirect3DVertexBuffer9::PrepareVertexBuffer(ContextAndCache *ctx){
 
 	if(pTimer){
 	int gInterval = pTimer->Stop();
+#ifdef ENABLE_VERTEX_BUFFER_LOG
 	infoRecorder->logError("[PrepareVertexBuffer]: call time:%f.\n", gInterval *1000.0 / pTimer->getFreq());
+#endif
 
 	}
 	t_timer->Start();
@@ -466,7 +471,9 @@ int WrapperDirect3DVertexBuffer9::PrepareVertexBuffer(ContextAndCache *ctx){
 	}
 	ctx->endCommand();
 	interval3 = t_timer->Stop();
+#ifdef ENABLE_VERTEX_BUFFER_LOG
 	infoRecorder->logError("[PrepareVertexBuffer]: id:%d, begin use:%f, write_arr use:%f, memcpy use:%f, end use:%f.\n",id, interval * 1000.0 / t_timer->getFreq(), interval1 * 1000.0 / t_timer->getFreq(), interval2 * 1000.0 / t_timer->getFreq(), interval3 * 1000.0 / t_timer->getFreq());
+#endif
 
 	if(pTimer)
 		pTimer->Start();

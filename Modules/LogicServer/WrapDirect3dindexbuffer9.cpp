@@ -27,7 +27,9 @@ int WrapperDirect3DIndexBuffer9::sendCreation(void *ctx){
 	int ret = PrepareIndexBuffer(c);
 	if(pTimer){
 		unsigned int interval = (UINT)pTimer->Stop();
+#ifdef ENABLE_INDEX_LOG
 		infoRecorder->logError("[WrapeprDirect3DIndexBuffer9]: prepare index buffer %d use %f ms.\n", id, 1000.0 * interval / pTimer->getFreq());
+#endif
 	}
 
 	return ret;
@@ -57,7 +59,9 @@ int WrapperDirect3DIndexBuffer9::sendUpdate(void * ctx){
 	ret = UpdateIndexBuffer(c);
 	if(pTimer){
 		unsigned int interval = (UINT)pTimer->Stop();
+#ifdef ENABLE_INDEX_LOG
 		infoRecorder->logError("[WrapperDirect3DeIndexBuffer9]: update index buffer %d use %f ms\n", id, 1000.0 * interval / pTimer->getFreq());
+#endif
 	}
 
 	return ret;
@@ -397,7 +401,9 @@ int WrapperDirect3DIndexBuffer9::PrepareIndexBuffer(ContextAndCache *ctx){
 // called when to create an index buffer
 int WrapperDirect3DIndexBuffer9::UpdateIndexBuffer(ContextAndCache * ctx) {
 	if(isFirst) {
+#ifdef ENABLE_INDEX_LOG
 		infoRecorder->logError("[WrapperDirect3DIndexBuffer9]: is first is true ? ERROR.\n");
+#endif
 		isFirst = false;
 	}
 
