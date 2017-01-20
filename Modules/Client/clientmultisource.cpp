@@ -551,7 +551,6 @@ void ProcessEvent(SDL_Event *event, CtrlMessagerClient * ctrlClient) {
 			break;
 
 		case SDL_MOUSEBUTTONUP:
-			infoRecorder->logError("[EventDeal]: mouse button up.\n");
 			if (rtspConf->ctrlEnable) {
 				sdlmsg_mousekey(&m, 0, event->button.button, event->button.x, event->button.y);
 				if(ctrlClient)
@@ -681,7 +680,7 @@ void ProcessEvent(SDL_Event *event, CtrlMessagerClient * ctrlClient) {
 			}
 			//add the sdl event to handle the render's exit and add
 			if(event->user.code == SDL_USEREVENT_ADD_RENDER){
-				infoRecorder->logError("[ProcessEvent]: SDL_USEREVENT_ADD_RENDER event triggered.\n");
+				infoRecorder->logTrace("[ProcessEvent]: SDL_USEREVENT_ADD_RENDER event triggered.\n");
 				// the render is added in the logic server
 				GameStreams * streams = (GameStreams *)event->user.data1;
 				char * cmd = (char *)event->user.data2;

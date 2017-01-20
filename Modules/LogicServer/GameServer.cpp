@@ -246,7 +246,7 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 	if(NULL == pTimer){
 		pTimer = new cg::core::PTimer();
 	}
-
+	DelayRecorder * delayRecorder = DelayRecorder::GetDelayRecorder();
 	cg::VideoGen::Initialize();
 
 	if(WSAStartup(sockVersion, &wsaData) != 0){

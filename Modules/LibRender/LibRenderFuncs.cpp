@@ -2080,17 +2080,19 @@ HRESULT FakeNullInstruct(RenderChannel * rch){
 		fromserver = true;
 	}
 #endif
+	DelayRecorder * delayRecorder = DelayRecorder::GetDelayRecorder();
 	
 	rch->specialTag = flag;
 	if(encodeTimer){
 		encodeTimer->Start();
-
 	}
 	else{
 		encodeTimer = new PTimer();
 	}
 	if(flag){
-		infoRecorder->logError("NullInstruction, get special tag: %d.\n", flag);
+		infoRecorder->logTrace("NullInstruction, get special tag: %d.\n", flag);
+		delayRecorder->startEndcode();
+
 	}
 	return D3D_OK;
 }

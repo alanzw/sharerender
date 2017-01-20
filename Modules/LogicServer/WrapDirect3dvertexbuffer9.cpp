@@ -94,7 +94,9 @@ int WrapperDirect3DVertexBuffer9::sendUpdate(void * ctx){
 	ret = UpdateVertexBuffer(c);
 	if(pTimer){
 		unsigned int interval = (UINT)pTimer->Stop();
+#ifdef ENABLE_VERTEX_BUFFER_LOG
 		infoRecorder->logError("[WrapperDirect3DVertexBuffer9]: update vertex buffer %d use %f ms.\n", id, interval * 1000.0 /pTimer->getFreq());
+#endif
 	}
 	return ret;
 }
@@ -610,7 +612,10 @@ int WrapperDirect3DVertexBuffer9::UpdateVertexBuffer(ContextAndCache * ctx){
 			ctx->cancelCommand();
 		}
 	}
+#ifdef ENABLE_VERTEX_BUFFER_LOG 
 	infoRecorder->logError("[WrapperDirect3DVertexBuffer]: update vertex buffer, compress size:%d, update count:%d, len:%d (base:%d, update len:%d), operation:%s.\n", compressSize, cnt, compressSize * cnt, base, size, cancel ? "COPY_MODE" : "DIFF_MODE");
+#endif
+
 	return cnt > 0;
 }
 

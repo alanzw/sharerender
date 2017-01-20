@@ -50,7 +50,7 @@ namespace cg{
 #ifdef ENABLE_WRITER_LOG
 		cg::core::infoRecorder->logTrace("[VideoWriter]: send packet, rtsp: %p enable rtsp:%s.\n", rtsp, rtsp->enableGen ? "true" : "false");
 #endif
-		
+		cg::core::DelayRecorder * delayRecorder = cg::core::DelayRecorder::GetDelayRecorder();
 		// write the encoded frame.
 
 		int ioLen = 0;
@@ -120,13 +120,12 @@ namespace cg{
 		*(pkt->data + 4) = ctx->getId();
 		if(specialTag && specialTagValid){
 			*(pkt->data + 4) |= 0x40;
-			specialTag = 0;
-			specialTagValid = false;
+			
 			unsigned char tmp = *(pkt->data + 4);
 			int encodeInterval = 0;
 			if(encodeTimer)
 				encodeInterval = encodeTimer->Stop();
-			cg::core::infoRecorder->logError("[VideoWriter]: special tag is %d, mean special frame, frame idx org:%x, tagged:%x, encode time:%f.\n", specialTag, ctx->getId(), tmp, 1000.0 * encodeInterval / encodeTimer->getFreq());
+			//cg::core::infoRecorder->logError("[VideoWriter]: special tag is %d, mean special frame, frame idx org:%x, tagged:%x, encode time:%f.\n", specialTag, ctx->getId(), tmp, 1000.0 * encodeInterval / encodeTimer->getFreq());
 		}
 		*(pkt->data + 5) = (tags++) % 255;
 
@@ -156,6 +155,15 @@ namespace cg{
 				return -1;
 			}
 		}
+
+		if(specialTag && specialTagValid){
+			specialTag = 0;
+			specialTagValid = false;
+
+			delayRecorder->encodeEnd();
+			cg::core::infoRecorder->logError("[Delay]: render encode: %f\n", delayRecorder->getEncodingDelay());
+		}
+
 		av_free(iobuf);
 		return 0;
 	}
@@ -181,7 +189,7 @@ namespace cg{
 
 	void VideoWriter::setSpecialTag(unsigned char val){
 		if(!specialTagValid){
-			cg::core::infoRecorder->logError("[VideoWriter]: special tag set: %d.\n", val);
+			cg::core::infoRecorder->logTrace("[VideoWriter]: special tag set: %d.\n", val);
 			specialTag = val;
 			specialTagValid = true;
 		}

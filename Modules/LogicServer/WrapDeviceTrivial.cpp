@@ -269,12 +269,17 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 		int renderCost = 0;
 		if(ctrlTimer){
 			renderCost = ctrlTimer->Stop();
-
 		}
 		else{
 			ctrlTimer = new PTimer();
 		}
-		infoRecorder->logError("[Device]: render cost: %f.\n", renderCost * 1000.0 / ctrlTimer->getFreq());
+		//infoRecorder->logError("[Device]: render cost: %f.\n", renderCost * 1000.0 / ctrlTimer->getFreq());
+
+		DelayRecorder * delayRecorder = DelayRecorder::GetDelayRecorder();
+		if(delayRecorder->isInputArrive()){
+			delayRecorder->renderEnd();
+			infoRecorder->logError("[Delay]: (system + render): %f %f\n", delayRecorder->getSystemProcessDelay(), delayRecorder->getRenderDelay());
+		}
 
 #endif
 		//infoRecorder->logError("deal input total use:%d \tqueue time:%d \tsystem to now:%d\n", tick_end - serverInputArrive, tick_start - serverInputArrive, tick_end - tick_start);
@@ -471,7 +476,7 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 
 	//limit it to max_fps
 	double to_sleep = 1000.0 / cmdCtrl->getMaxFps() * frame_cnt - elapse_time;
-	infoRecorder->logError("Present, frame:%f, frame count:%f, to sleep:%f, timer overhead:%f.\n", frame_time, frame_cnt, to_sleep, pPresentTimer->getOverhead() * 1000.0 / pPresentTimer->getFreq());
+	infoRecorder->logTrace("Present, frame:%f, frame count:%f, to sleep:%f, timer overhead:%f.\n", frame_time, frame_cnt, to_sleep, pPresentTimer->getOverhead() * 1000.0 / pPresentTimer->getFreq());
 
 #if 1
 	int sleepTime = (int)to_sleep;
@@ -992,10 +997,10 @@ STDMETHODIMP WrapperDirect3DDevice9::ColorFill(THIS_ IDirect3DSurface9* pSurface
 }
 
 STDMETHODIMP WrapperDirect3DDevice9::CreateOffscreenPlainSurface(THIS_ UINT Width,UINT Height,D3DFORMAT Format,D3DPOOL Pool,IDirect3DSurface9** ppSurface,HANDLE* pSharedHandle) {
+	// TODO, if the surface need to be send ???
 #ifdef ENBALE_DEVICE_LOG
-	infoRecorder->logTrace("WrapperDirect3DDevice9::CreateOffscreenPlainSurface() TODO\n");
-#endif
 	infoRecorder->logError("WrapperDirect3DDevice9::CreateOffscreenPlainSurface() TODO\n");
+#endif
 	return m_device->CreateOffscreenPlainSurface(Width, Height, Format, Pool, ppSurface, pSharedHandle);
 }
 

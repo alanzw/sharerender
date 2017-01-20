@@ -108,6 +108,7 @@ TIMEL1:
 			// for server
 			float systemProcessDelay;
 			float encodingDelay;
+			float renderDelay;  // hook F11 to present
 			bool inputArrived;
 
 			// for client
@@ -129,7 +130,7 @@ TIMEL1:
 					timer = NULL;
 				}
 			}
-
+			inline float getRenderDelay(){ return renderDelay; }
 			inline float getSystemProcessDelay(){ return systemProcessDelay; }
 			inline float getEncodingDelay(){ return encodingDelay; }
 			inline float getTotalDelay(){ return totalDelay; }
@@ -157,8 +158,20 @@ TIMEL1:
 				int systemInterval = timer->Stop();
 				systemProcessDelay = (1000.0 * systemInterval)/ timer->getFreq();
 			}
+			// for logic server
+			void renderEnd(){
+				int renderInterval = timer->Stop();
+				renderDelay = 1000.0 * renderInterval / timer->getFreq();
+				inputArrived = false;
+			}
 
-			// for server
+			// for render server only
+			void startEndcode(){
+				sign = true;
+				timer->Start();
+			}
+
+			// for server when encoding
 			void encodeEnd(){
 				int encodeInterval = timer->Stop();
 				encodingDelay = 1000.0 * encodeInterval / timer->getFreq();

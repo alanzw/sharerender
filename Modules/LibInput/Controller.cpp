@@ -44,7 +44,7 @@
 #include "Controller.h"
 #include "../LibCore/TimeTool.h"
 
-#define USE_INTERCEPTION
+//#define USE_INTERCEPTION
 
 
 #ifdef USE_INTERCEPTION
@@ -134,6 +134,9 @@ static bool keymap_initialized = false;
 //#define SDLK_PRINT
 #define SDLK_BREAK	SDLK_PRINTSCREEN
 #endif
+
+cg::core::BTimer * ctrlTimer = NULL;
+
 namespace cg{
 
 	namespace input{
@@ -806,13 +809,14 @@ CTRL_CLEAN:
 
 #ifdef WIN32
 
-		
-
 		void ReplayCallbackImp::replayNative(sdlmsg_t *msg){
 			INPUT				in;
 			sdlmsg_keyboard_t *	msgk = (sdlmsg_keyboard_t*) msg;
 			sdlmsg_mouse_t *	msgm = (sdlmsg_mouse_t*) msg;
 			cg::core::DelayRecorder * delayRecorder = cg::core::DelayRecorder::GetDelayRecorder();
+			if(!ctrlTimer){
+				ctrlTimer = new PTimer();
+			}
 
 			switch(msg->msgtype) {
 			case SDL_EVENT_MSGTYPE_KEYBOARD:
@@ -826,9 +830,10 @@ CTRL_CLEAN:
 
 					if(in.ki.wVk == VK_F11 && msgk->is_pressed == 0){
 						ctrlTimer->Start();
+						delayRecorder->setInputArrive();
 					}
 
-					cg::core::infoRecorder->logError("sdl replayer: vk=%x scan=%x, is press:%d\n", in.ki.wVk, in.ki.wScan, msgk->is_pressed);
+					cg::core::infoRecorder->logTrace("sdl replayer: vk=%x scan=%x, is press:%d\n", in.ki.wVk, in.ki.wScan, msgk->is_pressed);
 #ifndef USE_INTERCEPTION
 					SendInput(1, &in, sizeof(in));
 
@@ -905,7 +910,7 @@ CTRL_CLEAN:
 #endif
 				break;
 			case SDL_EVENT_MSGTYPE_MOUSEMOTION:
-				cg::core::infoRecorder->logError("sdl replayer: motion event x=%u y=%d, is relative: %s\n", msgm->mousex, msgm->mousey, msgm->relativeMouseMode !=0 ? "true" : "false");
+				cg::core::infoRecorder->logTrace("sdl replayer: motion event x=%u y=%d, is relative: %s\n", msgm->mousex, msgm->mousey, msgm->relativeMouseMode !=0 ? "true" : "false");
 				bzero(&in, sizeof(in));
 				in.type = INPUT_MOUSE;
 				// mouse x/y has to be mapped to (0,0)-(65535,65535)
@@ -927,7 +932,7 @@ CTRL_CLEAN:
 					in.mi.dy = (short) (scaleFactorY * msgm->mouseRelY);
 					in.mi.dwFlags = MOUSEEVENTF_MOVE;
 				}
-				cg::core::infoRecorder->logError("mouse (x, y):(%d, %d).\n", in.mi.dx, in.mi.dy);
+				cg::core::infoRecorder->logTrace("mouse (x, y):(%d, %d).\n", in.mi.dx, in.mi.dy);
 				SendInput(1, &in, sizeof(in));
 				break;
 			default: // do nothing
@@ -1719,7 +1724,7 @@ restart:
 			return TRUE;
 		}
 		BOOL CtrlMessagerServer::run(){
-			infoRecorder->logError("[CtrlMessagerServer]: run() called.\n");
+			infoRecorder->logTrace("[CtrlMessagerServer]: run() called.\n");
 			int rlen, msglen;
 			struct sockaddr_in csin, xsin;
 			int csinlen, xsinlen;
@@ -1728,7 +1733,7 @@ restart:
 			//
 tcp_readmore:
 			if (conf->ctrlProto == IPPROTO_TCP) {
-				infoRecorder->logError("[CtrlMessagerServer]: run(), TCP recv.\n");
+				infoRecorder->logTrace("[CtrlMessagerServer]: run(), TCP recv.\n");
 				if ((rlen = recv(sock, (char*)buf + buflen, sizeof(buf)-buflen, 0)) <= 0) {
 					infoRecorder->logTrace("[CtrlMessagerServer]: controller server-read: %s\n", strerror(errno));
 					closesocket(sock);
@@ -1739,7 +1744,7 @@ tcp_readmore:
 					rlen, buf[0], buf[1]);
 #endif
 				buflen += rlen;
-				infoRecorder->logError("[CtrlMessagerServer]: recv %d bytes.\n", rlen);
+				infoRecorder->logTrace("[CtrlMessagerServer]: recv %d bytes.\n", rlen);
 			}
 			else if (conf->ctrlProto == IPPROTO_UDP) {
 				infoRecorder->logError("[CtrlMessagerServer]: run(), UDP recv.\n");
@@ -1774,9 +1779,7 @@ tcp_again:
 				infoRecorder->logError("[CtrlMessagerServer]: controller server: WARNING - invalid message with size equal to zero!\n");
 				return TRUE;
 			}
-			else{
-				infoRecorder->logError("[CtrlMessagerServer]: controller receive msglen :%d.\n", msglen);
-			}
+			
 			// buffer checks for TCP - not sufficient?
 			if (conf->ctrlProto == IPPROTO_TCP) {
 				if (buflen < msglen) {

@@ -20,10 +20,15 @@ namespace cg{
 		}
 
 		KeyCommandHelper * keyCmdHelper = NULL;
+		static int keyCount = 0;
 
 		LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam){
 			KeyCommandHelper * keyHelper = KeyCommandHelper::GetKeyCmdHelper();
-			infoRecorder->logTrace("[Global]: key event, WPARAM: %x, LPARAM:%x.\n", wParam, lParam);
+			DelayRecorder * delayRecorder = DelayRecorder::GetDelayRecorder();
+#if 0
+			if(wParam == VK_F11)
+				infoRecorder->logError("[Global]: F11 key, WPARAM: %x, LPARAM:%x.\n", wParam, lParam);
+#endif
 			if (lParam & 0x80000000) // released
 			{
 				infoRecorder->logTrace("[Global]: key release, WPARAM: %x, LPARAM:%x.\n", wParam, lParam);
@@ -41,13 +46,19 @@ namespace cg{
 				}
 				else if (wParam == VK_F11){
 					//infoRecorder->logError("[Global]: F11 triggered. to SYN.\n");
-#if 1
-					infoRecorder->logError("[Global]: system process input time: %f.\n", getSysProcessTime());
+					keyCount++;
+					if(keyCount %2){
 
+#if 1
+					infoRecorder->logTrace("[Global]: wparam:%x, lparam:%x. system process input time: %f.\n", wParam, lParam, getSysProcessTime());
+					if(delayRecorder->isInputArrive()){
+						delayRecorder->keyTriggered();
+					}
 #endif
 					keyHelper->lock();
 					keyHelper->setSynSigin(true);
 					keyHelper->unlock();
+					}
 				}
 #if 1
 				else if(wParam == VK_F12){
