@@ -118,8 +118,10 @@ namespace cg{
 		*(pkt->data + 3) = 1;
 		// set the source id
 		*(pkt->data + 4) = ctx->getId();
+		*(pkt->data + 5) = (tags++) % 255;
 		if(specialTag && specialTagValid){
 			*(pkt->data + 4) |= 0x40;
+			*(pkt->data + 5) = valueTag;
 			
 			unsigned char tmp = *(pkt->data + 4);
 			int encodeInterval = 0;
@@ -127,7 +129,7 @@ namespace cg{
 				encodeInterval = encodeTimer->Stop();
 			//cg::core::infoRecorder->logError("[VideoWriter]: special tag is %d, mean special frame, frame idx org:%x, tagged:%x, encode time:%f.\n", specialTag, ctx->getId(), tmp, 1000.0 * encodeInterval / encodeTimer->getFreq());
 		}
-		*(pkt->data + 5) = (tags++) % 255;
+		//*(pkt->data + 5) = (tags++) % 255;
 
 		a++;
 
@@ -185,6 +187,11 @@ namespace cg{
 		ReleaseMutex(this->syncMutex);
 		ret = (int)(0.000001 * us * sampleRate);
 		return ret > 0 ? ret : 0;
+	}
+	void VideoWriter::setValueTag(unsigned char tag){
+		if(specialTagValid){
+			valueTag = tag;
+		}
 	}
 
 	void VideoWriter::setSpecialTag(unsigned char val){

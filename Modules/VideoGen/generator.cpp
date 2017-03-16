@@ -673,6 +673,9 @@ namespace cg{
 
 		return 0;
 	}
+	void VideoGen::setValueTag(unsigned char valueTag){
+
+	}
 
 	void VideoGen::setVideoSpecialTag(unsigned char tag){
 		if(writer){

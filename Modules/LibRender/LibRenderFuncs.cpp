@@ -2026,6 +2026,7 @@ extern CRITICAL_SECTION syn_sec;
 #endif
 HRESULT FakeNullInstruct(RenderChannel * rch){
 	unsigned char flag = rch->cc->read_uchar();
+	unsigned char tag = rch->cc->read_uchar();
 #if 0
 	SYSTEMTIME sys, now;
 	//GetLocalTime(&now);
@@ -2083,6 +2084,7 @@ HRESULT FakeNullInstruct(RenderChannel * rch){
 	DelayRecorder * delayRecorder = DelayRecorder::GetDelayRecorder();
 	
 	rch->specialTag = flag;
+	rch->valueTag = tag;
 	if(encodeTimer){
 		encodeTimer->Start();
 	}

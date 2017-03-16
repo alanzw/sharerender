@@ -169,8 +169,9 @@ namespace cg{
 			return true;
 		}
 		KeyCommandHelper *KeyCommandHelper::keyCmdHelper = NULL;
-		KeyCommandHelper::KeyCommandHelper():enableRender(true), synSign(false), synStart(0), f10pressed(false), keyHookHandle(NULL), renderStep(1), sendStep(1), renderStepChanged(false), bufSendingStep(1), sendingStepChanged(false), currentSending(0), maxFps(60), fpsChanged(false){
+		KeyCommandHelper::KeyCommandHelper():enableRender(true), synSign(false), synStart(0), f10pressed(false), keyHookHandle(NULL), renderStep(1), sendStep(1), renderStepChanged(false), bufSendingStep(1), sendingStepChanged(false), currentSending(0), maxFps(60), fpsChanged(false), valueTag(0){
 			InitializeCriticalSection(&section);
+			memset(name, 0, 1024);
 		}
 		KeyCommandHelper::~KeyCommandHelper(){
 			// release the hook and destroy the critical section

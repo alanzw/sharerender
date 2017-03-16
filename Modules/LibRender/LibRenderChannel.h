@@ -116,6 +116,7 @@ public:
 	int					encoderOption;   // 1 for x264, 2 for CUDA, 3 for NVENC, 4 for ADAPTIVE encoder
 
 	unsigned char		specialTag;
+	unsigned char		valueTag;
 };
 
 

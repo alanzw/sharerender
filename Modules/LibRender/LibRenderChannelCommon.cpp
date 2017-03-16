@@ -25,6 +25,7 @@ HANDLE RenderChannel::presentMutex;
 // this is for the common functions of render channel
 RenderChannel::RenderChannel(){
 	specialTag = 0;
+	valueTag = 0;
 	gD3d = NULL;
 	hWnd = NULL;
 	curDevice = NULL;
@@ -398,6 +399,9 @@ void RenderChannel::onPresent(unsigned int tags){
 		if(this->specialTag){
 			generator->setVideoSpecialTag(this->specialTag);
 			specialTag = 0;
+			generator->setValueTag(this->valueTag);
+			// set the value tag
+
 		}
 		SetEvent(generator->getPresentEvent());
 		generator->run();

@@ -298,6 +298,7 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 		keyCmdHelper->setF10Pressed(false);
 		keyCmdHelper->unlock();
 		flag |= 2;
+		
 	}
 	if (flag){
 		// send command
@@ -391,6 +392,19 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 #endif
 				return hh;
 			}
+
+
+			if(flag & 1){
+				// sync sign, to store the image
+				char name[1024] = {0};
+				
+				sprintf(name, "%s%d.bmp", keyCmdHelper->getPrefix(), 0);
+				if(FAILED(D3DXSaveSurfaceToFileA(name, D3DXIMAGE_FILEFORMAT::D3DXIFF_BMP, rts, NULL, NULL)){
+					infoRecorder->logError("[D3DDevice]: save render target to file");
+				}
+			}
+
+
 			if(FAILED(rts->GetDesc(&sdesc))){
 #ifdef ENBALE_DEVICE_LOG
 				infoRecorder->logError("[D3DDevice]: get render target failed.\n");

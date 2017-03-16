@@ -17,6 +17,9 @@ namespace cg{
 
 		*/
 		class KeyCommandHelper{
+			char				name[1024];
+			unsigned char		valueTag;
+
 			bool				synSign;
 			DWORD				synStart;
 			bool				f10pressed;
@@ -51,6 +54,9 @@ namespace cg{
 
 			// install keyboard hook for given thread
 			bool installKeyHook(DWORD threadId);
+
+			void setName(char *_name){ sprintf(name,"%s/%s-share-", _name, _name);}
+			char * getPrefix(){ return name; }
 
 			// commit each frame
 			bool commit();
