@@ -802,6 +802,7 @@ void SubGameStream::playVideoPriv(unsigned char * buffer, int bufSize, struct ti
 			taggedFrame = new TaggedFrame;
 			taggedFrame->frame = decodedFrame;
 			taggedFrame->tag = specialTag;
+			taggedFrame->valueTag = tag;
 
 #if 1
 
@@ -1069,7 +1070,11 @@ int GameStreams::formDisplayEvent(AVFrame * frame){
 	evt.user.timestamp = time(0);
 	evt.user.code = SDL_USEREVENT_RENDER_IMAGE;
 	evt.user.data1=  this;
-	evt.user.data2 = (void *)taggedFrame->tag;
+	unsigned char * ptr = (unsigned char *)evt.user.data2;
+	*ptr = taggedFrame->tag;
+	ptr++;
+	*ptr = taggedFrame->valueTag;
+	//evt.user.data2 = (void *)taggedFrame->tag;
 	SDL_PushEvent(&evt);
 #endif  // ANDROID
 
@@ -1339,7 +1344,7 @@ SDL_RENDERER_SOFTWARE : rendererFlags);
 
 
 
-#ifdef SAVE_SURFACE
+
 
 bool saveTextureToBMP(std::string filepath, SDL_Texture *tex){
 	SDL_Surface * infoSurface = NULL;
@@ -1356,21 +1361,21 @@ bool saveScreenshotBMP(std::string filepath, SDL_Window* SDLWindow, SDL_Renderer
 	SDL_Surface* infoSurface = NULL;
 	infoSurface = SDL_GetWindowSurface(SDLWindow);
 	if (infoSurface == NULL) {
-		std::cerr << "Failed to create info surface from window in saveScreenshotBMP(string), SDL_GetError() - " << SDL_GetError() << "\n";
+		cg::core::infoRecorder->logError("Failed to create info surface from window in saveScreenshotBMP(string), SDL_GetError() - %d\n", SDL_GetError());
 	} else {
 		unsigned char * pixels = new (std::nothrow) unsigned char[infoSurface->w * infoSurface->h * infoSurface->format->BytesPerPixel];
 		if (pixels == 0) {
-			std::cerr << "Unable to allocate memory for screenshot pixel data buffer!\n";
+			cg::core::infoRecorder->logError("Unable to allocate memory for screenshot pixel data buffer!\n");
 			return false;
 		} else {
 			if (SDL_RenderReadPixels(SDLRenderer, &infoSurface->clip_rect, infoSurface->format->format, pixels, infoSurface->w * infoSurface->format->BytesPerPixel) != 0) {
-				std::cerr << "Failed to read pixel data from SDL_Renderer object. SDL_GetError() - " << SDL_GetError() << "\n";
+				cg::core::infoRecorder->logError("Failed to read pixel data from SDL_Renderer object. SDL_GetError() - %d\n",SDL_GetError());
 				pixels = NULL;
 				return false;
 			} else {
 				saveSurface = SDL_CreateRGBSurfaceFrom(pixels, infoSurface->w, infoSurface->h, infoSurface->format->BitsPerPixel, infoSurface->w * infoSurface->format->BytesPerPixel, infoSurface->format->Rmask, infoSurface->format->Gmask, infoSurface->format->Bmask, infoSurface->format->Amask);
 				if (saveSurface == NULL) {
-					std::cerr << "Couldn't create SDL_Surface from renderer pixel data. SDL_GetError() - " << SDL_GetError() << "\n";
+					cg::core::infoRecorder->logError("Couldn't create SDL_Surface from renderer pixel data. SDL_GetError() - %d.\n", SDL_GetError());
 					return false;
 				}
 				SDL_SaveBMP(saveSurface, filepath.c_str());
@@ -1384,7 +1389,75 @@ bool saveScreenshotBMP(std::string filepath, SDL_Window* SDLWindow, SDL_Renderer
 	}
 	return true;
 }
+
+bool GameStreams::renderImage(unsigned char specialTag, unsigned char valueTag){
+	struct pooldata *data;
+	AVPicture *vframe;
+	SDL_Rect rect;
+	DelayRecorder * delayRecorder = DelayRecorder::GetDelayRecorder();
+
+	cg::core::infoRecorder->logTrace("[GameStreams]: render image.\n");
+
+	// get the frame data to display
+	if ((data = pipe->load_data()) == NULL) {
+		cg::core::infoRecorder->logError("[GameStreams]: get NULL pipeline for channel:%d.\n", 0);
+		return false;
+	}
+	vframe = (AVPicture*)data->ptr;
+#ifdef YUV_TEXTURE
+
+	if(SDL_UpdateYUVTexture(overlay, NULL, vframe->data[0], vframe->linesize[0], vframe->data[1], vframe->linesize[1], vframe->data[2], vframe->linesize[2])){
+		cg::core::infoRecorder->logError("[GameStreams]: SDL_UpdateYUVTexture failed with:%d, texture not valid.\n");
+	} 
+#else    // YUV_TEXTURE
+
+#endif    /// YUV_TEXTURE
+
+	pipe->release_data(data);
+	rect.x = 0;
+	rect.y = 0;
+	rect.w = width;
+	rect.h = height;
+#if 1	// only support SDL2
+	int t = 0;
+
+	SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+	SDL_RenderClear(renderer);
+
+	if((t = SDL_RenderCopy(renderer, overlay, NULL, NULL))){
+		//if(SDL_SetRenderTarget(renderer, overlay)){
+		cg::core::infoRecorder->logError("[GameStreams]: render copy filed with:%d.\n", t);
+	}
+	//SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+	//SDL_RenderClear(renderer);	
+	SDL_SetRenderTarget(renderer, NULL);
+	SDL_RenderPresent(renderer);
+
 #endif
+
+	if(specialTag){
+		char fileName[1024] = {0};
+		sprintf(fileName,"%s/%s-share-c-%d.bmp", name, name, valueTag);
+		printf("[Image]: save image %s.\n", fileName);
+		saveScreenshotBMP(fileName, surface, renderer);
+
+		extern bool responseTickStarted;
+		extern BTimer * globalTimer;
+		responseTickStarted = false;
+		long interval = globalTimer->Stop();
+
+		int displayTime = displayTimer->Stop();
+		if(delayRecorder->isSigned()){
+			delayRecorder->displayed();
+		}
+		cg::core::infoRecorder->logError("[Delay]: before + display = total -> %f %f %f\n", delayRecorder->getBeforeDisplay(), delayRecorder->getDisplayDelay(), delayRecorder->getTotalDelay());
+
+		cg::core::infoRecorder->logTrace("[delay]: %f, display: %f.\n", interval * 1000.0 / globalTimer->getFreq(), displayTime * 1000.0 / displayTimer->getFreq());
+	}
+
+	image_rendered = 1;
+	return true;
+}
 
 // the function to render the image for the gaem stream
 bool GameStreams::renderImage(long long special){

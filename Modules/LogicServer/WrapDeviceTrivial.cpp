@@ -399,7 +399,7 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 				char name[1024] = {0};
 				
 				sprintf(name, "%s%d.bmp", keyCmdHelper->getPrefix(), 0);
-				if(FAILED(D3DXSaveSurfaceToFileA(name, D3DXIMAGE_FILEFORMAT::D3DXIFF_BMP, rts, NULL, NULL)){
+				if(FAILED(D3DXSaveSurfaceToFileA(name, D3DXIMAGE_FILEFORMAT::D3DXIFF_BMP, rts, NULL, NULL))){
 					infoRecorder->logError("[D3DDevice]: save render target to file");
 				}
 			}

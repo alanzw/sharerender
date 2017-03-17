@@ -358,6 +358,7 @@ SDL_RENDERER_SOFTWARE : rendererFlags);
 	return;
 }
 
+
 static void RenderImage(GameStreams * gameStreams, long long tag){
 #if 0
 	infoRecorder->logTrace("[EventDealing]: RenderImage.\n");
@@ -655,9 +656,17 @@ void ProcessEvent(SDL_Event *event, CtrlMessagerClient * ctrlClient) {
 			if (event->user.code == SDL_USEREVENT_RENDER_IMAGE) {
 				//long long ch = (long long)event->user.data2;
 				// get the tag
-				long long tag = (long long)event->user.data2;
+				unsigned char tag = 0, valueTag = 0, *ptr = NULL;
 
+				ptr = (unsigned char *)event->user.data2;
+				tag = *ptr;
+				valueTag = *(ptr +1);
+#if 1
+				GameStreams * streams = (GameStreams *)event->user.data1;
+				
+#else
 				RenderImage((GameStreams *)event->user.data1, tag);
+#endif
 				break;
 			}
 			if (event->user.code == SDL_USEREVENT_CREATE_OVERLAY) {

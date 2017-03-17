@@ -16,7 +16,9 @@
 using namespace std;
 using namespace cg;
 using namespace cg::core;
-#define ENABLE_CLIENT_CONTROL
+//#define ENABLE_CLIENT_CONTROL
+
+
 #pragma comment(lib, "nvapi.lib")
 #pragma comment(lib, "d3d9.lib")
 
@@ -289,6 +291,7 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 			if(keyCmdHelper == NULL){
 				// install keyboard hook
 				keyCmdHelper = cg::core::KeyCommandHelper::GetKeyCmdHelper();
+				keyCmdHelper->setName(exeName);
 				keyCmdHelper->setSendStep(cmdCtrl->getSendStep());
 				keyCmdHelper->installKeyHook(GetCurrentThreadId());
 			}
@@ -392,13 +395,7 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 
 #else  // no clients
 			
-			
 #endif  // no clients
-			//SetKeyboardHook(NULL, GetCurrentThreadId());
-			
-			// create the input server thread
-			//InitializeCriticalSection(&f9);
-
 
 			first = 0;
 			infoRecorder->logTrace("[DllMain]: finish dll main.\n");

@@ -123,6 +123,7 @@ struct DecoderBuffer{
 struct TaggedFrame{
 	AVFrame * frame;  // the decoded frame data
 	unsigned char tag;   // the tag to represent the frame is special.
+	unsigned char valueTag; 
 };
 #endif
 
@@ -494,6 +495,7 @@ public:
 	bool			declineRenders(char * cmd);
 	bool			createOverlay();
 	bool			renderImage(long long special);
+	bool			renderImage(unsigned char specialTag, unsigned char valueTag);
 
 	HANDLE mutex;
 	char * name;
