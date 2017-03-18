@@ -955,12 +955,21 @@ int main(int argc, char * argv[]){
 	gameStreams->init();
 	gameStreams->setRunning(true);
 	gameStreams->name = _strdup(gameName);
-	gameStreams->setDisUrl(rtspConf->getDisUrl());
 	free(gameName);
 
+#if 0   // request the distributor
+	gameStreams->setDisUrl(rtspConf->getDisUrl());
+	
 	// create a thread to deal with network event
 	DWORD netThreadId = 0;
 	HANDLE netThread = chBEGINTHREADEX(NULL, 0, NetworkThreadProc, gameStreams, FALSE, &netThreadId);
+#else
+	// request the render proxy directly
+	// get the render proxy's url and port
+	UserClient * userClient = new UserClient();
+	userClient->startRTSP(NULL, 8554);
+
+#endif
 
 	// main thread to deal the SDL event
 	while(gameStreams->isRunning()){

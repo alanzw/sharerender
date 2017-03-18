@@ -414,6 +414,7 @@ public:
 		return streams;
 
 	}
+	// used when distributor is enabled
 	inline void		setDisUrl(char * url){ disUrl = _strdup(url); }
 	inline char *	getDisUrl(){ return disUrl; }
 
