@@ -472,6 +472,7 @@ readmore:
 			if (rBuffer == NULL) {
 				rBufSize = 65536;
 				if ((rBuffer = (char*)malloc(rBufSize)) == NULL) {
+					infoRecorder->logError("[RTSPContext]: malloc buffer failed.\n");
 					rBufSize = 0;
 					return -1;
 				}
@@ -480,8 +481,10 @@ readmore:
 			}
 			// buffer is empty, force read
 			if (rBufTail == rBufHead) {
-				if (rtspReadInternal() < 0)
+				if (rtspReadInternal() < 0){
+					infoRecorder->logError("[RTSPContext]: read internal failed.\n");
 					return -1;
+				}
 			}
 			// buffer is not empty
 			if (rBuffer[rBufHead] != '$') {

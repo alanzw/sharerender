@@ -4,7 +4,7 @@
 #include "../LibCore/CmdHelper.h"
 
 // this define will disable update worker thread
-//#define SINGLE_CONTEXT
+
 //#define ENABLE_SET_LOCK
 
 //#define ENABLE_SET_LOG		// log for command server set
@@ -573,7 +573,7 @@ int ContextManager::addCtx(ContextAndCache * _ctx){
 	infoRecorder->logError("[ContextManager]: add ctx:%p to ctx buffer.\n", _ctx);
 #ifndef ENABLE_HOT_PLUG
 	if(_ctx_cache){
-		// when exist at least one context, the new one should add to init
+		// when exist at lea.st one context, the new one should add to init
 		ctx_init.add(_ctx);
 	}
 	else{
@@ -589,9 +589,10 @@ int ContextManager::addCtx(ContextAndCache * _ctx){
 	infoRecorder->logTrace("[ContextManager]: after add ctx to init array, current ctx: %p.\n", this->_ctx_cache);
 	//ctx_init.add(_ctx);
 	ctx_buff.add(_ctx);			// insert to buffer
-#endif
 	ctxCount ++;
 	_ctx->checkFlags();
+#endif
+	
 	_ctx->preperationStart();
 #ifndef SINGLE_CONTEXT
 	// start the queue thread

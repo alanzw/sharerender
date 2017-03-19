@@ -167,6 +167,7 @@ namespace cg{
 		bool CmdController::commitRender(){
 
 #ifdef SERVER_SAVE_BMP  
+			enableToRender = true;
 			return true;
 #endif
 

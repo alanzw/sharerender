@@ -68,6 +68,7 @@ bool UserClient::startRTSP(char * url, int port){
 		infoRecorder->logTrace("[Client]: rtsp index:%d, url:%s, port:%d, name:%s.\n", rtspCount, url, port, gameName);
 		
 		sprintf(rtspUrl, "rtsp://%s:%d/%s", url, port, gameName);
+		printf("[Client]: request url: %s.", rtspUrl);
 		SubGameStream * subStream = new SubGameStream(rtspUrl);
 		gameStream->addSubStream(subStream);
 

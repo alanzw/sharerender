@@ -122,7 +122,8 @@ void cleanup(){
 enum RENDERMODE{
 	DIS_MODE,
 	REQ_LOADER,
-	REQ_PROCESS
+	REQ_PROCESS,
+	TEST_PSNR
 };
 
 void printHelp(){
@@ -267,6 +268,33 @@ bool dealCmd(int argc, char ** argv){
 			ch->taskId = 0;
 			if(encoderOption != -1)
 				ch->setEncoderOption(encoderOption);
+
+			if(!ch->initRenderChannel(0, requestName, socketForCmd)){
+				infoRecorder->logError("[Main]: create render channel failed.\n");
+				break;
+			}
+			// do the rendering 
+			ch->startChannelThread();
+			//wait the render channel to exit
+			WaitForSingleObject(ch->channelThreadHandle, INFINITE);
+		}
+		break;
+	case TEST_PSNR:
+		{
+			socketForCmd = connectToGraphic(url, requestPort);
+			ch = new RenderChannel();
+
+			ch->rtspObject = _strdup(requestName);
+			ch->taskId = 0;
+			if(encoderOption != -1)
+				ch->setEncoderOption(encoderOption);
+
+			/// send start task cmd
+			//strcpy(cmd, START_GAME);
+			//strcat(cmd, "+");
+			strcat(cmd, requestName);
+			printf("[RenderProxy]: send cmd '%s'.\n", cmd);
+			n = send(socketForCmd, cmd, strlen(cmd), 0);
 
 			if(!ch->initRenderChannel(0, requestName, socketForCmd)){
 				infoRecorder->logError("[Main]: create render channel failed.\n");

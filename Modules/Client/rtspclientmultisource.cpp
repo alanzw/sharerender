@@ -218,7 +218,7 @@ SubGameStream::SubGameStream(char * url){
 	char rtspUrl[100] = {0};
 	if(url[0] == 'r' || url[0] == 'R'){
 		// the url is a rtps url
-		this->url = strdup(url);
+		this->url = _strdup(url);
 	}
 	else{
 		// form the rtsp url

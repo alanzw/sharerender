@@ -495,7 +495,7 @@ int WrapperDirect3DVertexBuffer9::UpdateVertexBuffer(ContextAndCache * ctx){
 	int updatedSize = m_LockData.updatedSize;
 
 	m_LockData.updateClear();
-#if 0
+#if 1
 	//if(updatedSize > Length / 3){
 		ctx->beginCommand(VertexBufferUnlock_Opcode, getId());
 		ctx->write_uint(base);

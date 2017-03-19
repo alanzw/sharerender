@@ -14,7 +14,7 @@ evutil_socket_t connectToGraphic(char * url, int port){
 	sin.sin_addr.s_addr = inet_addr(url);
 	sin.sin_port = htons(port);
 
-	sock = socket(AF_INET, SOCK_STREAM, 0);
+	sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
 	if(connect(sock, (sockaddr *)&sin, sizeof(sin)) == SOCKET_ERROR){
 		infoRecorder->logError("[Global]: connect to graphic server failed with %d.\n", WSAGetLastError());

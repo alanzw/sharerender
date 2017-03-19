@@ -21,7 +21,8 @@ using namespace cg::core;
 // define the hot plug, this definition will enable logic server to hot plug render proxy anytime
 
 // HOT_PLUG means add render proxy whenever needed
-#define ENABLE_HOT_PLUG
+//#define ENABLE_HOT_PLUG
+#define SINGLE_CONTEXT
 
 // context lock will lock the context when needed.
 //#define _CONTEXT_LOCK_

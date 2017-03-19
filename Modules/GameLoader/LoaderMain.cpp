@@ -20,6 +20,7 @@ DWORD WINAPI TestRequestFromRenderProxy(LPVOID param){
 	char buf[1024] = {0};
 	SOCKET sock = (SOCKET)param;
 
+
 	GameLoader * loader = GameLoader::GetLoader();
 	// the args is 
 	DWORD processId = GetCurrentProcessId();
@@ -44,6 +45,9 @@ static void WaitRenderProxy(int port){
 	sin.sin_addr.S_un.S_addr = htonl(0);
 	sin.sin_port = htons(port);
 
+	GameLoader * loader = GameLoader::GetLoader();
+	DWORD processId = GetCurrentProcessId();
+
 	SOCKET listenSock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
 	if(bind(listenSock, (struct sockaddr *)&sin, sizeof(sin)) < 0){
@@ -59,10 +63,12 @@ static void WaitRenderProxy(int port){
 	HANDLE process[100] = {NULL};
 	int processCount = 0;
 	DWORD threadId = 0;
-
+	char args[1024] = {0};
+	char buf[1024] = {0};
 
 	while(1){
-		sock = accept(NULL, (sockaddr *)&clientSin, &sinSize);
+		printf("[WaitRenderProxy]: listen port:%d, accept ...\n", port);
+		sock = accept(listenSock, (sockaddr *)&clientSin, &sinSize);
 		if(sock < 0){
 			printf("[WaitRenderProxy]: accept failed.\n");
 			return;
@@ -71,7 +77,15 @@ static void WaitRenderProxy(int port){
 			printf("[WaitRenderProxy]: a render has connected.\n");
 		}
 
-		process[processCount++] = chBEGINTHREADEX(NULL, 0, TestRequestFromRenderProxy, (void *)sock, FALSE, &threadId);
+		int len =  recv(sock, buf, 1024, 0);
+		if(len > 0){
+			printf("To start game: %s.\n", buf);
+		}
+		sprintf(args, " -m 0 -a %d -p %d", sock, processId);
+
+		HANDLE gameProcess = loader->loadGame(buf, args);
+
+		process[processCount++] = gameProcess;
 	}
 
 	DWORD ret = WaitForMultipleObjects(processCount, process, TRUE, INFINITE);
@@ -116,10 +130,6 @@ static void dealCmd(int argc, char **argv){
 			// game map
 			strcpy(gameMapFile, argv[i + 1]);
 			useMap = true;
-			strcat(args, " ");
-			strcat(args, argv[i]);
-			strcat(args, " ");
-			strcat(args, argv[i+1]);
 		}
 		else if(!strcmp(argv[i], "-d") || !strcmp(argv[i], "-D")){
 			// use dll name
@@ -239,9 +249,8 @@ int main(int argc, char ** argv){
 
 #else
 
-	return dealCmd(argc, argv); 
-
-
+	dealCmd(argc, argv); 
+	return 0;
 
 	char * args = (char *)malloc(sizeof(char) * 1024);
 	char gameMapFile[50] = {0};

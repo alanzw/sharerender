@@ -963,8 +963,9 @@ int main(int argc, char * argv[]){
 	// request the render proxy directly
 	// get the render proxy's url and port
 	UserClient * userClient = new UserClient();
-	userClient->setName(gameName);
-	userClient->startRTSP(rtspConf->getDisUrl(), rtspConf->serverPort);
+	userClient->setName(gameStreams->name);
+	//userClient->startRTSP(rtspConf->getDisUrl(), rtspConf->serverPort);
+	userClient->startRTSP(argv[3], rtspConf->serverPort);
 
 #endif
 
