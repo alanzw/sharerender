@@ -69,7 +69,6 @@ bool UserClient::startRTSP(char * url, int port){
 		
 		sprintf(rtspUrl, "rtsp://%s:%d/%s", url, port, gameName);
 		SubGameStream * subStream = new SubGameStream(rtspUrl);
-		
 		gameStream->addSubStream(subStream);
 
 		DWORD tid = 0;
@@ -263,7 +262,7 @@ void clientErrorCB(struct bufferevent * bev, short what, void * arg){
 DWORD WINAPI NetworkThreadProc(LPVOID param){
 	// connect to dis
 	GameStreams * streams = (GameStreams *)param;
-	infoRecorder->logTrace("[NetWorkProc]: gameStreams: %p.\n", streams);
+	infoRecorder->logTrace("[NetWorkProc]: gameStreams: %p, game name:%s.\n", streams, streams->name);
 	char * gameName = streams->name;
 	UserClient * client = new UserClient();
 
@@ -279,6 +278,19 @@ DWORD WINAPI NetworkThreadProc(LPVOID param){
 	client->setEventBase(base);
 	client->launchRequest(streams->getDisUrl(), disPort, gameName);
 	client->dispatch();
+	return 0;
+}
+DWORD WINAPI UserClientThreadProc(LPVOID param){
+	GameStreams * streams = (GameStreams *)param;
+	char * gameName = streams->name;
+	UserClient * client = new UserClient();
+	struct RTSPConf * rtspConf = RTSPConf::GetRTSPConf();
+
+	client->setName(gameName);
+	event_base *base = event_base_new();
+	client->setEventBase(base);
+	client->startRTSP(rtspConf->getDisUrl(), rtspConf->serverPort);
+
 	return 0;
 }
 

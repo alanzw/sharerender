@@ -120,4 +120,14 @@ public:
 };
 
 
+
+#define DIRECT_PROXY_RTSP
+
+#ifdef DIRECT_PROXY_RTSP
+DWORD WINAPI DirectRTSPServerThread(LPVOID param);
+
+void StartDirectThread(void * param);
+
+#endif // DIRECT_PROXY_RTSP
+
 #endif   // __LIBRENDERCHANNEL_H__

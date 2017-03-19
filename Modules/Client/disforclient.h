@@ -145,6 +145,9 @@ public:
 };
 
 DWORD WINAPI NetworkThreadProc(LPVOID param);
+
+/// used only by direct request rtsp from render proxy
+DWORD WINAPI UserClientThreadProc(LPVOID param);  
 #if 0
 // callback function for client network
 void onBufferEventEvent(struct bufferevent * bev, short events, void * ctx);

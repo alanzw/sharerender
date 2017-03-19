@@ -182,7 +182,6 @@ namespace cg{
 			sdlmsg_keyboard(sdlmsg_t *msg, unsigned char pressed, unsigned short scancode, SDL_Keycode key, unsigned short mod, unsigned int unicode)
 		{
 			sdlmsg_keyboard_t *msgk = (sdlmsg_keyboard_t*) msg;
-			//ga_error("sdl client: key event code=%x key=%x mod=%x pressed=%u\n", scancode, key, mod, pressed);
 			bzero(msg, sizeof(sdlmsg_keyboard_t));
 			msgk->msgsize = htons(sizeof(sdlmsg_keyboard_t));
 			msgk->msgtype = SDL_EVENT_MSGTYPE_KEYBOARD;
@@ -199,7 +198,6 @@ namespace cg{
 		sdlmsg_t *
 			sdlmsg_mousekey(sdlmsg_t *msg, unsigned char pressed, unsigned char button, unsigned short x, unsigned short y) {
 				sdlmsg_mouse_t *msgm = (sdlmsg_mouse_t*) msg;
-				//ga_error("sdl client: button event btn=%u pressed=%u\n", button, pressed);
 				bzero(msg, sizeof(sdlmsg_mouse_t));
 				msgm->msgsize = htons(sizeof(sdlmsg_mouse_t));
 				msgm->msgtype = SDL_EVENT_MSGTYPE_MOUSEKEY;

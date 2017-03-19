@@ -863,10 +863,7 @@ void TestRTSPFiles(){
 
 // the main function for multi-soruces game client, event based
 int main(int argc, char * argv[]){
-#if 0
-	TestRTSPFiles();
-	return 0;
-#endif
+
 	DelayRecorder * delayRecorder = DelayRecorder::GetDelayRecorder();
 
 	if(infoRecorder == NULL){
@@ -898,7 +895,7 @@ int main(int argc, char * argv[]){
 	atexit(SDL_Quit);
 #ifdef INCLUDE_DISTRIBUTOR
 	if (argc < 3) {
-		rtsperror("usage: %s config url [game name]\n", argv[0]);
+		rtsperror("usage: %s [config] [url] [game name]\n", argv[0]);
 		return -1;
 	}
 #endif  // INCLUDE_DISTRIBUTOR
@@ -959,7 +956,6 @@ int main(int argc, char * argv[]){
 
 #if 0   // request the distributor
 	gameStreams->setDisUrl(rtspConf->getDisUrl());
-	
 	// create a thread to deal with network event
 	DWORD netThreadId = 0;
 	HANDLE netThread = chBEGINTHREADEX(NULL, 0, NetworkThreadProc, gameStreams, FALSE, &netThreadId);
@@ -967,7 +963,8 @@ int main(int argc, char * argv[]){
 	// request the render proxy directly
 	// get the render proxy's url and port
 	UserClient * userClient = new UserClient();
-	userClient->startRTSP(NULL, 8554);
+	userClient->setName(gameName);
+	userClient->startRTSP(rtspConf->getDisUrl(), rtspConf->serverPort);
 
 #endif
 

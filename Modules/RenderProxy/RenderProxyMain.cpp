@@ -149,7 +149,7 @@ bool dealCmd(int argc, char ** argv){
 	char * rtspConfFile = NULL;
 	
 	for(int i = 0; i < argc; i++){
-		if(!strcmp(argv[i], "-v") || ! strcmp(argv[1], "-V")){
+		if(!strcmp(argv[i], "-v") || ! strcmp(argv[i], "-V")){
 			// the rtsp port
 			rtspPort = atoi(argv[i+1]);
 		}
@@ -190,6 +190,9 @@ bool dealCmd(int argc, char ** argv){
 	cg::RTSPConf *rtspConf = NULL;
 	if(rtspConfFile){
 		rtspConf= cg::RTSPConf::GetRTSPConf(rtspConfFile);
+	}
+	else{
+		rtspConf = cg::RTSPConf::GetRTSPConf("config/server.render.conf");
 	}
 
 	// build the render proxy with given arguments
@@ -304,96 +307,6 @@ int main(int argc, char ** argv){
 	atexit(cleanup);
 	// init the function table
 	init_fptable();
-#if 0
-	// no other argv, work in distributed mode
-	if(argc == 1){
-
-		RenderProxy * proxy = NULL;
-		proxy = RenderProxy::GetProxy();
-		event_base * base = event_base_new();
-		proxy->setEventBase(base);
-
-		proxy->start();
-
-		// start to listen to RTSP port
-		//proxy->listenRTSP();
-		proxy->dispatch();
-	}else if(argc == 2){
-		// specify the dis server url in argv[1]
-		RenderProxy * proxy = NULL;
-		proxy = RenderProxy::GetProxy();
-		event_base * base = event_base_new();
-		proxy->setEventBase(base);
-		proxy->start(argv[1]);
-		proxy->dispatch();
-	}else if(argc == 3){
-		// specify the dis server url in argv[1], the encoder option in argv[2]
-		RenderProxy *proxy = NULL;
-		proxy = RenderProxy::GetProxy();
-		event_base * base = event_base_new();
-		proxy->setEventBase(base);
-		proxy->setEncodeOption(atoi(argv[2]));
-		proxy->start(argv[1]);
-		proxy->dispatch();
-	}else if(argc == 4){
-		// argv: RenderProxy [logic url] [name] [encode option]
-		char * url  = argv[1];
-		char * object = argv[2];
-		int encodeOption = atoi(argv[3]);
-
-		evutil_socket_t socketForCmd = connectToGraphic(url, 60000);
-		RenderChannel *ch = new RenderChannel();
-
-		ch->rtspObject = _strdup(object);
-		ch->taskId = 0;
-		ch->setEncoderOption(encodeOption);
-
-		/// send start task cmd
-		char cmd[1024] = {0};
-		strcpy(cmd, START_GAME);
-		strcat(cmd, "+");
-		strcat(cmd, object);
-		printf("[RenderProxy]: send cmd '%s'\n.", cmd);
-		int n = send(socketForCmd, cmd, strlen(cmd), 0);
-
-		if(!ch->initRenderChannel(0, object, socketForCmd)){
-			infoRecorder->logError("[Main]: create render channel failed.\n");
-			return -1;
-		}
-		// do the rendering 
-		ch->startChannelThread();
-		//wait the render channel to exit
-		WaitForSingleObject(ch->channelThreadHandle, INFINITE);
-
-	}
-	else if(argc == 6){
-		// argv: RenderProxy [url] [port] [GameName] [enable rtsp] [rtspPort]
-		char * url = argv[1];
-		int port = atoi(argv[2]);
-		char * gameName = argv[3];
-		int enableRTSP = atoi(argv[4]);
-		int rtspServerPort = atoi(argv[5]);
-
-		// single render mode
-		evutil_socket_t sockForCmd = NULL;
-		sockForCmd = connectToGraphic(url, port);
-		// create the connection
-		RenderChannel * ch = new RenderChannel();
-		ch->rtspObject = _strdup(gameName);
-		if(!ch->initRenderChannel(0, gameName, sockForCmd)){
-			infoRecorder->logError("[Main]: create render channel failed.\n");
-			return -1;
-		}
-		// do the rendering
-		ch->startChannelThread();
-		// wait the render channel to exit
-		WaitForSingleObject(ch->channelThreadHandle, INFINITE);
-	}else{
-		printf("[Usage:\n");
-		printf("RenderProxy\tWork in distributed mode.\n");
-		printf("RenderProxy [url] [port] [GameName] [enableRtsp]\tWork in single render mode.\n");
-	}
-#else
 
 #if 0
 	int t_argc = 11;
@@ -415,7 +328,6 @@ int main(int argc, char ** argv){
 #else
 
 	dealCmd(argc, argv);
-#endif
 #endif
 	return 0;
 }

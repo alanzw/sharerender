@@ -393,6 +393,7 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 				return hh;
 			}
 
+#ifdef SERVER_SAVE_BMP
 
 			if(flag & 1){
 				// sync sign, to store the image
@@ -403,6 +404,7 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 					infoRecorder->logError("[D3DDevice]: save render target to file");
 				}
 			}
+#endif
 
 
 			if(FAILED(rts->GetDesc(&sdesc))){

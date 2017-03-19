@@ -291,7 +291,7 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 			if(keyCmdHelper == NULL){
 				// install keyboard hook
 				keyCmdHelper = cg::core::KeyCommandHelper::GetKeyCmdHelper();
-				keyCmdHelper->setName(exeName);
+				keyCmdHelper->setName((char *)exeName.c_str());
 				keyCmdHelper->setSendStep(cmdCtrl->getSendStep());
 				keyCmdHelper->installKeyHook(GetCurrentThreadId());
 			}
@@ -353,6 +353,10 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 					// listen to render proxy, to listen 70000 port
 					infoRecorder->logTrace("[DllMain]: to create server for render proxy.\n");
 					clientThreadHandle = chBEGINTHREADEX(NULL, 0, RenderConnectionLitener, cmdCtrl, FALSE, &clientThreadId);
+				}
+				else if(cmdCtrl->getMode() == 3){
+					// test mode, render every frame and render proxy reqeust logic server directly
+
 				}
 				else{
 					infoRecorder->logError("[DllMain]: invalid listen mode:%d.\n", cmdCtrl->getMode());

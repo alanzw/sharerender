@@ -390,6 +390,13 @@ void RenderChannel::onPresent(unsigned int tags){
 
 		generator->onThreadStart();
 		VideoGen::addMap((IDENTIFIER )taskId, generator);
+
+#ifdef DIRECT_PROXY_RTSP
+		// if directly request the rtsp from render proxy, start the thread
+
+		StartDirectThread(generator->getContext());
+
+#endif
 	}
 	else{
 		//cg::core::infoRecorder->logError("on present: generator inited: %p.\n", generator);
@@ -410,3 +417,29 @@ void RenderChannel::onPresent(unsigned int tags){
 	cg::core::infoRecorder->onFrameEnd();
 #endif
 }
+
+#ifdef DIRECT_PROXY_RTSP
+
+// the rtsp server thread when client direct request rtsp from render proxy, int heis mode, there's not distributor, render proxy request the logic server first and then the client request the render proxy
+DWORD WINAPI DirectRTSPServerThread(LPVOID param){
+	// parameter is RTSPContext
+	RTSPContext * rtspCtx = (RTSPContext *)param;
+	RTSPConf * rtspConf = RTSPConf::GetRTSPConf();
+
+	// create the vent base
+	event_base * base = event_base_new();
+	evconnlistener * dirctListener = listenPort(rtspConf->getRTSPPort(), base, rtspCtx);
+
+	event_base_dispatch(base);
+	return 0;
+}
+
+DWORD directThreadID =0;
+HANDLE directThreadHandle = NULL;
+
+void StartDirectThread(void * param){
+
+	directThreadHandle = chBEGINTHREADEX(NULL, 0 , DirectRTSPServerThread, param, FALSE, &directThreadID);
+}
+
+#endif
