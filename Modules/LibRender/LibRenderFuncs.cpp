@@ -1185,12 +1185,10 @@ HRESULT FakedSetPixelShaderConstantB(RenderChannel * rch) {
 //extern SmallHash<HWND, HWND> serverToClient;
 
 HRESULT FakedReset(RenderChannel * rch) {
-	cg::core::infoRecorder->logTrace("FakedReset, ");
-
+	cg::core::infoRecorder->logTrace("FakedReset(), ");
 
 	D3DPRESENT_PARAMETERS t_d3dpp;
 	rch->cc->read_byte_arr((char*)(&t_d3dpp), sizeof(t_d3dpp));
-
 	rch->getDevice(rch->obj_id);
 
 	// correct the window handle
@@ -1198,11 +1196,13 @@ HRESULT FakedReset(RenderChannel * rch) {
 	HWND mappedHwnd = NULL;
 	if((mappedHwnd = serverToClient.getValue(serverHwnd)) == NULL){
 		
-		cg::core::infoRecorder->logError("invalid reset window handle.\n");
+		cg::core::infoRecorder->logError("invalid reset window handle.");
 	}
 	else{
 		t_d3dpp.hDeviceWindow = mappedHwnd;
 	}
+	cg::core::infoRecorder->logError("\n");
+	//return D3D_OK;
 	return rch->curDevice->Reset(&t_d3dpp);
 }
 
@@ -1726,7 +1726,7 @@ HRESULT FakedSetRenderTarget(RenderChannel * rch) {
 	if(!surface){
 		cg::core::infoRecorder->logTrace("FakedSetRenderTarget(%d, %d), get NULL surface, id:%d.\n ", RenderTargetIndex, sfid, sfid);
 	}else{
-		cg::core::infoRecorder->logTrace("FakedSetRenderTarget(%d, %d), use surface:%d.\n", RenderTargetIndex, sfid,sfid);
+		cg::core::infoRecorder->logError("FakedSetRenderTarget(%d, %d), use surface:%d.\n", RenderTargetIndex, sfid,sfid);
 		return rch->curDevice->SetRenderTarget(RenderTargetIndex, surface->GetSurface9());
 	}
 
@@ -2092,7 +2092,7 @@ HRESULT FakeNullInstruct(RenderChannel * rch){
 		encodeTimer = new PTimer();
 	}
 	if(flag){
-		infoRecorder->logTrace("NullInstruction, get special tag: %d.\n", flag);
+		infoRecorder->logError("NullInstruction, get special tag: %d, value tag:%d.\n", flag, tag);
 		delayRecorder->startEndcode();
 
 	}
@@ -2133,6 +2133,23 @@ HRESULT FakedD3DDSetStreamSourceFreq(RenderChannel * rch){
 	rch->getDevice(rch->obj_id);
 	cg::core::infoRecorder->logTrace("FakedD3DDSetStreamSourceFreq(%d, %d)\n", StreamNumber, Setting);
 	hr = rch->curDevice->SetStreamSourceFreq(StreamNumber, Setting);
+
+	return hr;
+}
+
+HRESULT FakedD3DSurfaceRelease(RenderChannel *rch){
+	HRESULT hr = D3D_OK;
+	int id = rch->obj_id;  // get the surface id
+	ClientSurface9 * surface = (ClientSurface9 *)rch->surface_list[id];
+
+#if 1
+	ULONG ref = surface->GetSurface9()->Release();
+	cg::core::infoRecorder->logError("FakedD3DSrufaceRelease(), id:%d, ref:%d.\n", id, ref);
+	if(ref <=0){
+		rch->surface_list[id] = NULL;
+	}
+#endif
+
 
 	return hr;
 }

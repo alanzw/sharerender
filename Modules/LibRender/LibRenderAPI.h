@@ -133,6 +133,7 @@ struct fptype {
 	HRESULT(*NullInstruct)(RenderChannel * rch);
 	HRESULT(*D3DCreateRenderTarget)(RenderChannel * rch);
 	HRESULT(*D3DDSetStreamSourceFreq)(RenderChannel *rch);
+	HRESULT(*D3DSurfaceRelease)(RenderChannel *rch);
 };
 
 extern fptype fptable;
@@ -264,5 +265,7 @@ HRESULT FakeNullInstruct(RenderChannel * rch);
 HRESULT FakedD3DCreateRenderTarget(RenderChannel * rch);
 
 HRESULT FakedD3DDSetStreamSourceFreq(RenderChannel * rch);
+
+HRESULT FakedD3DSurfaceRelease(RenderChannel *rch);
 
 #endif

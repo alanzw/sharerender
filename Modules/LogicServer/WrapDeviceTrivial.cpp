@@ -19,6 +19,7 @@
 #include "../VideoGen/generator.h"
 #include "KeyboardHook.h"
 #include "../LibCore/TimeTool.h"
+#include "../LibCore/BmpFormat.h"
 
 
 #include "../LibInput/Controller.h"
@@ -257,11 +258,10 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 	keyCmdHelper->unlock();
 
 	unsigned char flag = 0;
-
+	static unsigned char valueTag = 0;
 	if(synSign){
 		//if (tm && presented > 1){
 		DWORD tick_end = GetTickCount();
-
 		DWORD tick_start = keyCmdHelper->getSynSignedTime();
 
 #if 1
@@ -288,10 +288,9 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 		keyCmdHelper->setSynSigin(false);
 		keyCmdHelper->unlock();
 
-		
-
 		flag |= 1;
 		synSign = 0;
+		valueTag++;
 	}
 	if (tm1){
 		keyCmdHelper->lock();
@@ -304,6 +303,7 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 		// send command
 		csSet->beginCommand(NULLINSTRUCT_Opcode, id);
 		csSet->writeUChar(flag);
+		csSet->writeUChar(valueTag);
 		csSet->endCommand();
 	}
 
@@ -378,13 +378,73 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 			}
 		}
 
+#ifdef SERVER_SAVE_BMP
+
+		if(flag & 1){
+			// sync sign, to store the image
+			char name[1024] = {0};
+			IDirect3DSurface9 * rts = NULL;
+			HRESULT hr = m_device->GetRenderTarget(0, &rts);
+			sprintf(name, "%s%d.bmp", keyCmdHelper->getPrefix(), valueTag);
+			infoRecorder->logError("[D3DDevice]: store image %s.\n", name);
+			
+			LPD3DXBUFFER bmpBuf = NULL;
+			
+			if(FAILED(D3DXSaveSurfaceToFileInMemory(&bmpBuf, D3DXIMAGE_FILEFORMAT::D3DXIFF_BMP, rts, NULL, NULL))){
+				infoRecorder->logError("[D3DDevice]: save render target to file failed");
+			}else{
+				BYTE * data = (BYTE *)bmpBuf->GetBufferPointer();
+				int size = bmpBuf->GetBufferSize();
+
+				BITMAPFILEHEADER * pHeader = (BITMAPFILEHEADER *)data;
+
+				BITMAPINFOHEADER * pInfo = (BITMAPINFOHEADER *)(data + sizeof(BITMAPFILEHEADER));
+
+				int headerSize = sizeof(BITMAPINFOHEADER) + sizeof(BITMAPINFOHEADER);
+				BYTE * rawData = data + pHeader->bfOffBits;
+
+				int width =  pInfo->biWidth;
+				int heigh = pInfo->biHeight;
+				int orgSize = 0;
+				//int elemSize = pInfo->
+				if(pInfo->biCompression){
+					infoRecorder->logError("[D3DDevice]: BMP is no BI_RGB, complicated.\n");
+				}
+				if(pInfo->biSize){
+					orgSize = pInfo->biSize;
+				}
+				else{
+					infoRecorder->logError("[D3DDevice]: use BI_RGB, set 0.\n");
+					orgSize = width * pInfo->biBitCount / 8;
+				}
+				// get the RGB bmp file size
+				int padding = 0;
+				int scanlinebytes = width * 3;
+				int paddedsize = width * 3 * heigh;
+				
+				BYTE * buffer = new BYTE[paddedsize];
+
+				for(int j = 0; j < heigh; j++)
+				for(int i = 0; i < width; i++){
+					*(buffer + width * j * 3 + i * 3 + 0) = *(rawData + width * 4 * j + i * 4 + 0);
+					*(buffer + width * j * 3 + i * 3 + 1) = *(rawData + width * 4 * j + i * 4 + 1);
+					*(buffer + width * j * 3 + i * 3 + 2) = *(rawData + width * 4 * j + i * 4 + 2);
+				}
+				SaveBMP(buffer, 800, 600, paddedsize, name);
+
+			}
+			// reload and remove the alpha channel
+
+		}
+#endif
+
 		if(gGenerator && !gGenerator->isInited()){
 			// init the generator
 			int imageWidth = 0, imageHeight =0 ;
 			IDirect3DSurface9 * rts = NULL;
 			D3DSURFACE_DESC sdesc;
 			
-			// aquire the resolution
+			// acquire the resolution
 			HRESULT hr = m_device->GetRenderTarget(0, &rts);
 			if(FAILED(hr)){
 #ifdef ENBALE_DEVICE_LOG
@@ -392,20 +452,6 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 #endif
 				return hh;
 			}
-
-#ifdef SERVER_SAVE_BMP
-
-			if(flag & 1){
-				// sync sign, to store the image
-				char name[1024] = {0};
-				
-				sprintf(name, "%s%d.bmp", keyCmdHelper->getPrefix(), 0);
-				if(FAILED(D3DXSaveSurfaceToFileA(name, D3DXIMAGE_FILEFORMAT::D3DXIFF_BMP, rts, NULL, NULL))){
-					infoRecorder->logError("[D3DDevice]: save render target to file");
-				}
-			}
-#endif
-
 
 			if(FAILED(rts->GetDesc(&sdesc))){
 #ifdef ENBALE_DEVICE_LOG

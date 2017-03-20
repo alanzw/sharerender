@@ -230,6 +230,7 @@ STDMETHODIMP_(ULONG) WrapperDirect3DSurface9::AddRef(THIS) {
 	}
 #endif
 
+	infoRecorder->logError("[WrapperDirect3DSurface9]: %d (tex id:%d, level:%d) add ref, ref:%d, refcount:%d.\n", id, tex_id, level, hr, refCount);
 	return hr; 
 }
 STDMETHODIMP_(ULONG) WrapperDirect3DSurface9::Release(THIS) {
@@ -240,9 +241,12 @@ STDMETHODIMP_(ULONG) WrapperDirect3DSurface9::Release(THIS) {
 #endif
 #endif
 	refCount--;
+	
 	if(refCount <= 0){
-		infoRecorder->logTrace("[WrapperDirect3DSurface9]: m_surface id:%d(tex id:%d, level:%d) ref:%d, ref count:%d, creation cmd:%d, tex:%d.\n",id, tex_id, level, refCount, hr, creationCommand, tex_id);
+		infoRecorder->logError("[WrapperDirect3DSurface9]: m_surface id:%d(tex id:%d, level:%d) ref:%d, ref count:%d, creation cmd:%d, tex:%d.\n",id, tex_id, level, refCount, hr, creationCommand, tex_id);
 	}
+	csSet->beginCommand(D3DSurfaceRelease_Opcode, id);
+	csSet->endCommand();
 
 	return hr;
 }

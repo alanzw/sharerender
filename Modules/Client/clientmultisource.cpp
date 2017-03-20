@@ -568,7 +568,7 @@ void ProcessEvent(SDL_Event *event, CtrlMessagerClient * ctrlClient) {
 			}
 			break;
 		case SDL_MOUSEMOTION:
-			infoRecorder->logTrace("[EventDeal]: mouse motion, (x, y): (%d, %d), (relx, rely):(%d, %d).\n", event->motion.x, event->motion.y, event->motion.xrel, event->motion.yrel);
+			//infoRecorder->logTrace("[EventDeal]: mouse motion, (x, y): (%d, %d), (relx, rely):(%d, %d).\n", event->motion.x, event->motion.y, event->motion.xrel, event->motion.yrel);
 			if (rtspConf->ctrlEnable && rtspConf->sendMouseMotion) {
 				sdlmsg_mousemotion(&m, event->motion.x, event->motion.y, event->motion.xrel, event->motion.yrel, event->motion.state, relativeMouseMode == 0 ? 0 : 1);
 				if(ctrlClient)
@@ -658,11 +658,12 @@ void ProcessEvent(SDL_Event *event, CtrlMessagerClient * ctrlClient) {
 				// get the tag
 				unsigned char tag = 0, valueTag = 0, *ptr = NULL;
 
-				ptr = (unsigned char *)event->user.data2;
+				ptr = (unsigned char *)(&(event->user.data2));
 				tag = *ptr;
 				valueTag = *(ptr +1);
 #if 1
 				GameStreams * streams = (GameStreams *)event->user.data1;
+				streams->renderImage(tag, valueTag);
 				
 #else
 				RenderImage((GameStreams *)event->user.data1, tag);

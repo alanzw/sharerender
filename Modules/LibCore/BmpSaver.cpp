@@ -77,6 +77,10 @@ bool SaveBMP ( BYTE* Buffer, int width, int height, long paddedsize, LPCTSTR bmp
 	return true;
 }
 
+BYTE * LoadBMP(LPCTSTR bmpfile){
+	return NULL;
+}
+
 bool YV12ToBGR24_Native(unsigned char* pYUV,unsigned char* pBGR24,int width,int height)
 {
     if (width < 1 || height < 1 || pYUV == NULL || pBGR24 == NULL)

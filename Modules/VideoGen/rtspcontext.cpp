@@ -165,14 +165,19 @@ namespace cg{
 			va_list ap;
 			char buf[1024];
 			int buflen;
+			int ret = 0;
 
 			va_start(ap, fmt);
 			buflen = vsnprintf(buf, sizeof(buf), fmt, ap);
 			va_end(ap);
 #ifdef ENABLE_RTSP_LOG
-			infoRecorder->logTrace("[RTSPContext]: rtspPrintf: %s.\n", buf);
+			infoRecorder->logError("[RTSPContext]: rtspPrintf: %s.\n", buf);
 #endif
-			return rtspWrite(buf, buflen);
+			ret = rtspWrite(buf, buflen);
+			if(ret <= 0){
+				infoRecorder->logError("[RTSPContext]: rtsp write failed with code:%d\n", WSAGetLastError());
+			}
+			return ret;
 		}
 
 		int RTSPContext::rtspWriteBinData(int streamId, unsigned char * buf, int bufLen){
@@ -390,6 +395,7 @@ namespace cg{
 			if ((rlen = read(fd,
 				rBuffer + rBufTail,
 				rBufSize - rBufTail)) <= 0) {
+					infoRecorder->logError("[RTSPContext]: read error, code:%d.\n", WSAGetLastError());
 					return -1;
 			}
 			rBufTail += rlen;
@@ -1292,7 +1298,7 @@ error_setup:
 				}
 #endif  // HOlLE_PUNCHING
 				if((rlen = ctx->rtspGetNext(buf, sizeof(buf)))< 0){
-					infoRecorder->logError("[RTSPServer]: GetNext failed. TO QUIT.\n");
+					infoRecorder->logError("[RTSPServer]: GetNext failed. TO QUIT,FD issued, but get NOTHING.\n");
 					goto quit;
 				}
 				// Interleaved binary data?
@@ -1302,7 +1308,7 @@ error_setup:
 				}
 				// REQUEST line
 #ifdef ENABLE_RTSP_LOG
-				infoRecorder->logTrace("[RTSPServer]: %s.\n", buf);
+				infoRecorder->logError("[RTSPServer]: %s.\n", buf);
 #endif
 				p = buf;
 				GetWord(cmd, sizeof(cmd), &p);
@@ -1320,18 +1326,16 @@ error_setup:
 					int myseq = -1;
 					char mysession[sizeof(header->session_id)] = "";
 					if((rlen = ctx->rtspGetNext(buf, sizeof(buf))) < 0){
-						infoRecorder->logError("[RTSPServer]: GetNext fialed. TO QUIT\n");
+						infoRecorder->logError("[RTSPServer]: GetNext fialed. TO QUIT, read header failed.\n");
 						goto quit;
 					}
 					if(buf[0] == '\n' || (buf[0] == '\r' && buf[1] == '\n')){
-						infoRecorder->logError("[RTSPSever]: get NULL buf, break.\n");
 						break;
 					}
 
 #ifdef ENABLE_RTSP_LOG
 					infoRecorder->logTrace("[RTPSServer]: HEADER: %s.\n", buf);
 #endif
-
 					// Special handing to CSeq & Session header
 					// ff_rtsp_parser_line cannot handle CSeq & Session properly on windows
 					// any more?

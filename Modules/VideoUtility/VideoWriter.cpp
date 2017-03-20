@@ -84,7 +84,6 @@ namespace cg{
 		rq.num = 1;
 		if(encoderPts != (int64_t)AV_NOPTS_VALUE){
 			//cg::core::infoRecorder->logError("[VideoWriter]: send packet, encoder pts: %lld, encoder time_base(num:%d, den:%d), stream time_base(num:%d, den:%d), tmp rq:(num:%d, den:%d).\n", encoderPts, rtsp->encoder[channelId]->time_base.num, rtsp->encoder[channelId]->time_base.den, rtsp->stream[channelId]->time_base.num, rtsp->stream[channelId]->time_base.den, rq.num, rq.den);
-			//DebugBreak();
 			//static int64_t t_pts = 0;
 			//rtsp->stream[channelId]->time_base.num =1;
 			//rtsp->stream[channelId]->time_base.den = 90000;
@@ -118,7 +117,9 @@ namespace cg{
 		*(pkt->data + 3) = 1;
 		// set the source id
 		*(pkt->data + 4) = ctx->getId();
-		*(pkt->data + 5) = (tags++) % 255;
+		//*(pkt->data + 5) = (tags++) % 255;
+		*(pkt->data + 5) = 0;
+
 		if(specialTag && specialTagValid){
 			*(pkt->data + 4) |= 0x40;
 			*(pkt->data + 5) = valueTag;
@@ -128,6 +129,7 @@ namespace cg{
 			if(encodeTimer)
 				encodeInterval = encodeTimer->Stop();
 			//cg::core::infoRecorder->logError("[VideoWriter]: special tag is %d, mean special frame, frame idx org:%x, tagged:%x, encode time:%f.\n", specialTag, ctx->getId(), tmp, 1000.0 * encodeInterval / encodeTimer->getFreq());
+			cg::core::infoRecorder->logError("[VideoWriter]: special tag, value tag is :%d.\n", valueTag);
 		}
 		//*(pkt->data + 5) = (tags++) % 255;
 

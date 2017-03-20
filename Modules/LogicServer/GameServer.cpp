@@ -291,7 +291,7 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 			if(keyCmdHelper == NULL){
 				// install keyboard hook
 				keyCmdHelper = cg::core::KeyCommandHelper::GetKeyCmdHelper();
-				keyCmdHelper->setName((char *)exeName.c_str());
+				keyCmdHelper->setPrefix((char*)cmdCtrl->getObjName().c_str());
 				keyCmdHelper->setSendStep(cmdCtrl->getSendStep());
 				keyCmdHelper->installKeyHook(GetCurrentThreadId());
 			}

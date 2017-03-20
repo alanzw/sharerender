@@ -197,7 +197,7 @@ bool SubGameStream::init(){
 	videoDecoder = new VideoDecoder();
 	decoderBuffer = (DecoderBuffer *)malloc(sizeof(DecoderBuffer));
 	memset(decoderBuffer, 0, sizeof(DecoderBuffer));
-
+	streamId = 0;
 	return true;
 }
 
@@ -603,6 +603,8 @@ void SubGameStream::shutdownStream(RTSPClient * rtspClient, int exitCode){
 	UsageEnvironment& env = rtspClient->envir(); // alias
 	StreamClientState& scs = ((ourRTSPClient*)rtspClient)->scs; // alias
 
+	infoRecorder->logError("[SubGameStream]: shutdown stream with cdoe:%d.\n", exitCode);
+
 	if (RTSPClientCount <= 0)
 		return;
 
@@ -729,14 +731,12 @@ void SubGameStream::playVideoPriv(unsigned char * buffer, int bufSize, struct ti
 		displayTimer = new cg::core::PTimer();
 	}
 
-
 	unsigned char specialTag = frameIndex & 0xc0;
 	if(specialTag){
 		delayRecorder->startToDisplay();
 		displayTimer->Start();
-		infoRecorder->logTrace("[SubGameStream]: get special tag, frame index:%x.\n", specialTag);
+		infoRecorder->logError("[SubGameStream]: get special tag, frame index:%x, value tag:%d.\n", frameIndex, tag);
 	}
-	//infoRecorder->logError("[SubGameStreams]: frame index: %x.\n", frameIndex);
 
 	//cg::core::infoRecorder->logError("[SubGameStream]: playVideoPriv, size:%d, frame index:%d, frame tag:%d\n", bufSize, frameIndex, tag);
 
@@ -774,7 +774,7 @@ void SubGameStream::playVideoPriv(unsigned char * buffer, int bufSize, struct ti
 				cg::core::infoRecorder->logError("[SubGameStream]: to create a overlay width:%d, height:%d.\n", gameStreams->getWidth(), gameStreams->getHeight());
 				// create the overlay
 				LeaveCriticalSection(gameStreams->getSurfaceMutex());
-#if 1
+
 				bzero(&evt, sizeof(evt));
 				evt.user.type = SDL_USEREVENT;
 				evt.user.timestamp = time(0);
@@ -782,11 +782,7 @@ void SubGameStream::playVideoPriv(unsigned char * buffer, int bufSize, struct ti
 				evt.user.data1 = gameStreams;
 				evt.user.data2 = (void *)getId();
 				SDL_PushEvent(&evt);
-#else
-				if(!gameStreams->createOverlay()){
-					cg::core::infoRecorder->logError("[GameStreams]: create overlay for the gameStreams failed.\n");
-				}
-#endif
+
 				goto skip_frame;
 			}
 			LeaveCriticalSection(gameStreams->getSurfaceMutex());
@@ -815,18 +811,7 @@ void SubGameStream::playVideoPriv(unsigned char * buffer, int bufSize, struct ti
 			gameStreams->countFrameRate();
 
 #else
-			// get the time, if interval > 20, play video
-			DWORD lastTick  = 0;
-			static DWORD tickCount = GetTickCount();
-
-			if(tickCount - lastTick > 20){
-				gameStreams->playVideo();
-				gameStreams->countFrameRate();
-			}else{
-				infoRecorder->logTrace("[SubGameStream]: interval: %d.\n", tickCount - lastTick);
-			}
-
-			lastTick = tickCount;
+			
 #endif
 			// unlock game streams
 		}
@@ -1027,7 +1012,7 @@ int GameStreams::formDisplayEvent(TaggedFrame* taggedFrame){
 #else
 int GameStreams::formDisplayEvent(AVFrame * frame){
 #endif
-	cg::core::infoRecorder->logTrace("[GameStreams]: form display event.\n");
+	cg::core::infoRecorder->logError("[GameStreams]: form display event.\n");
 	AVPicture * dstFrame = NULL;
 #ifndef ANDROID
 	union SDL_Event evt;
@@ -1070,7 +1055,8 @@ int GameStreams::formDisplayEvent(AVFrame * frame){
 	evt.user.timestamp = time(0);
 	evt.user.code = SDL_USEREVENT_RENDER_IMAGE;
 	evt.user.data1=  this;
-	unsigned char * ptr = (unsigned char *)evt.user.data2;
+	unsigned char * ptr = (unsigned char *)&(evt.user.data2);
+
 	*ptr = taggedFrame->tag;
 	ptr++;
 	*ptr = taggedFrame->valueTag;
@@ -1185,13 +1171,6 @@ bool GameStreams::createOverlay(){
 	struct pooldata * data = NULL;
 	char windowTitle[64];
 
-#if 0
-	//surface = NULL;
-	renderer = NULL;
-	overlay = NULL;
-	swsctx = NULL;
-#endif
-
 	cg::RTSPConf * rtspConf = cg::RTSPConf::GetRTSPConf();
 
 	EnterCriticalSection(&surfaceMutex);
@@ -1209,14 +1188,12 @@ bool GameStreams::createOverlay(){
 	if((swsctx  = sws_getContext(width,height, format, width, height, PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL)) == NULL){
 		rtsperror("[GameStreams]: cannot create swsscale context.\n");
 		cg::core::infoRecorder->logError("[GameStreams]: cannot create swsscale context, FATAL ERROR.\n");
-
 		return false;
 		//exit(-1);
 	}
 	//pipeline
 	if(pipe != NULL){
 		cg::core::infoRecorder->logError("[GameStreams]: pipe already exist. FATAL ERROR.\n");
-
 		return false;
 	}
 
@@ -1266,6 +1243,8 @@ bool GameStreams::createOverlay(){
 #if 1	// only support SDL2
 	//SDL_WarpMouseInWindow(surface, width / 2, height / 2);
 #endif
+
+#if 0
 	relativeMouseMode = rtspConf->relativeMouse;
 	if (relativeMouseMode != 0) {
 		SDL_SetRelativeMouseMode(SDL_TRUE);
@@ -1274,6 +1253,7 @@ bool GameStreams::createOverlay(){
 		cg::core::infoRecorder->logError("[GameStreams]: relative mouse mode enabled.\n");
 	}
 	SDL_ShowCursor(showCursor);
+#endif
 
 #if 1	// only support SDL2
 	do {	// choose SW or HW renderer?
@@ -1357,6 +1337,7 @@ bool saveTextureToBMP(std::string filepath, SDL_Texture *tex){
 }
 
 bool saveScreenshotBMP(std::string filepath, SDL_Window* SDLWindow, SDL_Renderer* SDLRenderer) {
+	cg::core::infoRecorder->logError("Save scurrent to bmp: SDL_window: %p, renderer: %p.\n", SDLWindow, SDLRenderer);
 	SDL_Surface* saveSurface = NULL;
 	SDL_Surface* infoSurface = NULL;
 	infoSurface = SDL_GetWindowSurface(SDLWindow);
@@ -1396,7 +1377,7 @@ bool GameStreams::renderImage(unsigned char specialTag, unsigned char valueTag){
 	SDL_Rect rect;
 	DelayRecorder * delayRecorder = DelayRecorder::GetDelayRecorder();
 
-	cg::core::infoRecorder->logTrace("[GameStreams]: render image.\n");
+	cg::core::infoRecorder->logError("[GameStreams]: render image.\n");
 
 	// get the frame data to display
 	if ((data = pipe->load_data()) == NULL) {
@@ -1441,6 +1422,7 @@ bool GameStreams::renderImage(unsigned char specialTag, unsigned char valueTag){
 		printf("[Image]: save image %s.\n", fileName);
 		saveScreenshotBMP(fileName, surface, renderer);
 
+#if 0
 		extern bool responseTickStarted;
 		extern BTimer * globalTimer;
 		responseTickStarted = false;
@@ -1453,6 +1435,7 @@ bool GameStreams::renderImage(unsigned char specialTag, unsigned char valueTag){
 		cg::core::infoRecorder->logError("[Delay]: before + display = total -> %f %f %f\n", delayRecorder->getBeforeDisplay(), delayRecorder->getDisplayDelay(), delayRecorder->getTotalDelay());
 
 		cg::core::infoRecorder->logTrace("[delay]: %f, display: %f.\n", interval * 1000.0 / globalTimer->getFreq(), displayTime * 1000.0 / displayTimer->getFreq());
+#endif
 	}
 
 	image_rendered = 1;

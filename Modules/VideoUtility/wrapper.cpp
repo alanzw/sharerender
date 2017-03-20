@@ -8,7 +8,9 @@
 #include "../LibCore/InfoRecorder.h"
 
 #define USE_COPY_RT    // use the COPY render target to get antialiased screen
-//#define USE_RENDER_TARGET    // enable when use logic server to gen video
+#define USE_RENDER_TARGET    // enable when use logic server to gen video
+
+//#define SAVE_WARPPER_IMAGE
 
 namespace cg{
 
@@ -110,15 +112,27 @@ namespace cg{
 		HRESULT hr = D3D_OK;
 		
 		if(pSurface == NULL){
+			cg::core::infoRecorder->logError("[D3DWrapper]: capture, bnut get NULL surface to store.\n");
 			// the surface is NULL, error
 			return false;
 		}
+		cg::core::infoRecorder->logError("[D3DWrapper]: capture rener target to surface.\n");
 
 		IDirect3DSurface9 * rt  = NULL;
 		if(FAILED(hr= d3d_device->GetRenderTarget(0, &rt))){
 			cg::core::infoRecorder->logError("[D3DWrapper]: get render target failed with:%d.\n", hr);
 			return false;
 		}
+
+
+#ifdef SAVE_WARPPER_IMAGE
+		static int index = 0;
+		char name[1024] = {0};
+		sprintf(name, "capture-%d.bmp", index++);
+		D3DXSaveSurfaceToFileA(name, D3DXIMAGE_FILEFORMAT::D3DXIFF_BMP, rt, NULL, NULL);
+
+#endif
+
 		if(FAILED(hr = d3d_device->StretchRect(rt, NULL, pSurface, NULL, D3DTEXF_NONE))){
 			cg::core::infoRecorder->logError("[D3DWrapper]: copy render target failed with:%d.\n", hr);
 			return false;
@@ -222,9 +236,12 @@ namespace cg{
 					return false;
 				}
 			}
-			hr = d3d_device->GetRenderTargetData(renderTarget, sysOffscreenSurface);
+
+			renderTarget->Release();
+
+			hr = d3d_device->GetFrontBufferData(0, sysOffscreenSurface);
 			if(FAILED(hr)){
-				cg::core::infoRecorder->logError("[D3DWrapper]: get render target data failed.\n");		
+				cg::core::infoRecorder->logError("[D3DWrapper]: get front buffer data failed.\n");		
 			}
 
 			if(FAILED(hr)){
@@ -245,6 +262,15 @@ namespace cg{
 #else // USE_RENDER_TARGET
 			IDirect3DSurface9 * renderTarget = NULL;
 			hr = d3d_device->GetRenderTarget(0, &renderTarget);
+
+#if 0
+			static int index = 0;
+			char name[1024] = {0};
+			sprintf(name, "ShadowRun/capture-%d.bmp", index++);
+			D3DXSaveSurfaceToFileA(name, D3DXIMAGE_FILEFORMAT::D3DXIFF_BMP, sysOffscreenSurface, NULL, NULL);
+
+#endif
+
 			// create the surface in system memory
 			if(sysOffscreenSurface == NULL){
 				// if not created, create one
@@ -297,6 +323,14 @@ namespace cg{
 			}
 			// release the render target
 			renderTarget->Release();
+
+#ifdef SAVE_WARPPER_IMAGE
+			static int index = 0;
+			char name[1024] = {0};
+			sprintf(name, "ShadowRun/capture-%d.bmp", index++);
+			D3DXSaveSurfaceToFileA(name, D3DXIMAGE_FILEFORMAT::D3DXIFF_BMP, sysOffscreenSurface, NULL, NULL);
+
+#endif
 
 #endif // USE_RENDER_TARGET
 

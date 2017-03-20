@@ -31,7 +31,7 @@ namespace cg{
 #endif
 			if (lParam & 0x80000000) // released
 			{
-				infoRecorder->logTrace("[Global]: key release, WPARAM: %x, LPARAM:%x.\n", wParam, lParam);
+				//infoRecorder->logTrace("[Global]: key release, WPARAM: %x, LPARAM:%x.\n", wParam, lParam);
 				if (wParam == VK_F7 || wParam == VK_F6) // f7 pressed
 				{
 					keyHelper->setRenderStep(0);
@@ -45,19 +45,23 @@ namespace cg{
 #endif
 				}
 				else if (wParam == VK_F11){
-					//infoRecorder->logError("[Global]: F11 triggered. to SYN.\n");
+					
 					keyCount++;
-					if(keyCount %2){
-
-#if 1
-					infoRecorder->logTrace("[Global]: wparam:%x, lparam:%x. system process input time: %f.\n", wParam, lParam, getSysProcessTime());
-					if(delayRecorder->isInputArrive()){
-						delayRecorder->keyTriggered();
-					}
+					infoRecorder->logError("[Global]: VK_F11, key count:%d mode value:%d.\n", keyCount, keyCount %2);
+					if(keyCount % 2){
+#if 0
+						infoRecorder->logTrace("[Global]: wparam:%x, lparam:%x. system process input time: %f.\n", wParam, lParam, getSysProcessTime());
+						if(delayRecorder->isInputArrive()){
+							delayRecorder->keyTriggered();
+						}
 #endif
-					keyHelper->lock();
-					keyHelper->setSynSigin(true);
-					keyHelper->unlock();
+						infoRecorder->logError("[Global]: F11 triggered. to SYN.\n");
+						keyHelper->lock();
+						keyHelper->setSynSigin(true);
+						keyHelper->unlock();
+					}
+					else{
+						infoRecorder->logError("[Global]: key count mode value is:%d.\n", keyCount % 2);
 					}
 				}
 #if 1
@@ -160,7 +164,7 @@ namespace cg{
 
 		bool KeyCommandHelper::installKeyHook(DWORD threadId){
 			// set the keyboard hook
-			infoRecorder->logTrace("set the keyboard hook, module:%p, thread id:%d!\n", NULL, threadId);
+			infoRecorder->logError("set the keyboard hook, module:%p, thread id:%d!\n", NULL, threadId);
 			keyHookHandle = SetWindowsHookEx(WH_KEYBOARD, HookProc, NULL, threadId);
 			if(!keyHookHandle){
 				infoRecorder->logError("[KeyCommandHelper]: set window hook ex failed with:%d.\n", GetLastError());

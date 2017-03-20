@@ -401,7 +401,7 @@ void RenderChannel::onPresent(unsigned int tags){
 	else{
 		//cg::core::infoRecorder->logError("on present: generator inited: %p.\n", generator);
 	}
-	if(generator){
+	if(generator && generator->getContext()->enableGen){
 		generator->setVideoTag(tags);
 		if(this->specialTag){
 			generator->setVideoSpecialTag(this->specialTag);
