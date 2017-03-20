@@ -50,6 +50,7 @@ public:
 
 	virtual bool start(char * DisUrl); // star the render proxy
 	virtual bool dealEvent(cg::BaseContext * ctx);
+#if 0
 	virtual bool startRTSP(evutil_socket_t sock);
 
 	void startRTSPThread(evutil_socket_t sock);
@@ -57,6 +58,7 @@ public:
 
 	// intra-migration between CPU and GPU
 	bool regulation();
+#endif
 };
 
 evutil_socket_t connectToGraphic(char * url, int port);

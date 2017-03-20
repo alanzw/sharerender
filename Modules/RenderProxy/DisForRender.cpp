@@ -230,6 +230,8 @@ bool RenderProxy::start(char * disUrl){
 	return true;
 }
 
+#if 0
+
 bool RenderProxy::startRTSP(evutil_socket_t sock){
 	infoRecorder->logTrace("[RenderProxy]: star the rtsp dealing.\n");
 	startRTSPThread(sock);
@@ -288,47 +290,5 @@ bool RenderProxy::regulation(){
 	return true;
 }
 
-
-#if 0
-DWORD RenderProxy::RenderThreadProc(LPVOID param){
-	RenderChannel * ch = (RenderChannel *)param;
-	infoRecorder->logTrace("[RenderThreadProc]: enter render thread for game: '%s'.\n", ch->rtspObject);
-
-	char buffer[100] = { 0 };
-	bool running = true;
-	fd_set sockSet;
-	FD_ZERO(&sockSet);
-	FD_SET(ch->cmdSock, &sockSet);
-	timeval tv;
-	tv.tv_sec = 2;
-	tv.tv_usec = 0;
-	do{
-
-		if(select(0, &sockSet,NULL,NULL, NULL) >0){
-
-			if(FD_ISSET(ch->cmdSock, &sockSet)){
-				recv(ch->cmdSock, buffer, 100, 0);
-				if (!strncasecmp(buffer, "exit", strlen("exit"))){
-					running = false;
-				}
-				else{
-					//printf("[RenderChannel]: recv '%s'.\n", buffer);
-				}
-				memset(buffer, 0, 100);
-			}
-
-
-		}
-	} while (running);
-
-
-	return 0;
-}
-
-void RenderProxy::startRenderThread(RenderChannel * ch){
-	infoRecorder->logTrace("[RenderProxy]: start render thread.\n");
-	DWORD threadId;
-	HANDLE thread = chBEGINTHREADEX(NULL, 0, RenderThreadProc, ch, FALSE, &threadId);
-}
 
 #endif

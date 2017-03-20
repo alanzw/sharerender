@@ -19,7 +19,7 @@ using namespace cg;
 using namespace cg::core;
 
 // this definition will enable the trace log for RTSP context
-//#define ENABLE_RTSP_LOG
+#define ENABLE_RTSP_LOG
 
 namespace cg{
 	namespace rtsp{
@@ -1238,8 +1238,6 @@ error_setup:
 			// When this value is greater than zero, audio encoding then starts ...
 			// ctx.hasVideo = -(rtspConf->video_fps >> 1); // sor sllow encoders?
 
-			// set the context socket
-
 			int i = 0, fdmax = 0, active = 0;
 			do{
 				fd_set rfds;
@@ -1324,7 +1322,6 @@ error_setup:
 					if((rlen = ctx->rtspGetNext(buf, sizeof(buf))) < 0){
 						infoRecorder->logError("[RTSPServer]: GetNext fialed. TO QUIT\n");
 						goto quit;
-
 					}
 					if(buf[0] == '\n' || (buf[0] == '\r' && buf[1] == '\n')){
 						infoRecorder->logError("[RTSPSever]: get NULL buf, break.\n");
@@ -1392,6 +1389,8 @@ error_setup:
 #ifdef ENABLE_RTSP_LOG
 					infoRecorder->logTrace("[RTSPServer]: ctx:%p enable rtsp.\n", ctx);
 #endif
+
+					// enable the rtsp when ready.
 					ctx->enableGen = true;
 				}
 				else if(!strcmp(cmd, "PAUSE")){
