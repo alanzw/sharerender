@@ -61,7 +61,7 @@ Unity Angry Bots: http://unity3d.com/showcase/live-demos#angrybots
 ![image](https://github.com/alanzw/sharerender/raw/master/pic/system-comparasion.png)
 
 ## Graphic Task example
-![image](https://github.com/alanzw/sharerender/raw/master/pic/system-comparasion.png)
+![image](https://github.com/alanzw/sharerender/raw/master/pic/task-example.png)
 
 ## Retrieving Geometry Data
 ![image](https://github.com/alanzw/sharerender/raw/master/pic/retrieving-data.png)
