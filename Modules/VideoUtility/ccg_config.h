@@ -26,9 +26,11 @@ namespace cg{
 		std::string mkey();
 		std::string mvalue();
 		std::string mnextkey();
+		void print();
 	};
 
 	class ccgConfig{
+	protected:
 		std::string configFileName;
 		std::map<std::string, ConfVar> _confVars;
 		std::map<std::string, ConfVar>::iterator vmi;
@@ -68,6 +70,8 @@ namespace cg{
 		void confReset();
 		const char * confKey();
 		const char * confNextKey();
+
+		void print();
 	};
 }
 

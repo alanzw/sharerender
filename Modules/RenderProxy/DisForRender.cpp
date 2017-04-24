@@ -14,7 +14,7 @@ evutil_socket_t connectToGraphic(char * url, int port){
 	sin.sin_addr.s_addr = inet_addr(url);
 	sin.sin_port = htons(port);
 
-	sock = socket(AF_INET, SOCK_STREAM, 0);
+	sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
 	if(connect(sock, (sockaddr *)&sin, sizeof(sin)) == SOCKET_ERROR){
 		infoRecorder->logError("[Global]: connect to graphic server failed with %d.\n", WSAGetLastError());
@@ -53,9 +53,13 @@ bool RenderProxy::dealEvent(cg::BaseContext * ctx){
 		char * data = ctx->getData();
 		cg::IDENTIFIER id = *(cg::IDENTIFIER *)(data);
 		cg::IDENTIFIER renderId = *(cg::IDENTIFIER *)(data + sizeof(cg::IDENTIFIER));
-		//char * gameaName = (char *)(data + sizeof(IDENTIFIER) * 2);
 		short portOffset = *(short *)(data + sizeof(cg::IDENTIFIER) * 2);
-		char * url = data + sizeof(cg::IDENTIFIER) * 2 + sizeof(short);
+		short nameLen = *(short*)(data + sizeof(cg::IDENTIFIER) * 2 +sizeof(short));
+		char serviceName[100] = {0}, * p = NULL;
+		p = data + sizeof(cg::IDENTIFIER) * 2 + sizeof(short) * 2;
+		memcpy(serviceName, p, nameLen);
+
+		char * url = data + sizeof(cg::IDENTIFIER) * 2 + sizeof(short) * 2 + nameLen;
 		// start the render channel, connect to logic and send client id and render id to find the exist task in logic
 #if 0
 		connectToServer(url, DIS_PORT_GRAPHIC);
@@ -63,7 +67,10 @@ bool RenderProxy::dealEvent(cg::BaseContext * ctx){
 		infoRecorder->logTrace("[RenderProxy]: to start render task, graphic server '%s', id:%p.\n", url ,id);
 		// connect to logic server
 		evutil_socket_t sockForCmd = NULL;
-		sockForCmd = connectToGraphic(url, DIS_PORT_GRAPHIC);
+		int graphicPort = 60000;
+		if(conf)
+			graphicPort = conf->graphicPort;
+		sockForCmd = connectToGraphic(url, graphicPort);
 #if 0
 		// set nonblocking??????
 		u_long iMode = 1;  // non-bnlocking mode is enabled
@@ -75,10 +82,16 @@ bool RenderProxy::dealEvent(cg::BaseContext * ctx){
 		}
 #endif
 		// wait for server name from logic
-		char serviceName[50] = { 0 };
-		strcpy(serviceName, "Trine");
+		//char serviceName[50] = { 0 };
+		//strcpy(serviceName, "Trine");
 		// create render 
 		RenderChannel * chan = new RenderChannel();
+		if(conf){
+			chan->rtspConf = conf;
+		}
+		else{
+			chan->rtspConf = cg::RTSPConf::GetRTSPConf("config/server.render.conf");
+		}
 		chan->rtspObject = _strdup(serviceName);
 		chan->taskId = id;
 		chan->setEncoderOption(this->getEncodeOption());
@@ -148,9 +161,9 @@ bool RenderProxy::dealEvent(cg::BaseContext * ctx){
 			infoRecorder->logError("[RenderProxy]: the video generator for '%d' is not created yet.\n", id);
 			return false;
 		}else{
-			infoRecorder->logError("[RenderProxy]: the video generator for '%p' is '%p'.\nto listen port.\n", id, gen);
+			infoRecorder->logError("[RenderProxy]: the video generator for '%p' is '%p'.\nto listen port: %d.\n", id, gen, conf->serverPort + portOff);
 		}
-		evconnlistener * rtspListener = listenPort(DIS_PORT_RTSP + portOff, _base, gen->getContext());
+		evconnlistener * rtspListener = listenPort(conf->serverPort + portOff, _base, gen->getContext());
 
 		// TODO , manage the listener
 		// notify manager to start rtsp connection
@@ -198,13 +211,16 @@ bool RenderProxy::dealEvent(cg::BaseContext * ctx){
 	}
 	return true;
 }
-bool RenderProxy::start(char * disUrl /* = NULL */){
+bool RenderProxy::start(char * disUrl){
 	// start the render proxy
 	// connect to dis and register
-	if(!disUrl)
-		connectToServer(DIS_URL_DISSERVER, DIS_PORT_DOMAIN);
-	else
-		connectToServer(disUrl, DIS_PORT_DOMAIN);
+	int disPort = DIS_PORT_DOMAIN;
+	if(conf){
+		disPort = conf->disPort;
+	}
+	if(!connectToServer(disUrl, disPort)){
+		return false;
+	}
 
 	// register as render
 	ctx->writeCmd(cg::REGISTER);
@@ -213,6 +229,8 @@ bool RenderProxy::start(char * disUrl /* = NULL */){
 	ctx->writeToNet();
 	return true;
 }
+
+#if 0
 
 bool RenderProxy::startRTSP(evutil_socket_t sock){
 	infoRecorder->logTrace("[RenderProxy]: star the rtsp dealing.\n");
@@ -272,47 +290,5 @@ bool RenderProxy::regulation(){
 	return true;
 }
 
-
-#if 0
-DWORD RenderProxy::RenderThreadProc(LPVOID param){
-	RenderChannel * ch = (RenderChannel *)param;
-	infoRecorder->logTrace("[RenderThreadProc]: enter render thread for game: '%s'.\n", ch->rtspObject);
-
-	char buffer[100] = { 0 };
-	bool running = true;
-	fd_set sockSet;
-	FD_ZERO(&sockSet);
-	FD_SET(ch->cmdSock, &sockSet);
-	timeval tv;
-	tv.tv_sec = 2;
-	tv.tv_usec = 0;
-	do{
-
-		if(select(0, &sockSet,NULL,NULL, NULL) >0){
-
-			if(FD_ISSET(ch->cmdSock, &sockSet)){
-				recv(ch->cmdSock, buffer, 100, 0);
-				if (!strncasecmp(buffer, "exit", strlen("exit"))){
-					running = false;
-				}
-				else{
-					//printf("[RenderChannel]: recv '%s'.\n", buffer);
-				}
-				memset(buffer, 0, 100);
-			}
-
-
-		}
-	} while (running);
-
-
-	return 0;
-}
-
-void RenderProxy::startRenderThread(RenderChannel * ch){
-	infoRecorder->logTrace("[RenderProxy]: start render thread.\n");
-	DWORD threadId;
-	HANDLE thread = chBEGINTHREADEX(NULL, 0, RenderThreadProc, ch, FALSE, &threadId);
-}
 
 #endif

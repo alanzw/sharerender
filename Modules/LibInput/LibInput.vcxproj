@@ -88,6 +88,7 @@
   <ItemGroup>
     <ClInclude Include="Controller.h" />
     <ClInclude Include="CtrlConfig.h" />
+    <ClInclude Include="interception.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Controller.cpp" />

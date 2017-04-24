@@ -5,7 +5,7 @@
 #include "../LibCore/TimeTool.h"
 
 // this definition will enable trace log for VideoGen
-//#define ENABLE_GEN_LOG 
+#define ENABLE_GEN_LOG 
 
 namespace cg{
 
@@ -128,6 +128,7 @@ namespace cg{
 		encoder = NULL;
 		x264Encoder = NULL;
 		wrapper = NULL;
+		writer = NULL;
 
 		dxVer = DXNONE;
 		swapChain = NULL;
@@ -672,7 +673,20 @@ namespace cg{
 
 		return 0;
 	}
+	void VideoGen::setValueTag(unsigned char valueTag){
+		if(writer)
+			writer->setValueTag(valueTag);
 
+	}
+
+	void VideoGen::setVideoSpecialTag(unsigned char tag){
+		if(writer){
+			writer->setSpecialTag(tag);
+		}
+		else{
+			infoRecorder->logError("[VideoGen]: NULL writer.\n");
+		}
+	}
 	int VideoGen::changeEncodeDevice(ENCODER_TYPE dstEncoderType){
 		// 
 #ifdef ENABLE_GEN_LOG

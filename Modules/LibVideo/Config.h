@@ -57,6 +57,7 @@ public:
 
 #endif
 
+#if 0
 class ConfVar {
 private:
 	std::string data;
@@ -120,5 +121,6 @@ public:
 	const char * confKey();
 	const char * confNextKey();
 };
+#endif
 
 #endif

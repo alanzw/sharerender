@@ -36,8 +36,8 @@ using namespace std;
 #define GREEN_THRESHOLD 30
 
 /// define the port
-#define DIS_PORT_CLIENT 8556	// game client to connect logic server
-#define DIS_PORT_CTRL  8558   // for control connection   
+#define DIS_PORT_CLIENT 8556	// game process to connect game loader
+#define DIS_PORT_CTRL  8555   // for control connection   
 #define DIS_PORT_DOMAIN 8557   // dis server, logic server and render, user client to request games
 #define DIS_PORT_GRAPHIC 60000   // graphic connection between logic and render
 #define DIS_PORT_RTSP 8554  // rtsp connection between render and client

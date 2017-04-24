@@ -311,7 +311,7 @@ DWORD TaskQueue::QueueProc(LPVOID param){
 				popObj();
 			}
 			//infoRecorder->logError("[TaskQueue]: actually")
-			timeCounter += pThreadTimer->Stop();
+			timeCounter += (int)pThreadTimer->Stop();
 
 			return TRUE;
 			

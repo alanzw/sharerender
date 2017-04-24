@@ -50,7 +50,7 @@ namespace cg{
 		virtual void		releaseData(struct pooldata * data);
 
 	public:
-		inline float		getEncodeTime(){ return 1000.0 * encodeTime / pTimer->getFreq(); }
+		inline float		getEncodeTime(){ return (float)1000.0 * encodeTime / pTimer->getFreq(); }
 		virtual void		setRefIntraMigrationTimer(cg::core::PTimer * refTimer){ refIntraMigrationTimer = refTimer; }
 
 		Encoder(int _id, int _height, int _width,/* SOURCE_TYPE srcType, */ENCODER_TYPE _type, pipeline * _imgPipe, VideoWriter *_writer);

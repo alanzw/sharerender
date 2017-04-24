@@ -33,6 +33,9 @@ extern VideoGen * gGenerator;
 
 extern SmallHash<HWND, HWND> serverToClient;
 
+
+extern BTimer * encodeTimer;
+
 // global functions
 
 #define GET_DEVICE() \
@@ -111,7 +114,7 @@ HRESULT FakedClear(RenderChannel * rch) {
 	DWORD count = rch->cc->read_uint();
 	D3DRECT pRects;
 
-	bool is_null = rch->cc->read_char();
+	bool is_null = (bool)rch->cc->read_char();
 	if(!is_null) {
 		rch->cc->read_byte_arr((char*)(&pRects), sizeof(pRects));
 	}
@@ -444,6 +447,8 @@ char * RenderStateToString(D3DRENDERSTATETYPE state){
 		return _strdup("D3DTS_BLENDOPALPHA");
 	case 0x7fffffff:
 		return _strdup("D3DTS_FORCE_DWORD");
+	default:
+		return _strdup("D3DTS_UNKNOWN_STATE");
 	}
 }
 #endif
@@ -519,6 +524,8 @@ char * PrimitiveTypeToString(D3DPRIMITIVETYPE type){
 		return _strdup("D3DPT_TRIANGLELEFAN");
 	case 0x7fffffff:
 		return _strdup("D3DPT_FROCE_DWORD");
+	default:
+		return _strdup("D3DPT_KNOWN_TYPE");
 	}
 }
 
@@ -766,6 +773,8 @@ char * TypeToString(BYTE type){
 		return _strdup("D3DDECLTYPE_FLOAT16_4");
 	case D3DDECLTYPE_UNUSED:
 		return _strdup("D3DDECLTYPE_UNUSED");
+	default:
+		return _strdup("D3DDECLTYPE_UNKNOWN");
 	}
 }
 char * MethodToString(BYTE method){
@@ -784,7 +793,10 @@ char * MethodToString(BYTE method){
 		return _strdup("D3DDECLMETHOD_LOOKUP");
 	case D3DDECLMETHOD_LOOKUPPRESAMPLED:
 		return _strdup("D3DDECLMETHOD_LOOKUPPRESAMPLED");
+	default:
+		return _strdup("D3D_UNKNOWN_ERROR");
 	}
+
 }
 char * UsageToString(BYTE usage){
 	switch(usage){
@@ -816,6 +828,8 @@ char * UsageToString(BYTE usage){
 		return _strdup("D3DDECLUSAGE_DEPTH");
 	case D3DDECLUSAGE_SAMPLE:
 		return _strdup("D3DDECLUSAGE_SAMPLE");
+	default:
+		return _strdup("D3DECULUSAGE_UNKNOWN");
 	}
 }
 
@@ -825,7 +839,7 @@ HRESULT FakedCreateVertexDeclaration(RenderChannel * rch) {
 	D3DVERTEXELEMENT9 dt[100];
 	rch->cc->read_byte_arr((char*)dt, cnt * sizeof(D3DVERTEXELEMENT9));
 
-	cg::core::infoRecorder->logError("FakedCreateVertexDeclaration(), id=%d, cnt=%d, ", id, cnt);
+	cg::core::infoRecorder->logTrace("FakedCreateVertexDeclaration(), id=%d, cnt=%d, ", id, cnt);
 
 	LPDIRECT3DVERTEXDECLARATION9 vd = NULL;
 
@@ -1032,7 +1046,7 @@ HRESULT FakedSetPixelShaderConstantF(RenderChannel * rch) {
 	UINT StartRegister = rch->cc->read_uint();
 	UINT Vector4fcount = rch->cc->read_uint();
 
-	for(int i=0; i<Vector4fcount; ++i) {
+	for(UINT i=0; i<Vector4fcount; ++i) {
 		rch->cc->read_vec(vs_data + (i * 4));
 	}
 
@@ -1171,12 +1185,10 @@ HRESULT FakedSetPixelShaderConstantB(RenderChannel * rch) {
 //extern SmallHash<HWND, HWND> serverToClient;
 
 HRESULT FakedReset(RenderChannel * rch) {
-	cg::core::infoRecorder->logTrace("FakedReset, ");
-
+	cg::core::infoRecorder->logTrace("FakedReset(), ");
 
 	D3DPRESENT_PARAMETERS t_d3dpp;
 	rch->cc->read_byte_arr((char*)(&t_d3dpp), sizeof(t_d3dpp));
-
 	rch->getDevice(rch->obj_id);
 
 	// correct the window handle
@@ -1184,11 +1196,13 @@ HRESULT FakedReset(RenderChannel * rch) {
 	HWND mappedHwnd = NULL;
 	if((mappedHwnd = serverToClient.getValue(serverHwnd)) == NULL){
 		
-		cg::core::infoRecorder->logError("invalid reset window handle.\n");
+		cg::core::infoRecorder->logError("invalid reset window handle.");
 	}
 	else{
 		t_d3dpp.hDeviceWindow = mappedHwnd;
 	}
+	cg::core::infoRecorder->logError("\n");
+	//return D3D_OK;
 	return rch->curDevice->Reset(&t_d3dpp);
 }
 
@@ -1597,9 +1611,9 @@ HRESULT FakedSetCubeTexture(RenderChannel * rch) {
 	cube_tex = (ClientCubeTexture9*)(rch->ctex_list[id]);
 
 	if(cube_tex == NULL) {
-		cg::core::infoRecorder->logTrace("FakedSetCubeTexture(), cube_tex is NULL\,id:%dn", id);
+		cg::core::infoRecorder->logTrace("FakedSetCubeTexture(), cube_tex is NULL,id:%d\n", id);
 	}else{
-		cg::core::infoRecorder->logTrace("FakedSetCubeTexture(), cube_tex:%p ,id:%dn", cube_tex, id);
+		cg::core::infoRecorder->logTrace("FakedSetCubeTexture(), cube_tex:%p ,id:%d\n", cube_tex, id);
 	}
 
 	return rch->curDevice->SetTexture(Stage, cube_tex->GetCubeTex9());
@@ -1712,7 +1726,7 @@ HRESULT FakedSetRenderTarget(RenderChannel * rch) {
 	if(!surface){
 		cg::core::infoRecorder->logTrace("FakedSetRenderTarget(%d, %d), get NULL surface, id:%d.\n ", RenderTargetIndex, sfid, sfid);
 	}else{
-		cg::core::infoRecorder->logTrace("FakedSetRenderTarget(%d, %d), use surface:%d.\n", RenderTargetIndex, sfid,sfid);
+		cg::core::infoRecorder->logError("FakedSetRenderTarget(%d, %d), use surface:%d.\n", RenderTargetIndex, sfid,sfid);
 		return rch->curDevice->SetRenderTarget(RenderTargetIndex, surface->GetSurface9());
 	}
 
@@ -2011,9 +2025,10 @@ extern bool synPress;
 extern CRITICAL_SECTION syn_sec;
 #endif
 HRESULT FakeNullInstruct(RenderChannel * rch){
-	SYSTEMTIME sys, now;
-	char flag = rch->cc->read_char();
+	unsigned char flag = rch->cc->read_uchar();
+	unsigned char tag = rch->cc->read_uchar();
 #if 0
+	SYSTEMTIME sys, now;
 	//GetLocalTime(&now);
 	GetSystemTime(&now);
 	time(&end_t);
@@ -2066,6 +2081,21 @@ HRESULT FakeNullInstruct(RenderChannel * rch){
 		fromserver = true;
 	}
 #endif
+	DelayRecorder * delayRecorder = DelayRecorder::GetDelayRecorder();
+	
+	rch->specialTag = flag;
+	rch->valueTag = tag;
+	if(encodeTimer){
+		encodeTimer->Start();
+	}
+	else{
+		encodeTimer = new PTimer();
+	}
+	if(flag){
+		infoRecorder->logError("NullInstruction, get special tag: %d, value tag:%d.\n", flag, tag);
+		delayRecorder->startEndcode();
+
+	}
 	return D3D_OK;
 }
 
@@ -2103,6 +2133,23 @@ HRESULT FakedD3DDSetStreamSourceFreq(RenderChannel * rch){
 	rch->getDevice(rch->obj_id);
 	cg::core::infoRecorder->logTrace("FakedD3DDSetStreamSourceFreq(%d, %d)\n", StreamNumber, Setting);
 	hr = rch->curDevice->SetStreamSourceFreq(StreamNumber, Setting);
+
+	return hr;
+}
+
+HRESULT FakedD3DSurfaceRelease(RenderChannel *rch){
+	HRESULT hr = D3D_OK;
+	int id = rch->obj_id;  // get the surface id
+	ClientSurface9 * surface = (ClientSurface9 *)rch->surface_list[id];
+
+#if 1
+	ULONG ref = surface->GetSurface9()->Release();
+	cg::core::infoRecorder->logError("FakedD3DSrufaceRelease(), id:%d, ref:%d.\n", id, ref);
+	if(ref <=0){
+		rch->surface_list[id] = NULL;
+	}
+#endif
+
 
 	return hr;
 }

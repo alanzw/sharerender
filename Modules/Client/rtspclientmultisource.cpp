@@ -69,6 +69,9 @@ extern int windowSizeX;
 extern int windowSizeY;
 
 int image_rendered = 0;
+
+
+static cg::core::BTimer * displayTimer = NULL;
 ////////////////////////// PacketQueue ///////////
 PacketQueue::PacketQueue(){
 	size = 0;
@@ -194,7 +197,7 @@ bool SubGameStream::init(){
 	videoDecoder = new VideoDecoder();
 	decoderBuffer = (DecoderBuffer *)malloc(sizeof(DecoderBuffer));
 	memset(decoderBuffer, 0, sizeof(DecoderBuffer));
-
+	streamId = 0;
 	return true;
 }
 
@@ -215,11 +218,11 @@ SubGameStream::SubGameStream(char * url){
 	char rtspUrl[100] = {0};
 	if(url[0] == 'r' || url[0] == 'R'){
 		// the url is a rtps url
-		this->url = strdup(url);
+		this->url = _strdup(url);
 	}
 	else{
 		// form the rtsp url
-		sprintf(rtspUrl, "rtsp://%s:%d/desktop", url, cg::RTSPConf::GetRTSPConf()->serverport);
+		sprintf(rtspUrl, "rtsp://%s:%d/desktop", url, cg::RTSPConf::GetRTSPConf()->serverPort);
 		cg::core::infoRecorder->logError("[SubGameStream]: construct game stream with url '%s'.\n", rtspUrl);
 		this->url = _strdup(rtspUrl);
 	}
@@ -229,7 +232,7 @@ SubGameStream::SubGameStream(char * url){
 
 SubGameStream::SubGameStream(char * url, int port){
 	char rtspUrl[100] = {0};
-	sprintf(rtspUrl, "rtsp://%d:%d/desktop", url, cg::RTSPConf::GetRTSPConf()->serverport);
+	sprintf(rtspUrl, "rtsp://%d:%d/desktop", url, cg::RTSPConf::GetRTSPConf()->serverPort);
 	this->url = strdup(rtspUrl);
 
 	init();
@@ -247,10 +250,10 @@ bool SubGameStream::openUrl(UsageEnvironment * env, char * url){
 		//cg::core::infoRecorder->logError("[SubGameStream]: openUrl '%s'.\n", this->url);
 	}
 	else{
-		sprintf(rtspUrl, "rtsp://%s:%d/desktop", url, cg::RTSPConf::GetRTSPConf()->serverport);
+		sprintf(rtspUrl, "rtsp://%s:%d/desktop", url, cg::RTSPConf::GetRTSPConf()->serverPort);
 		this->url = _strdup(rtspUrl);
 		rtsperror("open url, %s\n", this->url);
-		//cg::core::infoRecorder->logError("[SubGameStream]: openURL '%s'.\n", this->url);
+		cg::core::infoRecorder->logError("[SubGameStream]: openURL '%s'.\n", this->url);
 	}
 
 	ourRTSPClient * c = ourRTSPClient::createNew(*env, this->url, RTSP_CLIENT_VERBOSITY_LEVEL, "RTSP Client");
@@ -600,6 +603,8 @@ void SubGameStream::shutdownStream(RTSPClient * rtspClient, int exitCode){
 	UsageEnvironment& env = rtspClient->envir(); // alias
 	StreamClientState& scs = ((ourRTSPClient*)rtspClient)->scs; // alias
 
+	infoRecorder->logError("[SubGameStream]: shutdown stream with cdoe:%d.\n", exitCode);
+
 	if (RTSPClientCount <= 0)
 		return;
 
@@ -705,16 +710,33 @@ FILE * outfile = NULL;
 //the buffer contains the header data, include the frame index
 void SubGameStream::playVideoPriv(unsigned char * buffer, int bufSize, struct timeval pts){
 	AVPacket avpkt;
-	int gotPicture, len;
+	int gotPicture = 0 , len = 0;
 #ifndef ANDROID
 	union SDL_Event evt;
 #endif
 	struct pooldata * data = NULL;
 	AVPicture * dstFrame = NULL;
+	AVFrame * decodedFrame = NULL;
+
+#ifdef USE_TEMPLATE_FRAME_POOL
+	TaggedFrame * taggedFrame = NULL;
+	DelayRecorder * delayRecorder = DelayRecorder::GetDelayRecorder();
+#endif
 
 	av_init_packet(&avpkt);
-	char frameIndex = *(buffer + 4);   // get the frame index
+	unsigned char frameIndex = *(buffer + 4);   // get the frame index
 	unsigned char tag = *(buffer + 5);
+
+	if(!displayTimer){
+		displayTimer = new cg::core::PTimer();
+	}
+
+	unsigned char specialTag = frameIndex & 0xc0;
+	if(specialTag){
+		delayRecorder->startToDisplay();
+		displayTimer->Start();
+		infoRecorder->logError("[SubGameStream]: get special tag, frame index:%x, value tag:%d.\n", frameIndex, tag);
+	}
 
 	//cg::core::infoRecorder->logError("[SubGameStream]: playVideoPriv, size:%d, frame index:%d, frame tag:%d\n", bufSize, frameIndex, tag);
 
@@ -729,31 +751,30 @@ void SubGameStream::playVideoPriv(unsigned char * buffer, int bufSize, struct ti
 
 	while(avpkt.size > 0){
 		// the vframe is the destination frame(decoded), the avpkt is the source frame)
-		if((len = this->videoDecoder->decodeVideo(&gotPicture, &avpkt)) < 0){
-			infoRecorder->logError("[SubGameStream]: decode failed, len:%d.\n", len);
+		decodedFrame = this->videoDecoder->decodeVideo(&gotPicture, &len, &avpkt);
+		if(!decodedFrame || len < 0){
+			infoRecorder->logError("[SubGameStream]: decode failed, return NULL frome VideoDecoder::decodeVideo or get a len <0.\n");
 			break;
 		}
 #if 1
 		if(gotPicture){
-#if 1
-			// store to file
-			if(outfile == NULL){
-				outfile = fopen("rtsp-client.264", "wb");
-			}
-			writeFrameToFile(outfile, &avpkt);
-#endif    // the data is OK!!!!!!!!!!!!!!!!!!!!!!
-
 			// remove the GameStreams part form subStream
 			EnterCriticalSection(gameStreams->getSurfaceMutex());   // only one surface 
 			if(gameStreams->getSwsctx() == NULL){
+#ifdef USE_TEMPLATE_FRAME_POOL
+				gameStreams->setWidth(decodedFrame->width);
+				gameStreams->setHeight(decodedFrame->height);
+				gameStreams->setFormat((PixelFormat)decodedFrame->format);
+#else
 				gameStreams->setWidth(videoDecoder->getVFrame()->width);
 				gameStreams->setHeight(videoDecoder->getVFrame()->height);
 				gameStreams->setFormat((PixelFormat)videoDecoder->getVFrame()->format);
+#endif
 
 				cg::core::infoRecorder->logError("[SubGameStream]: to create a overlay width:%d, height:%d.\n", gameStreams->getWidth(), gameStreams->getHeight());
 				// create the overlay
 				LeaveCriticalSection(gameStreams->getSurfaceMutex());
-#if 1
+
 				bzero(&evt, sizeof(evt));
 				evt.user.type = SDL_USEREVENT;
 				evt.user.timestamp = time(0);
@@ -761,37 +782,41 @@ void SubGameStream::playVideoPriv(unsigned char * buffer, int bufSize, struct ti
 				evt.user.data1 = gameStreams;
 				evt.user.data2 = (void *)getId();
 				SDL_PushEvent(&evt);
-#else
-				if(!gameStreams->createOverlay()){
-					cg::core::infoRecorder->logError("[GameStreams]: create overlay for the gameStreams failed.\n");
-				}
-#endif
+
 				goto skip_frame;
 			}
 			LeaveCriticalSection(gameStreams->getSurfaceMutex());
 
 			// lock game streams
 			FrameKey key;
-			key.frameIndex = frameIndex;
+			key.frameIndex = frameIndex & 0x3F;
 			key.tag = tag;
 
-			//gameStreams->lock();
-			gameStreams->storeFrame(key, videoDecoder->getVFrame());
-			//GameStreams play the video, synchronizable
-			// get the time, if interval > 20, play video
-			DWORD lastTick  = 0;
-			static DWORD tickCount = GetTickCount();
+			// get the frame tag
+			specialTag = frameIndex & 0xc0;
 
-			if(tickCount - lastTick > 20){
-				gameStreams->playVideo();
-				gameStreams->countFrameRate();
-			}else{
-				infoRecorder->logTrace("[SubGameStream]: interval: %d.\n", tickCount - lastTick);
-			}
+			taggedFrame = new TaggedFrame;
+			taggedFrame->frame = decodedFrame;
+			taggedFrame->tag = specialTag;
+			taggedFrame->valueTag = tag;
 
-			lastTick = tickCount;
+#if 1
+
+#if 0
+			gameStreams->storeFrame(key, taggedFrame);
+			gameStreams->playVideo();
+#else
+			gameStreams->formDisplayEvent(taggedFrame);
+#endif
+			gameStreams->countFrameRate();
+
+#else
+			
+#endif
 			// unlock game streams
-			//gameStreams->unlock();
+		}
+		else{
+			infoRecorder->logError("[SubGameStreams]: got NO from decoding.\n");
 		}
 #endif
 skip_frame:
@@ -800,11 +825,8 @@ skip_frame:
 	}
 }
 
-
-
 //////////////// GameStreams ////////////////
 GameStreams * GameStreams::streams = NULL;
-
 
 GameStreams::~GameStreams(){
 	// delete the critical section
@@ -928,10 +950,18 @@ SubGameStream * GameStreams::removeStream(char * url){
 
 	return subStream;
 }
-
+#ifdef USE_TEMPLATE_FRAME_POOL
+TaggedFrame* GameStreams::getIndexedFrame(FrameKey & lowBound_){
+#else
 AVFrame * GameStreams::getIndexedFrame(FrameKey & lowBound_){
+#endif
 	infoRecorder->logTrace("[GameStreams]:getIndexedFrame(), low bound:(frame index:%d, tag:%d).\n", lowBound_.frameIndex, lowBound_.tag);
-	AVFrame * ret=  framePool.getFrame(lowBound_);
+#ifdef USE_TEMPLATE_FRAME_POOL
+	TaggedFrame * ret = NULL;
+#else
+	AVFrame * ret = NULL; 
+#endif
+	ret=  framePool.getFrame(lowBound_);
 	if(ret == NULL){
 		infoRecorder->logTrace("[GameStreams]: get NULL frame, low bound:(frame index:%d, tag:%d).\nUpdate the low bound to zero.\n", lowBound_.frameIndex, lowBound_.tag);
 		
@@ -939,12 +969,10 @@ AVFrame * GameStreams::getIndexedFrame(FrameKey & lowBound_){
 			lowBound.frameIndex = 0;
 			lowBound.tag = 0;
 		}
-		
 	}else{
 		//lowBound = lowBound_;
 		infoRecorder->logTrace("[GameStreams]: update low bound to (index:%d, tag:%d).\n", lowBound_.frameIndex, lowBound_.tag);
 	}
-	
 	return ret;
 }
 
@@ -952,12 +980,16 @@ AVFrame * GameStreams::getIndexedFrame(FrameKey & lowBound_){
 int GameStreams::playVideo(){
 	infoRecorder->logTrace("[GameStreams]: play video.\n");
 	bool exitDisplay = false;
+#ifdef USE_TEMPLATE_FRAME_POOL
+	TaggedFrame * frame = NULL;
+#else
 	AVFrame * frame = NULL;
+#endif
 	while(!exitDisplay){
 		// check the frame index
 		if(totalStreams <= 0){
-			// no streams invlid
-			infoRecorder->logError("[GameStreams]: no stream is valid, total streams: %d, stremas:%p\n", totalStreams, this);
+			// no streams invalid
+			infoRecorder->logError("[GameStreams]: no stream is valid, total streams: %d, streams:%p\n", totalStreams, this);
 			return 0;
 		}
 
@@ -974,8 +1006,13 @@ int GameStreams::playVideo(){
 	return 0;
 }
 // form the display event
+#ifdef USE_TEMPLATE_FRAME_POOL
+int GameStreams::formDisplayEvent(TaggedFrame* taggedFrame){
+	AVFrame * frame = taggedFrame->frame;
+#else
 int GameStreams::formDisplayEvent(AVFrame * frame){
-	infoRecorder->logTrace("[GameStreams]: form display event.\n");
+#endif
+	cg::core::infoRecorder->logError("[GameStreams]: form display event.\n");
 	AVPicture * dstFrame = NULL;
 #ifndef ANDROID
 	union SDL_Event evt;
@@ -984,13 +1021,11 @@ int GameStreams::formDisplayEvent(AVFrame * frame){
 
 	EnterCriticalSection(&surfaceMutex);
 	if(this->swsctx == NULL){
-		infoRecorder->logError("[GameStreams]: formDisplayEvent(), get NULL swsctx, ERROR.\n");
+		cg::core::infoRecorder->logError("[GameStreams]: formDisplayEvent(), get NULL swsctx, ERROR.\n");
 #ifdef ANDROID
 
 #else
 		LeaveCriticalSection(&surfaceMutex);
-
-#if 0
 		bzero(&evt, sizeof(evt));
 		evt.user.type = SDL_USEREVENT;
 		evt.user.timestamp = time(0);
@@ -998,9 +1033,6 @@ int GameStreams::formDisplayEvent(AVFrame * frame){
 		evt.user.data1 = this;
 		evt.user.data2 = (void *)0;
 		SDL_PushEvent(&evt);
-#else
-		createOverlay();
-#endif
 		//goto skip_frame;
 		return 0;
 #endif
@@ -1009,56 +1041,50 @@ int GameStreams::formDisplayEvent(AVFrame * frame){
 	// copy into pool
 	data = pipe->allocate_data();
 	dstFrame = (AVPicture *)data->ptr;
-#if 1
+
 	sws_scale(swsctx, frame->data, frame->linesize,
 		0,frame->height, dstFrame->data, dstFrame->linesize);
-
 	avcodec_free_frame(&frame);
-	//avcodec_alloc_frame
-
-#else
-	// copy data
-	CopyMemory(dstFrame->data, frame->data, frame->pkt_size);
-	dstFrame->linesize = frame->linesize;
-
-
-	// delete the pic
-	avpicture_free(IndexedFrame->frame);
-	IndexedFrame->frame = NULL;
-#endif
-
 	pipe->store_data(data);
 
 #ifdef ANDROID
 
 #else
-
-#if 1
 	bzero(&evt, sizeof(evt));
 	evt.user.type = SDL_USEREVENT;
 	evt.user.timestamp = time(0);
 	evt.user.code = SDL_USEREVENT_RENDER_IMAGE;
 	evt.user.data1=  this;
-	evt.user.data2 = (void *)0;
+	unsigned char * ptr = (unsigned char *)&(evt.user.data2);
+
+	*ptr = taggedFrame->tag;
+	ptr++;
+	*ptr = taggedFrame->valueTag;
+	//evt.user.data2 = (void *)taggedFrame->tag;
 	SDL_PushEvent(&evt);
-#else
-	renderImage();
+#endif  // ANDROID
+
+#ifdef USE_TEMPLATE_FRAME_POOL
+	delete taggedFrame;
 #endif
 
-#endif
 	return 1;
 }
 
 // each subStreams will call this function to store the recved frame, so lock first
 // return value: 1 for alright to trigger frame event
 //				 -1 for frame is dropped.
+#ifdef USE_TEMPLATE_FRAME_POOL
+int GameStreams::storeFrame(FrameKey key,  TaggedFrame * frame){
+#else
 int GameStreams::storeFrame(FrameKey key, AVFrame * frame){
-	cg::core::infoRecorder->logError("[GaemStreams]: storeFrame(), frame index;%d,  tag:%d\n", key.frameIndex, key.tag);
+#endif
+	cg::core::infoRecorder->logTrace("[GaemStreams]: storeFrame(), frame index;%d,  tag:%d\n", key.frameIndex, key.tag);
 	int ret = 0;
 	lock();
 	//unsigned short index = frame->tag % MAX_RTSP_STREAM; // get the tag in the matrix
 	ret = framePool.addFrame(key, frame);
-	cg::core::infoRecorder->logError("[GameStreams]: frame pool has:%d.\n", ret);
+	cg::core::infoRecorder->logTrace("[GameStreams]: frame pool has:%d.\n", ret);
 	unlock();
 
 	SetEvent(frameEvent);
@@ -1128,13 +1154,9 @@ bool GameStreams::declineRenders(char * cmd){
 	char * urlStart = p;
 	char * urlEnd = p;
 
-
-
-
 	if(totalStreams){
 		maxFrameIndex = totalStreams - 1;
 		minFrameIndex = 0;
-
 	}
 
 	return ret;
@@ -1148,12 +1170,6 @@ bool GameStreams::createOverlay(){
 	unsigned int rendererFlags = SDL_RENDERER_SOFTWARE | SDL_RENDERER_PRESENTVSYNC;
 	struct pooldata * data = NULL;
 	char windowTitle[64];
-
-	//surface = NULL;
-	renderer = NULL;
-	overlay = NULL;
-
-	swsctx = NULL;
 
 	cg::RTSPConf * rtspConf = cg::RTSPConf::GetRTSPConf();
 
@@ -1172,7 +1188,6 @@ bool GameStreams::createOverlay(){
 	if((swsctx  = sws_getContext(width,height, format, width, height, PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL)) == NULL){
 		rtsperror("[GameStreams]: cannot create swsscale context.\n");
 		cg::core::infoRecorder->logError("[GameStreams]: cannot create swsscale context, FATAL ERROR.\n");
-
 		return false;
 		//exit(-1);
 	}
@@ -1228,13 +1243,17 @@ bool GameStreams::createOverlay(){
 #if 1	// only support SDL2
 	//SDL_WarpMouseInWindow(surface, width / 2, height / 2);
 #endif
+
+#if 0
+	relativeMouseMode = rtspConf->relativeMouse;
 	if (relativeMouseMode != 0) {
 		SDL_SetRelativeMouseMode(SDL_TRUE);
 		showCursor = 0;
 		//SDL_ShowCursor(0);
-		cg::core::infoRecorder->logError("[GameStreams]: relative mouse mode enbaled.\n");
+		cg::core::infoRecorder->logError("[GameStreams]: relative mouse mode enabled.\n");
 	}
 	SDL_ShowCursor(showCursor);
+#endif
 
 #if 1	// only support SDL2
 	do {	// choose SW or HW renderer?
@@ -1305,7 +1324,7 @@ SDL_RENDERER_SOFTWARE : rendererFlags);
 
 
 
-#ifdef SAVE_SURFACE
+
 
 bool saveTextureToBMP(std::string filepath, SDL_Texture *tex){
 	SDL_Surface * infoSurface = NULL;
@@ -1318,25 +1337,26 @@ bool saveTextureToBMP(std::string filepath, SDL_Texture *tex){
 }
 
 bool saveScreenshotBMP(std::string filepath, SDL_Window* SDLWindow, SDL_Renderer* SDLRenderer) {
+	cg::core::infoRecorder->logError("Save scurrent to bmp: SDL_window: %p, renderer: %p.\n", SDLWindow, SDLRenderer);
 	SDL_Surface* saveSurface = NULL;
 	SDL_Surface* infoSurface = NULL;
 	infoSurface = SDL_GetWindowSurface(SDLWindow);
 	if (infoSurface == NULL) {
-		std::cerr << "Failed to create info surface from window in saveScreenshotBMP(string), SDL_GetError() - " << SDL_GetError() << "\n";
+		cg::core::infoRecorder->logError("Failed to create info surface from window in saveScreenshotBMP(string), SDL_GetError() - %d\n", SDL_GetError());
 	} else {
 		unsigned char * pixels = new (std::nothrow) unsigned char[infoSurface->w * infoSurface->h * infoSurface->format->BytesPerPixel];
 		if (pixels == 0) {
-			std::cerr << "Unable to allocate memory for screenshot pixel data buffer!\n";
+			cg::core::infoRecorder->logError("Unable to allocate memory for screenshot pixel data buffer!\n");
 			return false;
 		} else {
 			if (SDL_RenderReadPixels(SDLRenderer, &infoSurface->clip_rect, infoSurface->format->format, pixels, infoSurface->w * infoSurface->format->BytesPerPixel) != 0) {
-				std::cerr << "Failed to read pixel data from SDL_Renderer object. SDL_GetError() - " << SDL_GetError() << "\n";
+				cg::core::infoRecorder->logError("Failed to read pixel data from SDL_Renderer object. SDL_GetError() - %d\n",SDL_GetError());
 				pixels = NULL;
 				return false;
 			} else {
 				saveSurface = SDL_CreateRGBSurfaceFrom(pixels, infoSurface->w, infoSurface->h, infoSurface->format->BitsPerPixel, infoSurface->w * infoSurface->format->BytesPerPixel, infoSurface->format->Rmask, infoSurface->format->Gmask, infoSurface->format->Bmask, infoSurface->format->Amask);
 				if (saveSurface == NULL) {
-					std::cerr << "Couldn't create SDL_Surface from renderer pixel data. SDL_GetError() - " << SDL_GetError() << "\n";
+					cg::core::infoRecorder->logError("Couldn't create SDL_Surface from renderer pixel data. SDL_GetError() - %d.\n", SDL_GetError());
 					return false;
 				}
 				SDL_SaveBMP(saveSurface, filepath.c_str());
@@ -1350,13 +1370,84 @@ bool saveScreenshotBMP(std::string filepath, SDL_Window* SDLWindow, SDL_Renderer
 	}
 	return true;
 }
-#endif
 
-// the function to render the image for the gaem stream
-bool GameStreams::renderImage(){
+bool GameStreams::renderImage(unsigned char specialTag, unsigned char valueTag){
 	struct pooldata *data;
 	AVPicture *vframe;
 	SDL_Rect rect;
+	DelayRecorder * delayRecorder = DelayRecorder::GetDelayRecorder();
+
+	cg::core::infoRecorder->logError("[GameStreams]: render image.\n");
+
+	// get the frame data to display
+	if ((data = pipe->load_data()) == NULL) {
+		cg::core::infoRecorder->logError("[GameStreams]: get NULL pipeline for channel:%d.\n", 0);
+		return false;
+	}
+	vframe = (AVPicture*)data->ptr;
+#ifdef YUV_TEXTURE
+
+	if(SDL_UpdateYUVTexture(overlay, NULL, vframe->data[0], vframe->linesize[0], vframe->data[1], vframe->linesize[1], vframe->data[2], vframe->linesize[2])){
+		cg::core::infoRecorder->logError("[GameStreams]: SDL_UpdateYUVTexture failed with:%d, texture not valid.\n");
+	} 
+#else    // YUV_TEXTURE
+
+#endif    /// YUV_TEXTURE
+
+	pipe->release_data(data);
+	rect.x = 0;
+	rect.y = 0;
+	rect.w = width;
+	rect.h = height;
+#if 1	// only support SDL2
+	int t = 0;
+
+	SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+	SDL_RenderClear(renderer);
+
+	if((t = SDL_RenderCopy(renderer, overlay, NULL, NULL))){
+		//if(SDL_SetRenderTarget(renderer, overlay)){
+		cg::core::infoRecorder->logError("[GameStreams]: render copy filed with:%d.\n", t);
+	}
+	//SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+	//SDL_RenderClear(renderer);	
+	SDL_SetRenderTarget(renderer, NULL);
+	SDL_RenderPresent(renderer);
+
+#endif
+
+	if(specialTag){
+		char fileName[1024] = {0};
+		sprintf(fileName,"%s/%s-share-c-%d.bmp", name, name, valueTag);
+		printf("[Image]: save image %s.\n", fileName);
+		saveScreenshotBMP(fileName, surface, renderer);
+
+#if 0
+		extern bool responseTickStarted;
+		extern BTimer * globalTimer;
+		responseTickStarted = false;
+		long interval = globalTimer->Stop();
+
+		int displayTime = displayTimer->Stop();
+		if(delayRecorder->isSigned()){
+			delayRecorder->displayed();
+		}
+		cg::core::infoRecorder->logError("[Delay]: before + display = total -> %f %f %f\n", delayRecorder->getBeforeDisplay(), delayRecorder->getDisplayDelay(), delayRecorder->getTotalDelay());
+
+		cg::core::infoRecorder->logTrace("[delay]: %f, display: %f.\n", interval * 1000.0 / globalTimer->getFreq(), displayTime * 1000.0 / displayTimer->getFreq());
+#endif
+	}
+
+	image_rendered = 1;
+	return true;
+}
+
+// the function to render the image for the gaem stream
+bool GameStreams::renderImage(long long special){
+	struct pooldata *data;
+	AVPicture *vframe;
+	SDL_Rect rect;
+	DelayRecorder * delayRecorder = DelayRecorder::GetDelayRecorder();
 
 	cg::core::infoRecorder->logTrace("[GameStreams]: render image.\n");
 
@@ -1427,8 +1518,6 @@ bool GameStreams::renderImage(){
 #endif
 #endif    /// YUV_TEXTURE
 
-
-
 	pipe->release_data(data);
 	rect.x = 0;
 	rect.y = 0;
@@ -1454,9 +1543,23 @@ bool GameStreams::renderImage(){
 #endif
 
 #endif
-	//
+
+	if(special){
+		extern bool responseTickStarted;
+		extern BTimer * globalTimer;
+		responseTickStarted = false;
+		long interval = globalTimer->Stop();
+
+		int displayTime = displayTimer->Stop();
+		if(delayRecorder->isSigned()){
+			delayRecorder->displayed();
+		}
+		cg::core::infoRecorder->logError("[Delay]: before + display = total -> %f %f %f\n", delayRecorder->getBeforeDisplay(), delayRecorder->getDisplayDelay(), delayRecorder->getTotalDelay());
+
+		cg::core::infoRecorder->logTrace("[delay]: %f, display: %f.\n", interval * 1000.0 / globalTimer->getFreq(), displayTime * 1000.0 / displayTimer->getFreq());
+	}
+
 	image_rendered = 1;
-	//
 	return true;
 }
 
@@ -1587,6 +1690,7 @@ Boolean
 }
 
 
+
 //////////////////// game decoder /////////////////////////
 
 int VideoDecoder::init(const char * sprop){
@@ -1659,13 +1763,15 @@ int VideoDecoder::init(const char * sprop){
 
 	return 0;
 }
-int VideoDecoder::decodeVideo(int * got_picture, AVPacket * pkt){
-	if((vFrame = avcodec_alloc_frame()) == NULL){
+AVFrame * VideoDecoder::decodeVideo(int * got_picture, int * step_len, AVPacket * pkt){
+	AVFrame * ret = NULL;
+	if((ret = avcodec_alloc_frame()) == NULL){
 		rtsperror("[VideoDecoder]: video decoder: allocate frame failed.]n" );
 		cg::core::infoRecorder->logError("[VideoDecoder]: video decoder: allocate frame failed.]n");
-		return -1;
+		return NULL;
 	}
-	return avcodec_decode_video2(vDecoder, vFrame, got_picture, pkt);
+	*step_len = avcodec_decode_video2(vDecoder, ret, got_picture, pkt);
+	return ret;
 }
 
 
@@ -1822,6 +1928,7 @@ int AudioDecoder::audioBufferDecode(AVPacket * pkt, unsigned char *dstBuf, int d
 		av_free_packet(pkt);
 		return filled;
 	}
+	return filled;
 }
 
 int AudioDecoder::audioBufferFillSDL(void * userdata, unsigned char * stream, int ssize){
@@ -1939,7 +2046,6 @@ DWORD WINAPI RTSPDisplayThread(LPVOID param){
 
 	GameStreams *streams = (GameStreams *)((void **)param)[0];
 
-
 	// connect to the temp distributor, get the substream count, construct the sub streams
 	// get the temp distributor url from rtspConf
 	SOCKET disSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
@@ -1951,18 +2057,17 @@ DWORD WINAPI RTSPDisplayThread(LPVOID param){
 	// fill the remote addr information
 	sockaddr_in servAddr;
 	servAddr.sin_family = AF_INET;
-	servAddr.sin_port = htons(rtspConf->dis_port);
-	servAddr.sin_addr.S_un.S_addr = inet_addr(rtspConf->distributorname);
+	servAddr.sin_port = htons(rtspConf->disPort);
+	servAddr.sin_addr.S_un.S_addr = inet_addr(rtspConf->disServerName);
 
 	// connect to dis
 	if(connect(disSocket, (sockaddr *)&servAddr, sizeof(servAddr)) == -1){
 		// connect failed
-		cg::core::infoRecorder->logError("[RTSPDisplay]: connect to dis '%s', port:%d failed.\n", rtspConf->distributorname, rtspConf->dis_port);
+		cg::core::infoRecorder->logError("[RTSPDisplay]: connect to dis '%s', port:%d failed.\n", rtspConf->disServerName, rtspConf->disPort);
 		return 0;
 	}
 
 	//recv the urls
-
 
 	char addCmd[1024] = {0};
 	char * p = addCmd;
@@ -1975,8 +2080,8 @@ DWORD WINAPI RTSPDisplayThread(LPVOID param){
 	*p = '+';
 	p++;
 	for(int i = 0; i< 3; i++){
-		sprintf(p, "%s", rtspConf->servername);
-		p+= strlen(rtspConf->servername);
+		sprintf(p, "%s", rtspConf->disServerName);
+		p+= strlen(rtspConf->disServerName);
 		*p= '+';
 		p++;
 	}
@@ -2062,4 +2167,5 @@ DWORD WINAPI RTSPDisplayThread(LPVOID param){
 			break;
 		}
 	}
+	return 0;
 }

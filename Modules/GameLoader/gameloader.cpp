@@ -638,7 +638,9 @@ bool LogicFactory::registerLogic(){
 bool LogicFactory::startInternalListen(){
 	printf("[LogicFactory]: start to listen to game process.\n");
 	unsigned short port = INTERNAL_PORT;
-	
+	if(conf){
+		port = conf->loaderPort;
+	}
 	// create loader listener for game process to connect
 	sockaddr_in sin;
 	int sin_size = sizeof(sin);
@@ -679,14 +681,17 @@ bool LogicFactory::startCtrlListen(){
 // start listen to process
 bool LogicFactory::startRenderListen(){
 	printf("[LogicFactory]: start to listen to render.\n");
-	unsigned port = INTERNAL_PORT;
+	unsigned port = 60000;
+	if(conf){
+		port = conf->graphicPort;
+	}
 
 	sockaddr_in sin;
 	int sin_size = sizeof(sin);
 	memset(&sin, 0, sin_size);
 	sin.sin_family = AF_INET;
 	sin.sin_addr.S_un.S_addr = htonl(0);
-	sin.sin_port = htons(60000);
+	sin.sin_port = htons(port);
 
 	renderListener = evconnlistener_new_bind(base, listenerCB, rmgr, LEV_OPT_CLOSE_ON_FREE | LEV_OPT_LEAVE_SOCKETS_BLOCKING | LEV_OPT_REUSEABLE, -1, (sockaddr *)&sin, sin_size);
 	if(!renderListener){

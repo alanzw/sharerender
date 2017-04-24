@@ -24,6 +24,12 @@
 
 using namespace std;
 
+
+// use templated frame pool
+
+#define USE_TEMPLATE_FRAME_POOL
+
+
 #ifdef __cplusplus
 extern "C"{
 #include "libavformat/avformat.h"
@@ -113,10 +119,23 @@ struct DecoderBuffer{
 	struct timeval	lastpts;
 };
 
+#ifdef USE_TEMPLATE_FRAME_POOL
+struct TaggedFrame{
+	AVFrame * frame;  // the decoded frame data
+	unsigned char tag;   // the tag to represent the frame is special.
+	unsigned char valueTag; 
+};
+#endif
+
+
 class VideoDecoder{
 	bool inited;
 	AVCodecContext * vDecoder;   // single channel 
+#ifdef USE_TEMPLATE_FRAME_POOL
+	TaggedFrame * frame;
+#else
 	AVFrame * vFrame;
+#endif
 
 	char *			videoCodecName;
 	AVCodecID		videoCodecId;
@@ -126,16 +145,23 @@ public:
 	VideoDecoder(){ 
 		inited = false;
 		videoCodecName = NULL; 
-		videoCodecId = AVCodecID::AV_CODEC_ID_NONE;
+		videoCodecId = AV_CODEC_ID_NONE;
 		vDecoder = NULL;
+#ifdef USE_TEMPLATE_FRAME_POOL
+		frame = NULL;
+#else
 		vFrame = NULL;
+#endif
 	}
 
 	inline AVCodecContext * getVDecoder(){ return vDecoder; }
+#ifndef USE_TEMPLATE_FRAME_POOL
 	inline AVFrame * getVFrame(){ return vFrame; }
+#endif
 
 	int init(const char * sprop);
-	int decodeVideo(int * got_picture, AVPacket * pkt);
+	AVFrame *decodeVideo(int * got_picture, int * step_len, AVPacket * pkt);
+
 
 
 	inline void		setVideoSessFmt(int val){ videoSessFmt = val; }
@@ -225,10 +251,10 @@ public:
 	SubGameStream(char * rtspUrl);
 	SubGameStream(char * url, int port);
 	~SubGameStream();
-	bool init();
+	bool			init();
 	inline bool		setQuitLive555(char val){ this->quitLive555 = val; return true; }
 
-	inline int getId(){ return streamId ;}
+	inline int		getId(){ return streamId ;}
 	bool			isDecoderInited(){ return videoDecoder->isInited(); }
 	int				initVDecoder(const char * sprop){ return videoDecoder->init(sprop); }
 };
@@ -248,6 +274,32 @@ struct FrameKey{
 	}
 };
 
+#ifdef USE_TEMPLATE_FRAME_POOL
+template<class T>
+class FramePool{
+	map<FrameKey, T *> pool;
+
+public:
+	int addFrame(FrameKey key, T * frame){
+		pool[key] = frame;
+		return pool.size();
+	}
+	T * getFrame(FrameKey &lowBound){
+		T * ret= NULL;
+		map<FrameKey, T *>::iterator it = pool.upper_bound(lowBound);
+		if(it != pool.end()){
+			lowBound.frameIndex = it->first.frameIndex;
+			lowBound.tag = it->first.tag;
+			ret = it->second;
+			pool.erase(it);
+			return ret;
+		}
+		else
+			return NULL;
+	}
+};
+
+#else
 class FramePool{
 	map<FrameKey, AVFrame *> pool;
 	
@@ -271,6 +323,7 @@ public:
 	}
 };
 
+#endif
 
 
 // game stream is formed nby SubGameStream, need to merge the video streams. Actually, it is the back end to display the result
@@ -282,7 +335,6 @@ class GameStreams{
 	LPCRITICAL_SECTION pSection;
 
 	AudioDecoder *	audioDecoder;
-
 	SubGameStream * subStreams[MAX_RTSP_STREAM];
 	//GameDecoder * gameDecoder[MAX_RTSP_STREAM];   // the decoder for this each stream
 
@@ -303,8 +355,6 @@ class GameStreams{
 	struct timeval	cf_tv1;
 	long long		cf_interval;
 #endif
-
-	// the heap to sort the frame
 
 	// the attributes are for rendering
 	CRITICAL_SECTION surfaceMutex;
@@ -340,28 +390,21 @@ class GameStreams{
 	unsigned char	nextFrameTag;
 	unsigned char	maxFrameTag, minFrameTag;    // current the max and min frame tag of the valid frames
 
-	short			displayInterval;    // the time interval to display when there are multiple frames arriveing.
-
-
-#if 0
-	cg::core::IndexedFrameMatrix<AVFrame *> frameMatrix;
-	cg::core::IndexedFrame<unsigned char, AVFrame *> * lowBound;
+	short			displayInterval;    // the time interval to display when there are multiple frames arriving.
+	
+#ifdef USE_TEMPLATE_FRAME_POOL
+	FramePool<TaggedFrame> framePool;
 #else
 	FramePool		framePool;
-	FrameKey		lowBound;
 #endif
+	FrameKey		lowBound;
 
 	bool running;
-
 	HANDLE newAddEvent, declineEvent;
-
 	HANDLE frameEvent; // set the event when store the frame
 	//storeIndexedFrameToMatrix(short row, short col);
 	GameStreams();
-
 	static GameStreams * streams;
-
-
 
 public:
 	static GameStreams * GetStreams(){
@@ -371,6 +414,7 @@ public:
 		return streams;
 
 	}
+	// used when distributor is enabled
 	inline void		setDisUrl(char * url){ disUrl = _strdup(url); }
 	inline char *	getDisUrl(){ return disUrl; }
 
@@ -429,23 +473,18 @@ public:
 	//static void		addMap(RTSPClient * client, SubGameStream * stream);
 	
 	int				playVideo();
-	
 	bool			checkRunning(){ return true; }
-
 	void			countFrameRate();
 
-#if 0
-	int				storeFrame(cg::core::IndexedFrame<unsigned char, AVFrame *> * data);
-	int				onGotPicture(cg::core::IndexedFrame<unsigned char, AVFrame *> * data); // callback on got picture
-	int				formDisplayEvent(cg::core::IndexedFrame<unsigned char, AVFrame *> * indexedFrame);
-	cg::core::IndexedFrame<unsigned char, AVFrame *> *getIndexedFrameToShow(short & tag, short & index);
-	cg::core::IndexedFrame<unsigned char, AVFrame *> *getIndexedFrameToShow();
 
+#ifdef USE_TEMPLATE_FRAME_POOL
+	int				storeFrame(FrameKey key, TaggedFrame * frame);
+	TaggedFrame *	getIndexedFrame(FrameKey &lowBound);
+	int				formDisplayEvent(TaggedFrame* frame);
 #else
-	AVFrame *		getIndexedFrame(FrameKey &lowBound);
 	int				storeFrame(FrameKey key, AVFrame * frame);
+	AVFrame *		getIndexedFrame(FrameKey &lowBound);
 	int				formDisplayEvent(AVFrame * frame);
-
 #endif
 	
 	~GameStreams();
@@ -455,13 +494,12 @@ public:
 	bool			init();
 	bool			addRenders(char * cmd);
 	bool			declineRenders(char * cmd);
-
 	bool			createOverlay();
-	bool			renderImage();
+	bool			renderImage(long long special);
+	bool			renderImage(unsigned char specialTag, unsigned char valueTag);
 
 	HANDLE mutex;
 	char * name;
-
 };
 
 

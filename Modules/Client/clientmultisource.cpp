@@ -126,10 +126,14 @@ using namespace cg::input;
 
 //extern cg::input::CtrlMessagerClient * ctrlClient;// = NULL;
 extern cg::input::CtrlMessagerClient * gCtrlClient;
-CtrlConfig * ctrlConf = NULL;
 
+CtrlConfig * ctrlConf = NULL;
 CRITICAL_SECTION watchdogMutex;
 struct timeval watchdogTimer = { 0LL, 0LL };
+
+// The time for response delay
+BTimer * globalTimer = NULL;
+bool responseTickStarted = false;
 
 #ifndef MULTI_SOURCES
 static RTSPThreadParam rtspThreadParam;
@@ -137,7 +141,7 @@ static RTSPThreadParam rtspThreadParam;
 GameStreams * gameStreams = NULL;
 #endif
 
-static char logic_servername[100];
+//static char logic_servername[100];
 int relativeMouseMode = 0;
 int showCursor = 1;
 int windowSizeX;
@@ -150,12 +154,14 @@ static cg::RTSPConf * rtspConf = NULL;
 #define	DEFAULT_FONTSIZE	24
 static TTF_Font *defFont = NULL;
 #endif
+
 struct CodecEntry codecTable[] = {
 	{ "H264", AV_CODEC_ID_H264, "video/avc", { "h264", NULL } },
 	{ "VP8", AV_CODEC_ID_VP8, "video/x-vnd.on2.vp8", { "libvpx", NULL } },
 	{ "MPA", AV_CODEC_ID_MP3, "audio/mpeg", { "mp3", NULL } },
 	{ NULL, AV_CODEC_ID_NONE, NULL, { NULL } }
 };
+
 const char ** ccgClient::LookupDecoders(const char * key){
 	struct CodecEntry * e = LookupCore(key);
 	if (e == NULL || e->ffmpeg_decoders == NULL){
@@ -164,6 +170,7 @@ const char ** ccgClient::LookupDecoders(const char * key){
 	}
 	return e->ffmpeg_decoders;
 }
+
 enum AVCodecID ccgClient::LookupCodecID(const char * key){
 	struct CodecEntry * e = LookupCore(key);
 	if (e == NULL){
@@ -172,6 +179,7 @@ enum AVCodecID ccgClient::LookupCodecID(const char * key){
 	}
 	return e->id;
 }
+
 const char *ccgClient::LookupMime(const char * key){
 	struct CodecEntry * e = LookupCore(key);
 	if (e == NULL || e->mime == NULL){
@@ -180,6 +188,7 @@ const char *ccgClient::LookupMime(const char * key){
 	}
 	return e->mime;
 }
+
 CodecEntry * ccgClient::LookupCore(const char *key){
 	int i = 0;
 	while (i >= 0 && codecTable[i].key != NULL){
@@ -189,6 +198,7 @@ CodecEntry * ccgClient::LookupCore(const char *key){
 	}
 	return NULL;
 }
+
 #ifdef MULTI_SOURCES
 static void CreateOverlay(GameStreams * gameStreams){
 
@@ -208,7 +218,6 @@ static void CreateOverlay(GameStreams * gameStreams){
 	struct pooldata * data = NULL;
 	char windowTitle[64];
 
-
 	infoRecorder->logError("[CreateOverlay]: to init the pipeline in GameStreams.\n");
 	cg::RTSPConf * rtspConf = cg::RTSPConf::GetRTSPConf();
 
@@ -219,11 +228,11 @@ static void CreateOverlay(GameStreams * gameStreams){
 		infoRecorder->logError("[ga-client]: duplicated create window request - image come too fast?");
 		return;
 	}
+
 	w = gameStreams->getWidth();
 	h = gameStreams->getHeight();
 	format = gameStreams->getFormat();
 	LeaveCriticalSection(gameStreams->getSurfaceMutex());
-	//swsctx
 
 	infoRecorder->logError("[ga-client]: to create sws_scale context, width:%d, height;%d.\n", w, h);
 	if((swsctx  = sws_getContext(w,h, format, w,h, PIX_FMT_YUV420P, SWS_FAST_BILINEAR, NULL, NULL, NULL)) == NULL){
@@ -326,7 +335,7 @@ SDL_RENDERER_SOFTWARE : rendererFlags);
 		infoRecorder->logError("ga-client: create overlay (textuer) failed. to exit?\n");
 		exit(-1);
 	}
-	//
+
 	EnterCriticalSection(gameStreams->getSurfaceMutex());
 	gameStreams->setPipe(pipe);
 	gameStreams->setSwsctx(swsctx);
@@ -336,9 +345,8 @@ SDL_RENDERER_SOFTWARE : rendererFlags);
 	gameStreams->setWindowId(SDL_GetWindowID(surface));
 #endif
 	gameStreams->setSurface(surface);
-
 	LeaveCriticalSection(gameStreams->getSurfaceMutex());
-	//
+
 	rtsperror("[ga-client]: window created successfully (%dx%d).\n", w, h);
 	infoRecorder->logError("[ga-client]: window created successfully (%dx%d).\n", w, h);
 
@@ -351,12 +359,17 @@ SDL_RENDERER_SOFTWARE : rendererFlags);
 }
 
 
-static void RenderImage(GameStreams * gameStreams){
+static void RenderImage(GameStreams * gameStreams, long long tag){
+#if 0
 	infoRecorder->logTrace("[EventDealing]: RenderImage.\n");
 	DWORD start =  GetTickCount();
-	gameStreams->renderImage();
+#endif
+	gameStreams->renderImage(tag);
+#if 0
 	DWORD end = GetTickCount();
 	infoRecorder->logTrace("[RenderImage]: use %d tick count to complete.\n", end -start);
+#endif
+
 	return;
 
 	struct pooldata *data;
@@ -398,6 +411,7 @@ static void RenderImage(GameStreams * gameStreams){
 	//
 	return;
 }
+
 static void RenderText(SDL_Renderer * renderer, SDL_Window * window, int x, int y, int line, const char * text){
 #ifdef ANDROID
 	// not supported
@@ -406,14 +420,11 @@ static void RenderText(SDL_Renderer * renderer, SDL_Window * window, int x, int 
 	SDL_Surface *textSurface = TTF_RenderText_Solid(defFont, text, textColor);
 	SDL_Rect dest = { 0, 0, 0, 0 }, boxRect;
 	SDL_Texture *texture;
-	int ww, wh;
-	//
+	int ww = 0, wh = 0;
 	if (window == NULL || renderer == NULL) {
-		rtsperror("render_text: Invalid window(%p) or renderer(%p) received.\n",
-			window, renderer);
+		rtsperror("render_text: Invalid window(%p) or renderer(%p) received.\n", window, renderer);
 		return;
 	}
-	//
 	SDL_GetWindowSize(window, &ww, &wh);
 	// centering X/Y?
 	if (x >= 0) { dest.x = x; }
@@ -488,65 +499,89 @@ static void OpenAudio(GameStreams * gameStreams, AVCodecContext * adecoder){
 }
 #endif
 
-void
-	ProcessEvent(SDL_Event *event, CtrlMessagerClient * ctrlClient) {
+
+void ProcessEvent(SDL_Event *event, CtrlMessagerClient * ctrlClient) {
 		sdlmsg_t m;
-		//
+		DelayRecorder * delayRecorder = DelayRecorder::GetDelayRecorder();
 		switch (event->type) {
 		case SDL_KEYUP:
 			infoRecorder->logTrace("[EventDeal]: key up.\n");
 			if (event->key.keysym.sym == SDLK_BACKQUOTE && relativeMouseMode != 0) {
 					showCursor = 1 - showCursor;
-
 					if (showCursor)
 						SDL_SetRelativeMouseMode(SDL_FALSE);
 					else
 						SDL_SetRelativeMouseMode(SDL_TRUE);
 			}
-			//
-			if (rtspConf->ctrlenable) {
-				infoRecorder->logTrace("[EventDeal]: key up, should never be here.\n");
-				sdlmsg_keyboard(&m, 0, event->key.keysym.scancode, event->key.keysym.sym, event->key.keysym.mod, 0/*event->key.keysym.unicode*/);
+
+			if (rtspConf->ctrlEnable) {
+				// for test response delay
+				if(event->key.keysym.sym == SDLK_HOME){
+					// to send special key
+				}
+				else if(event->key.keysym.sym == SDLK_F10){
+
+				}else if(event->key.keysym.sym == SDLK_F11){
+					if(!globalTimer){
+						globalTimer = new PTimer();
+					}
+					
+					if(!responseTickStarted){
+						globalTimer->Start();
+						responseTickStarted = true;
+					}
+					delayRecorder->startDelayCount();
+				}
+
+				sdlmsg_keyboard(&m, 0, 
+					event->key.keysym.scancode, 
+					event->key.keysym.sym, 
+					event->key.keysym.mod, 0/*event->key.keysym.unicode*/);
 				if(ctrlClient)
 					ctrlClient->sendMsg(&m, sizeof(sdlmsg_keyboard_t));
 			}
 			break;
+
 		case SDL_KEYDOWN:
 			infoRecorder->logTrace("[EventDeal]: key down.\n");
-			if (rtspConf->ctrlenable) {
+			if (rtspConf->ctrlEnable) {
 				sdlmsg_keyboard(&m, 1, event->key.keysym.scancode, event->key.keysym.sym, event->key.keysym.mod, 0/*event->key.keysym.unicode*/);
 				if(ctrlClient)
 					ctrlClient->sendMsg(&m, sizeof(sdlmsg_keyboard_t));
 			}
 			break;
+
 		case SDL_MOUSEBUTTONUP:
-			infoRecorder->logTrace("[EventDeal]: mouse button up.\n");
-			if (rtspConf->ctrlenable) {
+			if (rtspConf->ctrlEnable) {
 				sdlmsg_mousekey(&m, 0, event->button.button, event->button.x, event->button.y);
 				if(ctrlClient)
 					ctrlClient->sendMsg(&m, sizeof(sdlmsg_mouse_t));
 			}
 			break;
+
 		case SDL_MOUSEBUTTONDOWN:
 			infoRecorder->logTrace("[EventDeal]: mouse button down.\n");
-			if (rtspConf->ctrlenable) {
+			if (rtspConf->ctrlEnable) {
 				sdlmsg_mousekey(&m, 1, event->button.button, event->button.x, event->button.y);
 				if(ctrlClient)
 					ctrlClient->sendMsg(&m, sizeof(sdlmsg_mouse_t));
 			}
 			break;
 		case SDL_MOUSEMOTION:
-			infoRecorder->logTrace("[EventDeal]: mouse motion.\n");
-			if (rtspConf->ctrlenable && rtspConf->sendmousemotion) {
+			//infoRecorder->logTrace("[EventDeal]: mouse motion, (x, y): (%d, %d), (relx, rely):(%d, %d).\n", event->motion.x, event->motion.y, event->motion.xrel, event->motion.yrel);
+			if (rtspConf->ctrlEnable && rtspConf->sendMouseMotion) {
 				sdlmsg_mousemotion(&m, event->motion.x, event->motion.y, event->motion.xrel, event->motion.yrel, event->motion.state, relativeMouseMode == 0 ? 0 : 1);
 				if(ctrlClient)
 					ctrlClient->sendMsg(&m, sizeof(sdlmsg_mouse_t));
+			}
+			else{
+				infoRecorder->logError("[EventDeal]: ctrl disable or send mouse motion disabled.\n");
 			}
 			break;
 #if 1	// only support SDL2
 		case SDL_MOUSEWHEEL:
 			infoRecorder->logTrace("[EventDeal]: mouse wheel.\n");
-			if (rtspConf->ctrlenable && rtspConf->sendmousemotion) {
+			if (rtspConf->ctrlEnable && rtspConf->sendMouseMotion) {
 				sdlmsg_mousewheel(&m, event->motion.x, event->motion.y);
 				if(ctrlClient)
 					ctrlClient->sendMsg(&m, sizeof(sdlmsg_mouse_t));
@@ -561,7 +596,7 @@ void
 			if (windowSizeX[0] == 0)
 				break;
 			//DEBUG_FINGER(event->tfinger);
-			if (rtspConf->ctrlenable) {
+			if (rtspConf->ctrlEnable) {
 				unsigned short mapx, mapy;
 				mapx = (unsigned short)(1.0 * (windowSizeX[0] - 1) * event->tfinger.x / 32767.0);
 				mapy = (unsigned short)(1.0 * (windowSizeY[0] - 1) * event->tfinger.y / 32767.0);
@@ -577,7 +612,7 @@ void
 			if (windowSizeX[0] == 0)
 				break;
 			//DEBUG_FINGER(event->tfinger);
-			if (rtspConf->ctrlenable) {
+			if (rtspConf->ctrlEnable) {
 				unsigned short mapx, mapy;
 				mapx = (unsigned short)(1.0 * (windowSizeX[0] - 1) * event->tfinger.x / 32767.0);
 				mapy = (unsigned short)(1.0 * (windowSizeY[0] - 1) * event->tfinger.y / 32767.0);
@@ -593,7 +628,7 @@ void
 			if (windowSizeX[0] == 0)
 				break;
 			//DEBUG_FINGER(event->tfinger);
-			if (rtspConf->ctrlenable) {
+			if (rtspConf->ctrlEnable) {
 				unsigned short mapx, mapy;
 				mapx = (unsigned short)(1.0 * (windowSizeX[0] - 1) * event->tfinger.x / 32767.0);
 				mapy = (unsigned short)(1.0 * (windowSizeY[0] - 1) * event->tfinger.y / 32767.0);
@@ -619,17 +654,25 @@ void
 			break;
 		case SDL_USEREVENT:
 			if (event->user.code == SDL_USEREVENT_RENDER_IMAGE) {
-				long long ch = (long long)event->user.data2;
-				RenderImage((GameStreams *)event->user.data1);
+				//long long ch = (long long)event->user.data2;
+				// get the tag
+				unsigned char tag = 0, valueTag = 0, *ptr = NULL;
+
+				ptr = (unsigned char *)(&(event->user.data2));
+				tag = *ptr;
+				valueTag = *(ptr +1);
+#if 1
+				GameStreams * streams = (GameStreams *)event->user.data1;
+				streams->renderImage(tag, valueTag);
+				
+#else
+				RenderImage((GameStreams *)event->user.data1, tag);
+#endif
 				break;
 			}
 			if (event->user.code == SDL_USEREVENT_CREATE_OVERLAY) {
 				long long ch = (long long)event->user.data2;
 				CreateOverlay((GameStreams*)event->user.data1);
-
-				// create the ctrl
-
-
 				break;
 			}
 			if (event->user.code == SDL_USEREVENT_OPEN_AUDIO) {
@@ -647,7 +690,7 @@ void
 			}
 			//add the sdl event to handle the render's exit and add
 			if(event->user.code == SDL_USEREVENT_ADD_RENDER){
-				infoRecorder->logError("[ProcessEvent]: SDL_USEREVENT_ADD_RENDER event triggered.\n");
+				infoRecorder->logTrace("[ProcessEvent]: SDL_USEREVENT_ADD_RENDER event triggered.\n");
 				// the render is added in the logic server
 				GameStreams * streams = (GameStreams *)event->user.data1;
 				char * cmd = (char *)event->user.data2;
@@ -744,12 +787,9 @@ char * GetConfig(){
 	sprintf(conf, "%s", "config\\client.rel.conf");
 	return conf;
 }
-static int client_init(char * config){
-	//config = conffile;
+static int ClientInit(char * config){
 	infoRecorder->logTrace("[client-init]: %s\n", config);
-
 	srand(time(0));
-	//winsockInit();
 #if 1
 	if (WSAStartup(MAKEWORD(2, 2), &wd) != 0){
 		infoRecorder->logTrace("[client]: WSAStartup failed.\n");
@@ -763,44 +803,18 @@ static int client_init(char * config){
 
 	infoRecorder->logTrace("[Client]: init av part finished, start to load config.\n");
 	cg::RTSPConf * conf = cg::RTSPConf::GetRTSPConf((char *)config);
-	if (config != NULL){
-#if 0
-		if (conf->confLoad(config) < 0){
-			infoRecorder->logError("[client]: cannot load configure file '%s'\n", config);
-			return -1;
-		}
-#endif
-		infoRecorder->logTrace("[Client]: rtsp config load succeeded.\n");
-
-	}
-	else{
+	if (conf == NULL){
 		infoRecorder->logError("[client]: get rtsp config failed.\n");
 		return -1;
 	}
-#if 0
-	if (url != NULL){
-		// get the server url and port
-		// overwrite the server url and port
-		if (conf->UrlParse(url) < 0){
-			infoRecorder->logError("[client]: invalied URL '%s'\n", url);
-			return -1;
-		}
-	}
-#endif
 	return 0;
 }
-static int client_init(char * config, const char * url){
+static int ClientInit(char * config, const char * url){
 	//config = conffile;
 	infoRecorder->logTrace("[client-init]: %s %s\n", config, url);
 
 	srand(time(0));
 	winsockInit();
-
-#if 0
-	if (WSAStartup(MAKEWORD(2, 2), &wd) != 0){
-		return -1;
-	}
-#endif
 
 	av_register_all();
 	avcodec_register_all();
@@ -825,8 +839,34 @@ static int client_init(char * config, const char * url){
 }
 //int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow){
 
+#if 0
+void TestRTSPFiles(){
+	string fileNames[] ={
+		string("client.abs.conf"),
+		string("client.rel.conf"),
+		string("server.controller.conf"),
+		string("server.distributor.conf"),
+		string("server.logic.conf"),
+		string("server.render.conf")
+	};
+	string path = "config/";
+	for each(std::string file in fileNames){
+		string fullPath = path + file;
+		std::cout << "load config file " << fullPath<< std::endl;
+		ccgConfig * conf = new ccgConfig((char *)fullPath.c_str());
+		conf->confLoad(fullPath.c_str());
+		conf->print();
+		delete conf;
+	}
+}
+#endif
+
+
 // the main function for multi-soruces game client, event based
 int main(int argc, char * argv[]){
+
+	DelayRecorder * delayRecorder = DelayRecorder::GetDelayRecorder();
+
 	if(infoRecorder == NULL){
 		infoRecorder = new InfoRecorder("client");
 	}
@@ -834,7 +874,6 @@ int main(int argc, char * argv[]){
 	int i = 0;
 	SDL_Event event;
 	HANDLE rtspthread = NULL, ctrlthread = NULL, watchdog = NULL;
-	infoRecorder->logTrace("[client]: argc: %d\n", argc);
 
 	for (int m = 0; m < argc; m++){
 		infoRecorder->logTrace("[client]: argv[%d]: %s\n", m, argv[m]);
@@ -846,37 +885,33 @@ int main(int argc, char * argv[]){
 		return -1;
 	}
 #else  // ANDROID
-	// init the sdlf
+	// init the SDL to intercept everything
 	//SDL_SetMainReady();
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0){
 		infoRecorder->logError("[Client]: unable to initialize SDL: %s\n", SDL_GetError());
 		return -1;
 	}
-	//atexit(SDL_Quit);
+
 	infoRecorder->logTrace("SDL_Quit:%p.\n", SDL_Quit);
-	//atexit(SDL_Quit);
+	atexit(SDL_Quit);
 #ifdef INCLUDE_DISTRIBUTOR
-	if (argc < 4) {
-		rtsperror("usage: %s config url [game name]\n", argv[0]);
+	if (argc < 3) {
+		rtsperror("usage: %s [config] [url] [game name]\n", argv[0]);
 		return -1;
 	}
 #endif  // INCLUDE_DISTRIBUTOR
 
 	char * configfilename = _strdup(argv[1]);
-	char * url = _strdup(argv[2]); // the url is the distributor's
 
 #ifdef INCLUDE_DISTRIBUTOR
-	char * gameName = _strdup(argv[3]);
-	infoRecorder->logTrace("%s %s %s\n", configfilename, url, gameName);
+	char * gameName = _strdup(argv[2]);
+	infoRecorder->logTrace("%s %s\n", configfilename, gameName);
 #else  // INCLUDE_DISTRIBUTOR
-	infoRecorder->logTrace("%s %s\n", configfilename, url);
-	infoRecorder->logError("[Client]: %s %s.\n", configfilename, url);
+	infoRecorder->logError("[Client]: %s.\n", configfilename);
 #endif // INCLUDE_DISTRIBUTOR
 	//load the config file and set the server url
-	infoRecorder->logTrace("[client]: load config file and set the server url.\n");
-
-	if (client_init(configfilename) < 0){
-		rtsperror("[client]: cannot load configuration file '%s'\n", argv[1]);
+	if (ClientInit(configfilename) < 0){
+		rtsperror("[client]: init failed, maybe cannot load configuration file '%s'\n", argv[1]);
 		return -1;
 	}
 
@@ -897,13 +932,11 @@ int main(int argc, char * argv[]){
 	///// launch watchdog
 	// init the watchdog critical section
 	InitializeCriticalSection(&watchdogMutex);
-	//pthread_mutex_init(&watchdogMutex, NULL);
 	if (rtspConf->confReadBool("enable-watchdog", 1) == 1) {
 		// launch the watch dog thread
 		DWORD watchdog_thread_id;
-		//watchdog = chBEGINTHREADEX(NULL, 0, watchdog_thread, 0, NULL, &watchdog_thread_id);
+		// watchdog = chBEGINTHREADEX(NULL, 0, watchdog_thread, 0, NULL, &watchdog_thread_id);
 		if (watchdog == 0){
-			//if (pthread_create(&watchdog, NULL, watchdog_thread, NULL) != 0) {
 			rtsperror("Cannot create watchdog thread.\n");
 			infoRecorder->logError("[Client]: cannot create watchdog thread.\n");	
 		}
@@ -911,8 +944,6 @@ int main(int argc, char * argv[]){
 	else {
 		infoRecorder->logError("[Client]: watchdog disabled.\n");
 	}
-	infoRecorder->logError("[client]: to create all mutex.\n");
-
 
 	/////////// build the GameStreams and init //////////////
 	if(gameStreams == NULL){
@@ -922,18 +953,28 @@ int main(int argc, char * argv[]){
 	gameStreams->init();
 	gameStreams->setRunning(true);
 	gameStreams->name = _strdup(gameName);
-	gameStreams->setDisUrl(url);
 	free(gameName);
 
+#if 0   // request the distributor
+	gameStreams->setDisUrl(rtspConf->getDisUrl());
 	// create a thread to deal with network event
 	DWORD netThreadId = 0;
 	HANDLE netThread = chBEGINTHREADEX(NULL, 0, NetworkThreadProc, gameStreams, FALSE, &netThreadId);
+#else
+	// request the render proxy directly
+	// get the render proxy's url and port
+	UserClient * userClient = new UserClient();
+	userClient->setName(gameStreams->name);
+	//userClient->startRTSP(rtspConf->getDisUrl(), rtspConf->serverPort);
+	userClient->startRTSP(argv[3], rtspConf->serverPort);
+
+#endif
 
 	// main thread to deal the SDL event
 	while(gameStreams->isRunning()){
 		if(SDL_WaitEvent(&event)){
 		//if(SDL_WaitEvent(&event)){
-			infoRecorder->logError("process event, ctrl client:%p.\n", gCtrlClient);
+			//infoRecorder->logError("process event, ctrl client:%p.\n", gCtrlClient);
 			ProcessEvent(&event, gCtrlClient);
 		}else{
 			infoRecorder->logTrace("[main]: no event.\n");
@@ -946,13 +987,16 @@ int main(int argc, char * argv[]){
 	//
 #ifndef ANDROID
 	//TerminateThread(rtspthread, 0);
-	if (rtspConf->ctrlenable && ctrlthread){
+	if (rtspConf->ctrlEnable && ctrlthread){
 		TerminateThread(ctrlthread, 0);
+		ctrlthread = NULL;
 	}
-	TerminateThread(watchdog, 0);
+	if(watchdog){
+		TerminateThread(watchdog, 0);
+		watchdog = NULL;
+	}
 #endif // ANDROID
 	//SDL_WaitThread(thread, &status);
 	SDL_Quit();
-	exit(0);
 	return 0;
 }

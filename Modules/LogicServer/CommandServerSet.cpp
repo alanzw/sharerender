@@ -4,11 +4,11 @@
 #include "../LibCore/CmdHelper.h"
 
 // this define will disable update worker thread
-//#define SINGLE_CONTEXT
+
 //#define ENABLE_SET_LOCK
 
 //#define ENABLE_SET_LOG		// log for command server set
-//#define ENABLE_CTX_LOG      // log for context
+#define ENABLE_CTX_LOG      // log for context
 //#define ENABLE_MGR_LOG      // log for context manager
 
 IndexManager * IndexManager::_indexMgr;
@@ -62,7 +62,7 @@ ContextAndCache::ContextAndCache(int _index){
 	obj_id = -1;
 	func_count_ = 0;
 
-	status = CtxStatus::CTX_INIT;
+	status = CTX_INIT;
 	op_code = -1;
 	sv_obj_id = -1;
 	sv_ptr = NULL;
@@ -90,7 +90,7 @@ ContextAndCache::ContextAndCache(){
 	obj_id = -1;
 	func_count_ = 0;
 
-	status = CtxStatus::CTX_INIT;
+	status = CTX_INIT;
 	op_code = -1;
 	sv_obj_id = -1;
 	sv_ptr = NULL;
@@ -208,8 +208,9 @@ void ContextAndCache::write_packed_byte_arr(char * src, int length){
 		//infoRecorder->logError("[ContextAndCache]: send packed byte arr, idx:%d, total count: %d, data len:%d, succ send:%d.\n", index, packetCount, sizeToSend, ret);
 	}
 
-	
+#ifdef ENABLE_SET_LOG
 	infoRecorder->logError("[ContextAndCache]: write_packed_byte_arr, total packet:%d, total send:%d.\n",packetCount, totalSend);
+#endif
 	// unlock the context
 	get_cur_ptr(2);
 	unlock();
@@ -469,12 +470,12 @@ bool ContextManager::switchCtx(){
 
 	for(int i = 0; i < ctx_init.getCtxCount(); i++){
 		cur_ctx = ctx_init.getCtx(i);
-		if(cur_ctx->status == CtxStatus::CTX_INIT){
+		if(cur_ctx->status == CTX_INIT){
 			// the next frame to prepare data
 			cur_ctx->status = CTX_PREPARE;
 			cur_ctx->taskQueue->setStatus(QUEUE_CREATE);
 		}
-		else if(cur_ctx->status == CtxStatus::CTX_READY && cur_ctx->taskQueue->isDone()){
+		else if(cur_ctx->status == CTX_READY && cur_ctx->taskQueue->isDone()){
 			infoRecorder->logError("[ContextManager]: context is ready for switching.\n");
 			// add to the ctx_pool
 			// remove from init pool
@@ -488,7 +489,7 @@ bool ContextManager::switchCtx(){
 			cur_ctx->preperationEnd();
 			//addCtxToPool(cur_ctx);   // available to switch
 		}
-		else if(cur_ctx->status == CtxStatus::CTX_PREPARE && cur_ctx->taskQueue->isDone()){
+		else if(cur_ctx->status == CTX_PREPARE && cur_ctx->taskQueue->isDone()){
 			// the next frame to render
 			cur_ctx->status = CTX_READY;
 			cur_ctx->taskQueue->setStatus(QUEUE_UPDATE);  // now, only update
@@ -572,7 +573,7 @@ int ContextManager::addCtx(ContextAndCache * _ctx){
 	infoRecorder->logError("[ContextManager]: add ctx:%p to ctx buffer.\n", _ctx);
 #ifndef ENABLE_HOT_PLUG
 	if(_ctx_cache){
-		// when exist at least one context, the new one should add to init
+		// when exist at lea.st one context, the new one should add to init
 		ctx_init.add(_ctx);
 	}
 	else{
@@ -588,9 +589,10 @@ int ContextManager::addCtx(ContextAndCache * _ctx){
 	infoRecorder->logTrace("[ContextManager]: after add ctx to init array, current ctx: %p.\n", this->_ctx_cache);
 	//ctx_init.add(_ctx);
 	ctx_buff.add(_ctx);			// insert to buffer
-#endif
 	ctxCount ++;
 	_ctx->checkFlags();
+#endif
+	
 	_ctx->preperationStart();
 #ifndef SINGLE_CONTEXT
 	// start the queue thread

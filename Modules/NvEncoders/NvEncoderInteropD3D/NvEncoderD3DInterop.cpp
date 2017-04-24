@@ -448,7 +448,7 @@ namespace cg{
 			cg::core::infoRecorder->logError("[CNvEncoderD3DInteropImpl]: encode.\n");
 			nvStatus = m_pNvHWEncoder->NvEncEncodeFrame(pEncodeBuffer, NULL, encodeConfig.width, encodeConfig.height);
 			if(nvStatus != NV_ENC_SUCCESS){
-				cg:core::infoRecorder->logError("[CNvEncoderD3DInteropImpl]: encode frame failed with:%d.\n", nvStatus);
+				cg::core::infoRecorder->logError("[CNvEncoderD3DInteropImpl]: encode frame failed with:%d.\n", nvStatus);
 			}
 			return TRUE;
 		}

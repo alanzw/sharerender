@@ -19,6 +19,13 @@
 #include "../VideoGen/generator.h"
 #include "KeyboardHook.h"
 #include "../LibCore/TimeTool.h"
+#include "../LibCore/BmpFormat.h"
+
+
+#include "../LibInput/Controller.h"
+
+
+#include "GameClient.h"
 
 #include <MMSystem.h>
 
@@ -232,9 +239,8 @@ STDMETHODIMP WrapperDirect3DDevice9::Reset(THIS_ D3DPRESENT_PARAMETERS* pPresent
 	return m_device->Reset(pPresentationParameter);
 }
 
+
 extern int serverInputArrive;
-
-
 static double last_time = 0.0f;
 static float last_frame_time = 0.0f;
 static bool init = false;
@@ -243,41 +249,61 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 #ifdef ENBALE_DEVICE_LOG
 	infoRecorder->logTrace("WrapperDirect3DDevice9::Present(), source %d, dst %d, wind %d, rgbdata %d\n", pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
 #endif
-	bool tm = false, tm1 = false;
+	bool synSign = false, tm1 = false;
 	//DebugBreak();
 
 	keyCmdHelper->lock();
-	tm = keyCmdHelper->isSynSigned();
+	synSign = keyCmdHelper->isSynSigned();
 	tm1 = keyCmdHelper->isF10Pressed();
 	keyCmdHelper->unlock();
 
-	char flag = 0;
-
-	if(tm){
+	unsigned char flag = 0;
+	static unsigned char valueTag = 0;
+	if(synSign){
 		//if (tm && presented > 1){
 		DWORD tick_end = GetTickCount();
-
-#ifdef ENBALE_DEVICE_LOG
 		DWORD tick_start = keyCmdHelper->getSynSignedTime();
-		infoRecorder->logTrace("deal input total use:%d \tqueue time:%d \tsystem to now:%d\n", tick_end - serverInputArrive, tick_start - serverInputArrive, tick_end - tick_start);
+
+#if 1
+		extern BTimer * ctrlTimer;
+		int renderCost = 0;
+		if(ctrlTimer){
+			renderCost = ctrlTimer->Stop();
+		}
+		else{
+			ctrlTimer = new PTimer();
+		}
+		//infoRecorder->logError("[Device]: render cost: %f.\n", renderCost * 1000.0 / ctrlTimer->getFreq());
+
+		DelayRecorder * delayRecorder = DelayRecorder::GetDelayRecorder();
+		if(delayRecorder->isInputArrive()){
+			delayRecorder->renderEnd();
+			infoRecorder->logError("[Delay]: (system + render): %f %f\n", delayRecorder->getSystemProcessDelay(), delayRecorder->getRenderDelay());
+		}
+
 #endif
+		//infoRecorder->logError("deal input total use:%d \tqueue time:%d \tsystem to now:%d\n", tick_end - serverInputArrive, tick_start - serverInputArrive, tick_end - tick_start);
+
 		keyCmdHelper->lock();
 		keyCmdHelper->setSynSigin(false);
 		keyCmdHelper->unlock();
 
 		flag |= 1;
-		tm = 0;
+		synSign = 0;
+		valueTag++;
 	}
 	if (tm1){
 		keyCmdHelper->lock();
 		keyCmdHelper->setF10Pressed(false);
 		keyCmdHelper->unlock();
 		flag |= 2;
+		
 	}
 	if (flag){
 		// send command
 		csSet->beginCommand(NULLINSTRUCT_Opcode, id);
-		csSet->writeChar(flag);
+		csSet->writeUChar(flag);
+		csSet->writeUChar(valueTag);
 		csSet->endCommand();
 	}
 
@@ -296,7 +322,6 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 	csSet->commit();
 
 	// deal with the initializer
-
 	Initializer * initializer = Initializer::GetInitializer();
 	// initializer contains the check for Device
 	if(initializer){
@@ -309,6 +334,21 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 		csSet->checkObj(dynamic_cast<IdentifierBase *>(this));
 	}
 
+	if(GameClient::GetGameClient() && !GameClient::IsInitialized()){
+		// to notify the dis manager that GAME_READ
+		//GameClient::GetGameClient()->notifyGameReady();
+		SetEvent(GameClient::GetGameClient()->getClientEvent());
+		GameClient::SetInitialized(true);
+		cg::input::CreateClientControl(cmdCtrl->getHwnd());
+		RTSPConf * conf = RTSPConf::GetRTSPConf();
+		cmdCtrl->setMaxFps(conf->video_fps);
+
+		infoRecorder->logError("[WrapperDirect3DDevice9]: to notifier GAME READY, set fps: %d.\n", cmdCtrl->getMaxFps());
+	}
+	else{
+		infoRecorder->logTrace("[WrapperDirect3DDevice9]: no need to notify GAME READY.\n");
+	}
+
 	HRESULT hh = D3D_OK;
 
 	//infoRecorder->logError("[WrapperDirect3dDeivce9]:Present(), key cmd helper before commit, is sending:%s, sending step:%d.\n", keyCmdHelper->isSending() ? "true" : "false", keyCmdHelper->getSendStep());
@@ -318,6 +358,7 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 	//infoRecorder->logError("[WrapperDirect3dDeivce9]:Present(), key cmd helper commit, is sending:%s, sending step:%d.\n", keyCmdHelper->isSending() ? "true" : "false", keyCmdHelper->getSendStep());
 
 	cmdCtrl->commitRender();
+
 
 #ifdef ENBALE_DEVICE_LOG
 	infoRecorder->logTrace("[WrapperDirect3DDevice9]: render step:%d.\n", cmdCtrl->getFrameStep());
@@ -337,13 +378,73 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 			}
 		}
 
+#ifdef SERVER_SAVE_BMP
+
+		if(flag & 1){
+			// sync sign, to store the image
+			char name[1024] = {0};
+			IDirect3DSurface9 * rts = NULL;
+			HRESULT hr = m_device->GetRenderTarget(0, &rts);
+			sprintf(name, "%s%d.bmp", keyCmdHelper->getPrefix(), valueTag);
+			infoRecorder->logError("[D3DDevice]: store image %s.\n", name);
+			
+			LPD3DXBUFFER bmpBuf = NULL;
+			
+			if(FAILED(D3DXSaveSurfaceToFileInMemory(&bmpBuf, D3DXIMAGE_FILEFORMAT::D3DXIFF_BMP, rts, NULL, NULL))){
+				infoRecorder->logError("[D3DDevice]: save render target to file failed");
+			}else{
+				BYTE * data = (BYTE *)bmpBuf->GetBufferPointer();
+				int size = bmpBuf->GetBufferSize();
+
+				BITMAPFILEHEADER * pHeader = (BITMAPFILEHEADER *)data;
+
+				BITMAPINFOHEADER * pInfo = (BITMAPINFOHEADER *)(data + sizeof(BITMAPFILEHEADER));
+
+				int headerSize = sizeof(BITMAPINFOHEADER) + sizeof(BITMAPINFOHEADER);
+				BYTE * rawData = data + pHeader->bfOffBits;
+
+				int width =  pInfo->biWidth;
+				int heigh = pInfo->biHeight;
+				int orgSize = 0;
+				//int elemSize = pInfo->
+				if(pInfo->biCompression){
+					infoRecorder->logError("[D3DDevice]: BMP is no BI_RGB, complicated.\n");
+				}
+				if(pInfo->biSize){
+					orgSize = pInfo->biSize;
+				}
+				else{
+					infoRecorder->logError("[D3DDevice]: use BI_RGB, set 0.\n");
+					orgSize = width * pInfo->biBitCount / 8;
+				}
+				// get the RGB bmp file size
+				int padding = 0;
+				int scanlinebytes = width * 3;
+				int paddedsize = width * 3 * heigh;
+				
+				BYTE * buffer = new BYTE[paddedsize];
+
+				for(int j = 0; j < heigh; j++)
+				for(int i = 0; i < width; i++){
+					*(buffer + width * j * 3 + i * 3 + 0) = *(rawData + width * 4 * j + i * 4 + 0);
+					*(buffer + width * j * 3 + i * 3 + 1) = *(rawData + width * 4 * j + i * 4 + 1);
+					*(buffer + width * j * 3 + i * 3 + 2) = *(rawData + width * 4 * j + i * 4 + 2);
+				}
+				SaveBMP(buffer, 800, 600, paddedsize, name);
+
+			}
+			// reload and remove the alpha channel
+
+		}
+#endif
+
 		if(gGenerator && !gGenerator->isInited()){
 			// init the generator
 			int imageWidth = 0, imageHeight =0 ;
 			IDirect3DSurface9 * rts = NULL;
 			D3DSURFACE_DESC sdesc;
 			
-			// aquire the resolution
+			// acquire the resolution
 			HRESULT hr = m_device->GetRenderTarget(0, &rts);
 			if(FAILED(hr)){
 #ifdef ENBALE_DEVICE_LOG
@@ -351,6 +452,7 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 #endif
 				return hh;
 			}
+
 			if(FAILED(rts->GetDesc(&sdesc))){
 #ifdef ENBALE_DEVICE_LOG
 				infoRecorder->logError("[D3DDevice]: get render target failed.\n");
@@ -401,9 +503,9 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 		infoRecorder->logTrace("[WrapperDirect3DDevice9]:Present(), not render.\n");
 	}
 
-	int frameTime = pPresentTimer->Stop();
+	int frameTime = (float)pPresentTimer->Stop();
 	infoRecorder->setRenderStep(cmdCtrl->getFrameStep());
-	infoRecorder->onFrameEnd(frameTime * 1000.0 / pPresentTimer->getFreq(), true);
+	infoRecorder->onFrameEnd((float)frameTime * 1000.0 / pPresentTimer->getFreq(), true);
 
 	/////////////////////////////////
 	//limit it to max_fps
@@ -436,7 +538,7 @@ STDMETHODIMP WrapperDirect3DDevice9::Present(THIS_ CONST RECT* pSourceRect, CONS
 
 	//limit it to max_fps
 	double to_sleep = 1000.0 / cmdCtrl->getMaxFps() * frame_cnt - elapse_time;
-	infoRecorder->logError("Present, frame:%f, frame count:%f, to sleep:%f, timer overhead:%f.\n", frame_time, frame_cnt, to_sleep, pPresentTimer->getOverhead() * 1000.0 / pPresentTimer->getFreq());
+	infoRecorder->logTrace("Present, frame:%f, frame count:%f, to sleep:%f, timer overhead:%f.\n", frame_time, frame_cnt, to_sleep, pPresentTimer->getOverhead() * 1000.0 / pPresentTimer->getFreq());
 
 #if 1
 	int sleepTime = (int)to_sleep;
@@ -759,7 +861,7 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateIndexBuffer(THIS_ UINT Length,DWORD U
 	infoRecorder->logTrace("WrapperDirect3DDevice9::CreateIndexBuffer invoked! Usage:%d, Format:%d, Pool:%d, ",Usage, Format, Pool);
 #endif
 	LPDIRECT3DINDEXBUFFER9 base_ib = NULL;
-
+	
 	HRESULT hr = m_device->CreateIndexBuffer(Length, Usage, Format, Pool, &base_ib, pSharedHandle);
 	WrapperDirect3DIndexBuffer9 * wib = NULL;
 
@@ -774,8 +876,8 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateIndexBuffer(THIS_ UINT Length,DWORD U
 			infoRecorder->logTrace("ret NULL, ");
 		}
 		else {
-			infoRecorder->logTrace("IndexBuffer id=%d, length=%d, ", ((WrapperDirect3DIndexBuffer9*)*ppIndexBuffer)->getId(), ((WrapperDirect3DIndexBuffer9*)*ppIndexBuffer)->GetLength());
 
+			infoRecorder->logTrace("IndexBuffer id=%d, length=%d, ", ((WrapperDirect3DIndexBuffer9*)*ppIndexBuffer)->getId(), ((WrapperDirect3DIndexBuffer9*)*ppIndexBuffer)->GetLength());
 		}
 #endif
 
@@ -799,7 +901,6 @@ STDMETHODIMP WrapperDirect3DDevice9::CreateIndexBuffer(THIS_ UINT Length,DWORD U
 	}
 	else {
 #ifdef ENBALE_DEVICE_LOG
-
 		infoRecorder->logTrace("CreateIndexBuffer Failed.\n");
 #endif
 	}
@@ -958,10 +1059,10 @@ STDMETHODIMP WrapperDirect3DDevice9::ColorFill(THIS_ IDirect3DSurface9* pSurface
 }
 
 STDMETHODIMP WrapperDirect3DDevice9::CreateOffscreenPlainSurface(THIS_ UINT Width,UINT Height,D3DFORMAT Format,D3DPOOL Pool,IDirect3DSurface9** ppSurface,HANDLE* pSharedHandle) {
+	// TODO, if the surface need to be send ???
 #ifdef ENBALE_DEVICE_LOG
-	infoRecorder->logTrace("WrapperDirect3DDevice9::CreateOffscreenPlainSurface() TODO\n");
-#endif
 	infoRecorder->logError("WrapperDirect3DDevice9::CreateOffscreenPlainSurface() TODO\n");
+#endif
 	return m_device->CreateOffscreenPlainSurface(Width, Height, Format, Pool, ppSurface, pSharedHandle);
 }
 
@@ -1957,7 +2058,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetVertexShaderConstantF(THIS_ UINT StartRe
 
 	memcpy((char*)vs_data, (char*)pConstantData, Vector4fCount * 16);
 
-	int i = 0;
+	UINT i = 0;
 	// send command
 	if(keyCmdHelper->isSending()){
 		csSet->beginCommand(SetVertexShaderConstantF_Opcode, id);
@@ -2235,7 +2336,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetPixelShaderConstantF(THIS_ UINT StartReg
 		csSet->writeUInt(StartRegister);
 		csSet->writeUInt(Vector4fCount);
 
-		for(int i = 0; i< Vector4fCount; i++){
+		for(UINT i = 0; i< Vector4fCount; i++){
 			csSet->writeVec(SetPixelShaderConstantF_Opcode, vs_data + ( i * 4));
 		}
 		csSet->endCommand();
@@ -2244,7 +2345,7 @@ STDMETHODIMP WrapperDirect3DDevice9::SetPixelShaderConstantF(THIS_ UINT StartReg
 		stateRecorder->BeginCommand(SetPixelShaderConstantF_Opcode, id);
 		stateRecorder->WriteUInt(StartRegister);
 		stateRecorder->WriteUInt(Vector4fCount);
-		for(int i = 0; i < Vector4fCount; i++){
+		for(UINT i = 0; i < Vector4fCount; i++){
 			stateRecorder->WriterVec(SetPixelShaderConstantF_Opcode, vs_data + (i * 4) , 16);
 		}
 		stateRecorder->EndCommand();

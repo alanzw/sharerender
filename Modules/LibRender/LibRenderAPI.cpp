@@ -127,6 +127,7 @@ FuncJumpTable funcs[] = {
 	X(D3DCreateRenderTarget),
 	
 	X(D3DDSetStreamSourceFreq),
+	X(D3DSurfaceRelease),
 
 	{NULL, NULL}
 };
@@ -261,6 +262,7 @@ void init_fptable() {
 	fptable.D3DCreateRenderTarget = FakedD3DCreateRenderTarget;
 
 	fptable.D3DDSetStreamSourceFreq = FakedD3DDSetStreamSourceFreq;
+	fptable.D3DSurfaceRelease = FakedD3DSurfaceRelease;
 }
 #endif
 

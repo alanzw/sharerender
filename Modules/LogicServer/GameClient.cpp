@@ -117,6 +117,9 @@ void GameClientEventCB(struct bufferevent * bev, short what, void * arg){
 #endif
 }
 
+GameClient * GameClient::gameClient = NULL;
+bool GameClient::initialized = false;
+
 GameClient::GameClient(){
 	sock = NULL;
 	ctx = NULL;
@@ -127,11 +130,16 @@ GameClient::GameClient(){
 	rtspThreadHandle = NULL;
 	ctrlThreadId = 0;
 	rtspThreadID = 0;
+	clientEvent =  CreateEvent(NULL, FALSE, FALSE, NULL);
 }
 GameClient::~GameClient(){
 	if(gameName){
 		free(gameName);
 		gameName = NULL;
+	}
+	if(clientEvent){
+		CloseHandle(clientEvent);
+		clientEvent = NULL;
 	}
 }
 
@@ -343,11 +351,15 @@ bool GameClient::dealCmdOption(cg::CMD_OPTION option, short value, cg::VideoGen 
 void GameClient::connectToLogicServer(){
 	infoRecorder->logTrace("[GameClient]: connect to logic server.\n");
 	//evutil_socket_t sock = NULL;
+	cg::RTSPConf * config = cg::RTSPConf::GetRTSPConf();
+
+
 	sockaddr_in sin;
 	int sin_size = sizeof(sin);
 	sin.sin_family = AF_INET;
 	sin.sin_addr.S_un.S_addr = inet_addr(LOGCAL_HOST);
-	sin.sin_port = htons(INTERNAL_PORT);
+	//sin.sin_port = htons(INTERNAL_PORT);
+	sin.sin_port = htons(config->loaderPort);
 
 	struct bufferevent * bev = NULL;
 

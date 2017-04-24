@@ -14,7 +14,7 @@ namespace cg{
 
 	class X264Encoder: public Encoder{
 
-		RTSPConf *			rtspConf;
+		//RTSPConf *			rtspConf;
 		HANDLE				avcodecOpenMutex;  // avcodec_open / close is not thread-safe
 		char *				pic_data;
 		AVCodec *			videoEncoderCodec;

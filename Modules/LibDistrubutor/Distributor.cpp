@@ -151,17 +151,17 @@ namespace cg{
 			//data++;
 
 			if (!strncasecmp(data, LOGIC, strlen(LOGIC))){
-				cg::core::infoRecorder->logTrace("[DisServer]: a new Logic connected.\n");
+				cg::core::infoRecorder->logTrace("[DisServer]: a new Logic connected, id:%p, url:%s.\n", id, ctx->url);
 				logicMap[id] = ctx;
 				ctx->domainType = string("LOGIC");
 			}
 			else if (!strncasecmp(data, RENDER, strlen(RENDER))){
-				cg::core::infoRecorder->logTrace("[DisServer]: a new render connected.\n");
+				cg::core::infoRecorder->logTrace("[DisServer]: a new render connected, id:%p, url:%s.\n",id, ctx->url);
 				renderMap[id] = ctx;
 				ctx->domainType = string("RENDER");
 			}
 			else if (!strncasecmp(data, CLIENT, strlen(CLIENT))){
-				cg::core::infoRecorder->logTrace("[DisServer]: a new Client connected, ERROR.\n");
+				cg::core::infoRecorder->logTrace("[DisServer]: a new Client connected, ERROR, id:%p, url:%s.\n", id, ctx->url);
 				ctx->domainType = string("CLIENT");
 			}
 			else{
@@ -176,7 +176,7 @@ namespace cg{
 			clientMap[ctx->sock] = ctx;
 			//data++;
 			// get the game name
-			cg::core::infoRecorder->logTrace("[DisServer]: REQ_GAME, get game name '%s' from client '%s'.\n", data, ctx->toString().c_str());
+			cg::core::infoRecorder->logError("[DisServer]: REQ_GAME, get game name '%s' from client '%s'.\n", data, ctx->toString().c_str());
 
 			// TODO, determine the rtsp service is on logic server or render server
 			TaskInfo * task = buildTask(string(data), ctx);
@@ -560,17 +560,27 @@ namespace cg{
 #ifdef SCHEDULE_USE_BEST_FIT
 		for (int i = size - 1; i >= 0; i++){
 			if(arr[i]->cpuUsage + cpuRe <= OVERLOAD_THRESHOLD){
-				return arr[i];}
+				ret = arr[i];
+				break;
+			}
 		}
 #endif
 		// or worst fit?
 		for (int i = 0; i < size; i++){
 			if (arr[i]->cpuUsage + cpuRe <= OVERLOAD_THRESHOLD){
 				// find the worth fit
-				return arr[i];
+				ret = arr[i];
+				break;
 			}
 		}
 		// or first fit ? no use !
+
+		if(arr){
+			free(arr);
+		}
+		if(ret){
+			cg::core::infoRecorder->logTrace("[DisServer]: get logic candidate with sock:%p, url:%s.\n",ret->sock, ret->url);
+		}
 
 		return ret;
 	}
@@ -604,7 +614,8 @@ namespace cg{
 #ifdef SCHEDULE_USE_BEST_FIT
 		for (int i = size - 1; i >= 0; i++){
 			if (arr[i]->gpuUsage + gpuRe <= OVERLOAD_THRESHOLD){
-				return arr[i];
+				ret =  arr[i];
+				break;
 			}
 		}
 #endif
@@ -612,10 +623,19 @@ namespace cg{
 		for (int i = 0; i < size; i++){
 			if (arr[i]->gpuUsage + gpuRe <= OVERLOAD_THRESHOLD){
 				// find the worth fit
+				ret = arr[i];
+				break;
 				return arr[i];
 			}
 		}
 		// or first fit ? no use !
+
+		if(arr){
+			free(arr);
+		}
+
+		if(ret)
+			cg::core::infoRecorder->logTrace("[DisServer]: get render candidate with sock:%p, url:%s.\n",ret->sock, ret->url);
 
 		return ret;
 	}
@@ -626,11 +646,15 @@ namespace cg{
 			return false;
 		}
 		cg::core::infoRecorder->logTrace("[DisServer]: send to render, task id: %p, render id: %p, port:%d, logic url:%s.\n", task->id, render->sock, task->portOffset, task->logicCtx->url);
+		short nameLen = task->taskName.length();
 		// send cmd to given server
 		render->writeCmd(cmd);
 		render->writeIdentifier(task->id);
 		render->writeIdentifier(render->sock);
 		render->writeData((void *)&task->portOffset, sizeof(short));
+		
+		render->writeData((void *)&nameLen, sizeof(short));
+		render->writeData((void *)task->taskName.c_str(), nameLen);
 		render->writeData((void *)&task->logicCtx->url, strlen(task->logicCtx->url));
 		render->writeToNet(0);
 		return true;
@@ -639,10 +663,11 @@ namespace cg{
 	bool DisServer::sendCmdToRender(TaskInfo * task, const char * cmd){
 		cg::core::infoRecorder->logTrace("[DisServer]: send cmd to render.\n");
 		if (task->status != ASSIGNED){
-			cg::core::infoRecorder->logTrace("[DisServer]: task is not assigned.\n");
+			cg::core::infoRecorder->logError("[DisServer]: task is not assigned.\n");
 			return false;
 		}
 
+		short nameLen = task->taskName.length();
 		// cmd format: START_TASK+pid+renderId(render socket in dis server)+ port offset + [Logic url]
 		BaseContext * ctx = NULL;
 		for(int i = 0;i< task->renderCount; i++){
@@ -652,13 +677,18 @@ namespace cg{
 			ctx->writeIdentifier(task->id);
 			ctx->writeIdentifier(ctx->sock);
 			ctx->writeData((void *)&task->portOffset, sizeof(short));
+
+			ctx->writeData((void *)&nameLen, sizeof(short));
+			ctx->writeData((void *)task->taskName.c_str(), nameLen);
+
 			ctx->writeData((void *)task->logicCtx->url, strlen(task->logicCtx->url));
 			ctx->writeToNet();
+			cg::core::infoRecorder->logTrace("[DisServer]: send START TASK to render with logic url:%s.\n", task->logicCtx->url);
 		}
 		return true;
 	}
 
-	// send the given command to render those are assigned to given task
+	// NOT USED. send the given command to render those are assigned to given task
 	bool DisServer::sendCmdToRender(TaskInfo * task, char * cmddata, int len){
 		cg::core::infoRecorder->logTrace("[DisServer]: send given cmd to render.\n");
 		if (task->status != ASSIGNED){

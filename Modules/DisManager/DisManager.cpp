@@ -8,6 +8,7 @@
 #include <Windows.h>
 #include "../LibDistrubutor/Context.h"
 #include "CmdController.h"
+#include "../VideoUtility/rtspconf.h"
 
 #include <iostream>
 #include <string>
@@ -151,7 +152,8 @@ void DisManagerListenerCB(struct evconnlistener * listerner, evutil_socket_t soc
 	netctx->addr = (sockaddr_in *)malloc(sizeof(char *) * len + 10);
 	memcpy(netctx->addr , addr, len);
 
-	netctx->url = inet_ntoa(netctx->addr->sin_addr);
+	netctx->url = _strdup(inet_ntoa(netctx->addr->sin_addr));
+	cg::core::infoRecorder->logTrace("[DisManagerListernerCB]: get url, addr:%p, url:%s.\n", netctx->url, netctx->url);
 
 	DisServer * server = (DisServer *)ctx;
 	//server->addCtx(netctx);
@@ -183,6 +185,8 @@ DWORD WINAPI DisManagerNetProc(LPVOID param){
 		return -1;
 	}
 
+	cg::RTSPConf * conf = cg::RTSPConf::GetRTSPConf();
+
 	// listen the dis port
 	sockaddr_in sin;
 	int sin_size=  sizeof(sin);
@@ -190,8 +194,8 @@ DWORD WINAPI DisManagerNetProc(LPVOID param){
 	sin.sin_family = AF_INET;
 	
 	sin.sin_addr.S_un.S_addr = inet_addr(server->getServerUrl()); //htonl(INADDR_ANY);
-	sin.sin_port = htons(DIS_PORT_DOMAIN);
-	cg::core::infoRecorder->logTrace("[DisManagerThread]: listen to url:%s, port:%d.\n", DIS_URL_DISSERVER, DIS_PORT_DOMAIN);
+	sin.sin_port = htons(conf->disPort);
+	cg::core::infoRecorder->logTrace("[DisManagerThread]: listen to url:%s, port:%d.\n", server->getServerUrl(), conf->disPort);
 	server->startWatchdog();
 	server->setEventBase(base);
 
@@ -274,14 +278,16 @@ int main(int argc, char ** argv){
 	CmdDealer * ctrl = CmdDealer::GetDealer();//::GetController();
 	DisServer * server = DisServer::GetDisServer();
 	ctrl->setServer(server);
-
+	char * rtspConfigDefault = "config/server.distributor.conf";
+	char * rtspConfig = NULL;
 	if(argc > 1){
-		// argv[1] is the url of dis server
-		server->setDisUrl(argv[1]);
+		rtspConfig = _strdup(argv[1]);  // get the config file
 	}else{
-		server->setDisUrl(DIS_URL_DISSERVER);
+		rtspConfig = rtspConfigDefault;
 	}
-
+	// load the rtsp config file
+	cg::RTSPConf * rtspConf = cg::RTSPConf::GetRTSPConf(rtspConfig);
+	server->setDisUrl(rtspConf->getDisUrl());
 
 	DWORD netThreadId  = 0;
 	HANDLE netThreadHandle = chBEGINTHREADEX(NULL, 0, DisManagerNetProc, server, FALSE, &netThreadId);

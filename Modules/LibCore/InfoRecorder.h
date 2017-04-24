@@ -19,7 +19,7 @@ namespace cg{
 		class InfoRecorder{
 
 			LARGE_INTEGER secondEnd, secondStart, freq, frameStart, frameEnd;
-			ULONGLONG timeCount;
+			LONGLONG timeCount;
 
 			// the cpu and gpu watcher
 			CpuWatch *frameCpuWatcher, *secondCpuWatcher;
@@ -94,6 +94,8 @@ namespace cg{
 			void logFrame(char * format, ...);
 			void logSecond(char * format, ...);
 
+			void logExtra(char *format, ...);
+
 			// log the trace to file
 			void logTrace(char * foramt, ...);
 			inline void setLimitFps(int _maxFps){
@@ -105,8 +107,6 @@ namespace cg{
 
 		// the global info recorder
 		extern InfoRecorder * infoRecorder;
-
-
 
 		//// to log the data write in the shared memory map
 		class SharedDataLogger{

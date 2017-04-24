@@ -2,23 +2,36 @@
 #include "../LibCore/CmdHelper.h"
 #include "KeyboardHook.h"
 #include "../VideoGen/generator.h"
-
-
-
+#include "../LibInput/Controller.h"
 extern bool toRecorde;
+
 namespace cg{
 	namespace core{
+		
+		//extern BTimer * ctrlTimer;
+
+		float getSysProcessTime(){
+			float ret = 0.0;
+
+			int interval = 0;
+			if(ctrlTimer) interval = ctrlTimer->Stop();
+			return 1000.0 * interval / ctrlTimer->getFreq();
+			
+		}
 
 		KeyCommandHelper * keyCmdHelper = NULL;
-
+		static int keyCount = 0;
 
 		LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam){
-
 			KeyCommandHelper * keyHelper = KeyCommandHelper::GetKeyCmdHelper();
-			infoRecorder->logTrace("[Global]: key event, WPARAM: %x, LPARAM:%x.\n", wParam, lParam);
+			DelayRecorder * delayRecorder = DelayRecorder::GetDelayRecorder();
+#if 0
+			if(wParam == VK_F11)
+				infoRecorder->logError("[Global]: F11 key, WPARAM: %x, LPARAM:%x.\n", wParam, lParam);
+#endif
 			if (lParam & 0x80000000) // released
 			{
-				infoRecorder->logTrace("[Global]: key release, WPARAM: %x, LPARAM:%x.\n", wParam, lParam);
+				//infoRecorder->logTrace("[Global]: key release, WPARAM: %x, LPARAM:%x.\n", wParam, lParam);
 				if (wParam == VK_F7 || wParam == VK_F6) // f7 pressed
 				{
 					keyHelper->setRenderStep(0);
@@ -32,9 +45,24 @@ namespace cg{
 #endif
 				}
 				else if (wParam == VK_F11){
-					keyHelper->lock();
-					keyHelper->setSynSigin(true);
-					keyHelper->unlock();
+					
+					keyCount++;
+					infoRecorder->logError("[Global]: VK_F11, key count:%d mode value:%d.\n", keyCount, keyCount %2);
+					if(keyCount % 2){
+#if 0
+						infoRecorder->logTrace("[Global]: wparam:%x, lparam:%x. system process input time: %f.\n", wParam, lParam, getSysProcessTime());
+						if(delayRecorder->isInputArrive()){
+							delayRecorder->keyTriggered();
+						}
+#endif
+						infoRecorder->logError("[Global]: F11 triggered. to SYN.\n");
+						keyHelper->lock();
+						keyHelper->setSynSigin(true);
+						keyHelper->unlock();
+					}
+					else{
+						infoRecorder->logError("[Global]: key count mode value is:%d.\n", keyCount % 2);
+					}
 				}
 #if 1
 				else if(wParam == VK_F12){
@@ -136,7 +164,7 @@ namespace cg{
 
 		bool KeyCommandHelper::installKeyHook(DWORD threadId){
 			// set the keyboard hook
-			infoRecorder->logTrace("set the keyboard hook, module:%p, thread id:%d!\n", NULL, threadId);
+			infoRecorder->logError("set the keyboard hook, module:%p, thread id:%d!\n", NULL, threadId);
 			keyHookHandle = SetWindowsHookEx(WH_KEYBOARD, HookProc, NULL, threadId);
 			if(!keyHookHandle){
 				infoRecorder->logError("[KeyCommandHelper]: set window hook ex failed with:%d.\n", GetLastError());
@@ -145,8 +173,9 @@ namespace cg{
 			return true;
 		}
 		KeyCommandHelper *KeyCommandHelper::keyCmdHelper = NULL;
-		KeyCommandHelper::KeyCommandHelper():enableRender(true), synSign(false), synStart(0), f10pressed(false), keyHookHandle(NULL), renderStep(1), sendStep(1), renderStepChanged(false), bufSendingStep(1), sendingStepChanged(false), currentSending(0), maxFps(60), fpsChanged(false){
+		KeyCommandHelper::KeyCommandHelper():enableRender(true), synSign(false), synStart(0), f10pressed(false), keyHookHandle(NULL), renderStep(1), sendStep(1), renderStepChanged(false), bufSendingStep(1), sendingStepChanged(false), currentSending(0), maxFps(60), fpsChanged(false), valueTag(0){
 			InitializeCriticalSection(&section);
+			memset(name, 0, 1024);
 		}
 		KeyCommandHelper::~KeyCommandHelper(){
 			// release the hook and destroy the critical section

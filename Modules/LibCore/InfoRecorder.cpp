@@ -269,12 +269,12 @@ namespace cg{
 				// log the second counter
 				float cpuUsage = 0.0f;
 				float gpuUsage = 0.0f;
-				float fpsInSecond = frameCountInSecond * this->freq.QuadPart / (secondEnd.QuadPart - secondStart.QuadPart);
+				float fpsInSecond = 1.0 * frameCountInSecond * this->freq.QuadPart / (secondEnd.QuadPart - secondStart.QuadPart);
 
 				frameCountInSecond = 0;
-				cpuUsage = secondCpuWatcher->GetProcessCpuUtilization(processHandle);
+				cpuUsage = (float)secondCpuWatcher->GetProcessCpuUtilization(processHandle);
 				if(recordGpu)
-					gpuUsage = gpuWatcher->GetGpuUsage();
+					gpuUsage = (float)gpuWatcher->GetGpuUsage();
 
 				// calculate the performance data
 				float aveCapture = 0.0f, aveConvet = 0.0f, aveEncode = 0.0f, avePacket = 0.0f;
@@ -327,6 +327,10 @@ namespace cg{
 			return true;
 		}
 
+		void InfoRecorder::logExtra(char *format, ...){
+
+		}
+
 		// log the error to file
 		void InfoRecorder::logError(char * format, ...){
 			char tem[512] = {0};
@@ -343,8 +347,10 @@ namespace cg{
 			errorRecorder->log(tem, n);
 			errorRecorder->flush(true);
 
+#if 1
 			traceRecorder->log(tem, n);
 			traceRecorder->flush(true);
+#endif
 
 			unlock();
 
@@ -385,6 +391,8 @@ namespace cg{
 			int  n = vsprintf(tem, format, ap);
 			//errorRecorder->log(format, ap);
 			va_end(ap);
+
+
 #ifdef DEBUG_
 			infoRecorder->logError("[INfoRecorder]: tem:'%s', size:%d.\n", tem, n);
 #endif

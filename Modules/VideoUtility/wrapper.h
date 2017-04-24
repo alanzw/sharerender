@@ -56,7 +56,7 @@ namespace cg{
 		bool initilize();
 
 	public:
-		inline float getCaptureTime(){ return 1000.0 * captureTime / pTimer->getFreq(); }
+		inline float getCaptureTime(){ return (float)1000.0 * captureTime / pTimer->getFreq(); }
 		Wrapper(HWND hwnd, int _winWidth, int _winHeight, pipeline *_src_pipe);
 		virtual ~Wrapper();
 

@@ -42,6 +42,46 @@
 #include "../LibCore/MemOp.h"
 #include "../LibCore/InfoRecorder.h"
 #include "Controller.h"
+#include "../LibCore/TimeTool.h"
+
+//#define USE_INTERCEPTION
+
+
+#ifdef USE_INTERCEPTION
+#include "interception.h"
+
+#pragma comment(lib, "interception.lib")
+
+
+bool interceptionInited = false;
+InterceptionDevice keyboard = INTERCEPTION_KEYBOARD(1);
+InterceptionContext context;
+
+
+void InitInterception(){
+	if(!interceptionInited){
+		SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
+		context = interception_create_context();
+		interceptionInited = true;
+	}
+
+}
+
+void generateKey(InterceptionDevice device, int up){
+	InterceptionKeyStroke kstroke;
+	memset(&kstroke, 0, sizeof(InterceptionKeyStroke));
+
+	//InterceptionKeyStroke &kstroke = *(InterceptionKeyStroke *) &stroke;
+	kstroke.code = 87;
+	kstroke.state = up;  // 0 press, 1 up
+	kstroke.information = 0;
+
+	//print_key_info((InterceptionKeyStroke*)&stroke);
+	interception_send(context, device, (InterceptionStroke*)&kstroke, 1);
+}
+
+
+#endif
 
 using namespace std;
 using namespace cg;
@@ -94,6 +134,9 @@ static bool keymap_initialized = false;
 //#define SDLK_PRINT
 #define SDLK_BREAK	SDLK_PRINTSCREEN
 #endif
+
+cg::core::BTimer * ctrlTimer = NULL;
+
 namespace cg{
 
 	namespace input{
@@ -139,7 +182,6 @@ namespace cg{
 			sdlmsg_keyboard(sdlmsg_t *msg, unsigned char pressed, unsigned short scancode, SDL_Keycode key, unsigned short mod, unsigned int unicode)
 		{
 			sdlmsg_keyboard_t *msgk = (sdlmsg_keyboard_t*) msg;
-			//ga_error("sdl client: key event code=%x key=%x mod=%x pressed=%u\n", scancode, key, mod, pressed);
 			bzero(msg, sizeof(sdlmsg_keyboard_t));
 			msgk->msgsize = htons(sizeof(sdlmsg_keyboard_t));
 			msgk->msgtype = SDL_EVENT_MSGTYPE_KEYBOARD;
@@ -156,7 +198,6 @@ namespace cg{
 		sdlmsg_t *
 			sdlmsg_mousekey(sdlmsg_t *msg, unsigned char pressed, unsigned char button, unsigned short x, unsigned short y) {
 				sdlmsg_mouse_t *msgm = (sdlmsg_mouse_t*) msg;
-				//ga_error("sdl client: button event btn=%u pressed=%u\n", button, pressed);
 				bzero(msg, sizeof(sdlmsg_mouse_t));
 				msgm->msgsize = htons(sizeof(sdlmsg_mouse_t));
 				msgm->msgtype = SDL_EVENT_MSGTYPE_MOUSEKEY;
@@ -610,73 +651,121 @@ namespace cg{
 				return INVALID_KEY;
 		}
 
-
-
-
 		static char *myctrlid = NULL;
 		static bool ctrlenabled = true;
 
-		ccgRect CtrlReplayer::cropRect;
-		ccgRect * CtrlReplayer::prect;
-		int CtrlReplayer::outputW;
-		int CtrlReplayer::outputH;
-		int CtrlReplayer::cxsize;
-		int CtrlReplayer::cysize;
+		static bool clientControlCreated = false;
 
-		double CtrlReplayer::scaleFactorX;
-		double CtrlReplayer::scaleFactorY;
+		void CreateClientControl(HWND wnd){
+#ifdef ENABLE_CLIENT_CONTROL
 
-		CtrlMessagerServer * CtrlReplayer::ctrlMsgServer;
-		CtrlConfig *CtrlReplayer::conf;
+			if(clientControlCreated)
+				return;
+
+			clientControlCreated = true;
+
+			RECT windowRect;
+			memset(&windowRect, 0, sizeof(RECT));
 
 
-		int CtrlReplayer::init(RECT * rect){
-			if (keymap_initialized == false) {
-				SDLKeyToKeySym_init();
-			}
-			if (ctrlMsgServer && ctrlMsgServer->getCtrlConfig()){
-				conf = ctrlMsgServer->getCtrlConfig();
-			}
-			if (rect != NULL) {
-				if (ccg_fillrect(&cropRect, rect->left, rect->top, rect->right, rect->bottom) == NULL) {
-					cg::core::infoRecorder->logError("controller: invalid rect (%d,%d)-(%d,%d)\n",
-						rect->left, rect->top,
-						rect->right, rect->bottom);
-					return -1;
+#if 0
+			cg::input::CtrlConfig * conf = NULL;
+			conf = cg::input::CtrlConfig::GetCtrlConfig(STREAM_SERVER_CONFIG);
+#else
+
+			cg::RTSPConf *conf = cg::RTSPConf::GetRTSPConf();
+#endif
+			cg::input::CtrlMessagerServer * ctrlServer = new cg::input::CtrlMessagerServer();
+			do{
+				if (conf->ctrlEnable){
+					if (ctrlServer->initQueue(32768, sizeof(cg::input::sdlmsg_t)) < 0){
+						conf->ctrlEnable = 0;
+						goto CTRL_CLEAN;
+					}
+					// create the replay callback
+
+					GetWindowRect(wnd, &windowRect);
+
+					ReplayCallbackImp * replayCallback = new ReplayCallbackImp(&windowRect, &windowRect);
+					if(ctrlServer->init(conf, CTRL_CURRENT_VERSION)){
+						cg::core::infoRecorder->logError("[SERVER]: cannot start the input thread.\n");
+						goto CTRL_CLEAN;	
+					}
+
+					ctrlServer->setReplay(replayCallback);
+
+					if (!ctrlServer->start()){
+						cg::core::infoRecorder->logError("Cannot create controller thread, controller disable\n");
+						conf->ctrlEnable = 0;
+						goto CTRL_CLEAN;
+					}
 				}
-				prect = &cropRect;
-				cg::core::infoRecorder->logError("controller: crop rect (%d,%d)-(%d,%d)\n",
-					prect->left, prect->top,
-					prect->right, prect->bottom);
+				else{
+					cg::core::infoRecorder->logError("[MsgServer]: client control is disabled.\n");
+					goto CTRL_CLEAN;
+				}
+				//enableRender = conf->enableRender;
+			} while (0);
+
+			return;
+
+CTRL_CLEAN:
+			if(ctrlServer){
+				delete ctrlServer;
+				ctrlServer = NULL;
 			}
-			else {
+
+#endif  // ENABLE_CLIENT_CONTROL
+		}
+		
+		ReplayCallbackImp::ReplayCallbackImp(RECT * windowRect, RECT * pOutputRect): prect(NULL), pOutputWindowRect(NULL), scaleFactorX(0), scaleFactorY(0),cxsize(0), cysize(0)
+		{
+			if(windowRect){
+				prect = new RECT;
+				memcpy(prect, windowRect, sizeof(RECT));
+			}
+			if(pOutputRect){
+				pOutputWindowRect = new RECT;
+				memcpy(pOutputWindowRect, pOutputRect, sizeof(RECT));
+			}
+			initKeyMap();
+		}
+
+		ReplayCallbackImp::~ReplayCallbackImp(){
+			if(prect){
+				delete prect;
 				prect = NULL;
 			}
+			if(pOutputWindowRect){
+				delete pOutputWindowRect;
+				pOutputWindowRect = NULL;
+			}
+		}
+		
+		int ReplayCallbackImp::initKeyMap(){
+			if(keymap_initialized == false){
+				SDLKeyToKeySym_init();
+			}
+			// set the scaler 
 
-			cg::core::infoRecorder->logTrace("sdl_replayer: sizeof(sdlmsg) = %d\n", sizeof(sdlmsg_t));
-			//
-
+			// get the screen resolution
 			cxsize = GetSystemMetrics(SM_CXSCREEN);
 			cysize = GetSystemMetrics(SM_CYSCREEN);
-			ctrlMsgServer->setResolution(cxsize, cysize);
-			ctrlMsgServer->setOutputResolution(cxsize, cysize);
-			scaleFactorX = 1.0f;
-			scaleFactorY = 1.0f;
-			cg::core::infoRecorder->logTrace("sdl replayer: Replay using SendInput(), screen-size=%dx%d\n", cxsize, cysize);
+
 
 			// compute scale factor
 			do {
-				int resolution[2];
 				int baseX, baseY;
-
-				if (conf->confReadInts("output-resolution", resolution, 2) != 2)
-					break;
+				float outputW = 0; int outputH = 0;
+				if(pOutputWindowRect == NULL){
+					cg::core::infoRecorder->logError("[Callback]: NULL output window rect.\n");
+					outputW = cxsize;
+					outputH = cysize;
+				}
+				outputW = pOutputWindowRect->right - pOutputWindowRect->left + 1;
+				outputH = pOutputWindowRect->bottom - pOutputWindowRect->top + 1;
 				//
-				outputW = resolution[0];
-				outputH = resolution[1];
-				ctrlMsgServer->setOutputResolution(outputW, outputH);
-				//
-				if (rect == NULL) {
+				if (prect == NULL) {
 					baseX = cxsize;
 					baseY = cysize;
 				}
@@ -684,85 +773,25 @@ namespace cg{
 					baseX = prect->right - prect->left + 1;
 					baseY = prect->bottom - prect->top + 1;
 				}
-				ctrlMsgServer->setResolution(baseX, baseY);
-				ctrlMsgServer->getScaleFactor(&scaleFactorX, &scaleFactorY);
-				//
-				cg::core::infoRecorder->logTrace("sdl replayer: mouse coordinate scale factor = (%.3f,%.3f)\n",
+
+				float rx, ry;
+				rx = 1.0 * baseX / outputW;
+				ry = 1.0 * baseY / outputH;
+
+				if(rx <= 0.0)	rx = 1.0;
+				if(ry <= 0.0)	ry = 1.0;
+
+				scaleFactorX = rx;
+				scaleFactorY = ry;
+
+				cg::core::infoRecorder->logTrace("[Callback]: sdl replayer: mouse coordinate scale factor = (%.3f,%.3f)\n",
 					scaleFactorX, scaleFactorY);
 			} while (0);
-			// register callbacks
-			ctrlMsgServer->setReplay(&(CtrlReplayer::replayCallback));
-			//
-			return 0;
-		}
-		int CtrlReplayer::init(ccgRect * rect, CtrlConfig * config){
-			if (keymap_initialized == false) {
-				SDLKeyToKeySym_init();
-			}
-			if (config){
-				conf = config;
-			}
-			else if (ctrlMsgServer && ctrlMsgServer->getCtrlConfig()){
-				conf = ctrlMsgServer->getCtrlConfig();
-			}
-			if (rect != NULL) {
-				if (ccg_fillrect(&cropRect, rect->left, rect->top, rect->right, rect->bottom) == NULL) {
-					cg::core::infoRecorder->logError("controller: invalid rect (%d,%d)-(%d,%d)\n",
-						rect->left, rect->top,
-						rect->right, rect->bottom);
-					return -1;
-				}
-				prect = &cropRect;
-				("controller: crop rect (%d,%d)-(%d,%d)\n",
-					prect->left, prect->top,
-					prect->right, prect->bottom);
-			}
-			else {
-				prect = NULL;
-			}
 
-			cg::core::infoRecorder->logTrace("sdl_replayer: sizeof(sdlmsg) = %d\n", sizeof(sdlmsg_t));
-			//
 
-			cxsize = GetSystemMetrics(SM_CXSCREEN);
-			cysize = GetSystemMetrics(SM_CYSCREEN);
-			ctrlMsgServer->setResolution(cxsize, cysize);
-			ctrlMsgServer->setOutputResolution(cxsize, cysize);
-			cg::core::infoRecorder->logTrace("sdl replayer: Replay using SendInput(), screen-size=%dx%d\n", cxsize, cysize);
-
-			// compute scale factor
-			do {
-				int resolution[2];
-				int baseX, baseY;
-
-				if (conf->confReadInts("output-resolution", resolution, 2) != 2)
-					break;
-				//
-				outputW = resolution[0];
-				outputH = resolution[1];
-				ctrlMsgServer->setOutputResolution(outputW, outputH);
-				//
-				if (rect == NULL) {
-					baseX = cxsize;
-					baseY = cysize;
-				}
-				else {
-					baseX = prect->right - prect->left + 1;
-					baseY = prect->bottom - prect->top + 1;
-				}
-				ctrlMsgServer->setResolution(baseX, baseY);
-				ctrlMsgServer->getScaleFactor(&scaleFactorX, &scaleFactorY);
-				//
-				cg::core::infoRecorder->logTrace("sdl replayer: mouse coordinate scale factor = (%.3f,%.3f)\n",
-					scaleFactorX, scaleFactorY);
-			} while (0);
-			// register callbacks
-			ctrlMsgServer->setReplay(&(CtrlReplayer::replayCallback));
-			//
 			return 0;
 		}
 
-		void CtrlReplayer::deInit(){}
 		//void sdlmsg_replay_deinit(void *arg) {
 		//#ifdef WIN32
 		//#elif defined __APPLE__
@@ -777,12 +806,16 @@ namespace cg{
 		//}
 
 #ifdef WIN32
-		void CtrlReplayer::replayNative(sdlmsg_t *msg) {
-			INPUT in;
-			sdlmsg_keyboard_t *msgk = (sdlmsg_keyboard_t*) msg;
-			sdlmsg_mouse_t *msgm = (sdlmsg_mouse_t*) msg;
-			//
-			infoRecorder->logError("[CtrlReplayer]: replay native.\n");
+
+		void ReplayCallbackImp::replayNative(sdlmsg_t *msg){
+			INPUT				in;
+			sdlmsg_keyboard_t *	msgk = (sdlmsg_keyboard_t*) msg;
+			sdlmsg_mouse_t *	msgm = (sdlmsg_mouse_t*) msg;
+			cg::core::DelayRecorder * delayRecorder = cg::core::DelayRecorder::GetDelayRecorder();
+			if(!ctrlTimer){
+				ctrlTimer = new PTimer();
+			}
+
 			switch(msg->msgtype) {
 			case SDL_EVENT_MSGTYPE_KEYBOARD:
 				bzero(&in, sizeof(in));
@@ -792,8 +825,20 @@ namespace cg{
 						in.ki.dwFlags |= KEYEVENTF_KEYUP;
 					}
 					in.ki.wScan = MapVirtualKey(in.ki.wVk, MAPVK_VK_TO_VSC);
-					//ga_error("sdl replayer: vk=%x scan=%x\n", in.ki.wVk, in.ki.wScan);
+
+					if(in.ki.wVk == VK_F11 && msgk->is_pressed == 0){
+						ctrlTimer->Start();
+						delayRecorder->setInputArrive();
+					}
+
+					cg::core::infoRecorder->logTrace("sdl replayer: vk=%x scan=%x, is press:%d\n", in.ki.wVk, in.ki.wScan, msgk->is_pressed);
+#ifndef USE_INTERCEPTION
 					SendInput(1, &in, sizeof(in));
+
+#else
+					InitInterception();
+					generateKey(keyboard, msgk->is_pressed == 0 ? 1 : 0);
+#endif
 				} else {
 					////////////////
 					cg::core::infoRecorder->logTrace("sdl replayer: undefined key scan=%u(%04x) key=%u(%04x) mod=%u(%04x) pressed=%d\n",
@@ -804,7 +849,7 @@ namespace cg{
 				}
 				break;
 			case SDL_EVENT_MSGTYPE_MOUSEKEY:
-				//ga_error("sdl replayer: button event btn=%u pressed=%d\n", msg->mousebutton, msg->is_pressed);
+				cg::core::infoRecorder->logTrace("sdl replayer: button event btn=%u pressed=%d\n", msg->mousebutton, msg->is_pressed);
 				bzero(&in, sizeof(in));
 				in.type = INPUT_MOUSE;
 				if(msgm->mousebutton == 1 && msgm->is_pressed != 0) {
@@ -863,7 +908,7 @@ namespace cg{
 #endif
 				break;
 			case SDL_EVENT_MSGTYPE_MOUSEMOTION:
-				//ga_error("sdl replayer: motion event x=%u y=%d\n", msgm->mousex, msgm->mousey);
+				cg::core::infoRecorder->logTrace("sdl replayer: motion event x=%u y=%d, is relative: %s\n", msgm->mousex, msgm->mousey, msgm->relativeMouseMode !=0 ? "true" : "false");
 				bzero(&in, sizeof(in));
 				in.type = INPUT_MOUSE;
 				// mouse x/y has to be mapped to (0,0)-(65535,65535)
@@ -885,7 +930,7 @@ namespace cg{
 					in.mi.dy = (short) (scaleFactorY * msgm->mouseRelY);
 					in.mi.dwFlags = MOUSEEVENTF_MOVE;
 				}
-				cg::core::infoRecorder->logError("mouse (x, y):(%d, %d).\n", in.mi.dx, in.mi.dy);
+				cg::core::infoRecorder->logTrace("mouse (x, y):(%d, %d).\n", in.mi.dx, in.mi.dy);
 				SendInput(1, &in, sizeof(in));
 				break;
 			default: // do nothing
@@ -893,6 +938,7 @@ namespace cg{
 			}
 			return;
 		}
+
 #elif defined __APPLE__
 		static void
 			sdlmsg_replay_native(sdlmsg_t *msg) {
@@ -1075,24 +1121,19 @@ namespace cg{
 				return;
 		}
 #endif
-		int CtrlReplayer::replay(sdlmsg_t * msg){
-			// convert from network byte order to host byte order
+
+		void ReplayCallbackImp::operator()(void * buf, int len){
+			sdlmsg_t *m = (sdlmsg_t *)buf;
+			if(len  != ntohs(m->msgsize)){
+				cg::core::infoRecorder->logError("[ReplaCallbackImp]: msg length mismatched. (%d != %d).\n", len, ntohs(m->msgsize));
+			}
+			replay((sdlmsg_t*)buf);
+		}
+		void ReplayCallbackImp::replay(sdlmsg_t * msg){
 			sdlmsg_ntoh(msg);
 			replayNative(msg);
-			return 0;
 		}
-
-		void CtrlReplayer::replayCallback(void * msg, int msglen){
-			sdlmsg_t *m = (sdlmsg_t*)msg;
-			if (msglen != ntohs(m->msgsize)/*sizeof(sdlmsg_t)*/) {
-				cg::core::infoRecorder->logError("message length mismatched. (%d != %d)\n",
-					msglen, ntohs(m->msgsize));
-			}
-			replay((sdlmsg_t*)msg);
-			return;
-		}
-
-
+		
 
 		//
 
@@ -1115,7 +1156,7 @@ namespace cg{
 				}
 				return addr.s_addr;
 		}
-		// for queuemessager
+		// for queue messager
 		int QueueMessager::initQueue(int size, int maxunit){
 
 			InitializeCriticalSection(&queueSection);
@@ -1196,7 +1237,7 @@ namespace cg{
 			int nextpos;
 			struct queuemsg *qmsg;
 			//
-			infoRecorder->logError("[QueueMessager]: write msg, size:%d.\n", msgsize);
+			infoRecorder->logTrace("[QueueMessager]: write msg, size:%d.\n", msgsize);
 			if ((msgsize + sizeof(struct queuemsg)) > qunit) {
 				infoRecorder->logError("[QueueMessager]:controller queue msg size exceeded (%d > %d).\n",
 					msgsize + sizeof(struct queuemsg), qunit);
@@ -1245,6 +1286,7 @@ namespace cg{
 		}
 
 		////////////////////////////////////////////////////////////////////
+#if 0
 		int CtrlMessagerClient::ctrlSocketInit(CtrlConfig *conf) {
 			//
 			if (conf->ctrlproto == IPPROTO_TCP) {
@@ -1259,6 +1301,7 @@ namespace cg{
 			}
 			if (ctrlSocket < 0) {
 				infoRecorder->logError("[CtrlMessagerClient]:Controller socket-init: %s\n", strerror(errno));
+				return -1;
 			}
 			//
 			bzero(&ctrlsin, sizeof(struct sockaddr_in));
@@ -1276,6 +1319,8 @@ namespace cg{
 			//
 			return ctrlSocket;
 		}
+		
+
 		int CtrlMessagerServer::ctrlSocketInit(CtrlConfig *conf) {
 			//
 			infoRecorder->logError("[CstrlMessagerServer]: port:%d.\n", conf->ctrlport);
@@ -1311,12 +1356,12 @@ namespace cg{
 			//
 			return ctrlSocket;
 		}
-
+#endif
 		int CtrlMessagerClient::ctrlSocketInit(struct cg::RTSPConf *conf) {
 			//
-			if(conf->ctrlproto == IPPROTO_TCP) {
+			if(conf->ctrlProto == IPPROTO_TCP) {
 				ctrlSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-			} else if(conf->ctrlproto == IPPROTO_UDP) {
+			} else if(conf->ctrlProto == IPPROTO_UDP) {
 				ctrlSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 			} else {
 				infoRecorder->logError("[CtrlMessagerServer]:Controller socket-init: not supported protocol.\n");
@@ -1328,11 +1373,11 @@ namespace cg{
 			//
 			bzero(&ctrlsin, sizeof(struct sockaddr_in));
 			ctrlsin.sin_family = AF_INET;
-			ctrlsin.sin_port = htons(conf->ctrlport);
-			if (conf->logic_servername != NULL) {
-				ctrlsin.sin_addr.s_addr = name_resolve(conf->logic_servername);
+			ctrlsin.sin_port = htons(conf->ctrlPort);
+			if (ctrlServerUrl != NULL) {
+				ctrlsin.sin_addr.s_addr = name_resolve(ctrlServerUrl);
 				if(ctrlsin.sin_addr.s_addr == INADDR_NONE) {
-					infoRecorder->logError("[CtrlMessagerServer]:Name resolution failed: %s\n", conf->logic_servername);
+					infoRecorder->logError("[CtrlMessagerServer]:Name resolution failed: %s\n", ctrlServerUrl);
 					return -1;
 				}
 			}
@@ -1343,14 +1388,14 @@ namespace cg{
 		}
 		int CtrlMessagerServer::ctrlSocketInit(struct RTSPConf *conf) {
 			//
-			if (conf->ctrlproto == IPPROTO_TCP) {
+			if (conf->ctrlProto == IPPROTO_TCP) {
 				ctrlSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 			}
-			else if (conf->ctrlproto == IPPROTO_UDP) {
+			else if (conf->ctrlProto == IPPROTO_UDP) {
 				ctrlSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 			}
 			else {
-				infoRecorder->logError("[CtrlMessagerServer]:Controller socket-init: not supported protocol. configured protocol:%d\n", conf->ctrlproto);
+				infoRecorder->logError("[CtrlMessagerServer]:Controller socket-init: not supported protocol. configured protocol:%d\n", conf->ctrlProto);
 				return -1;
 			}
 			if (ctrlSocket < 0) {
@@ -1359,7 +1404,7 @@ namespace cg{
 			//
 			bzero(&ctrlsin, sizeof(struct sockaddr_in));
 			ctrlsin.sin_family = AF_INET;
-			ctrlsin.sin_port = htons(conf->ctrlport);
+			ctrlsin.sin_port = htons(conf->ctrlPort);
 
 #if 0
 			if (conf->servername != NULL) {
@@ -1378,65 +1423,21 @@ namespace cg{
 
 		////////////////////////////////////////////////////////////////////
 
-		int CtrlMessagerClient::init(struct RTSPConf *conf, const char *ctrlid) {
-			if (!conf){
-				infoRecorder->logError("[CtrlMessagerClient]: NULL CtrlConsfig.\n");
-				return -1;
-			}
-			//this->conf = conf;
+		int CtrlMessagerClient::init(cg::RTSPConf* rtspConf,char * url, const char * ctrlid){
+			
+			conf = rtspConf;
+
+			ctrlServerUrl = _strdup(url);
+
 			if (ctrlSocketInit(conf) < 0) {
-				conf->ctrlenable = 0;
+				conf->ctrlEnable = 0;
 				return -1;
 			}
 
-			//QueueMessager::init(size, maxunit);
-
-			// init the critical sectiona and the event
+			// init the critical section and the event
 			InitializeCriticalSection(&wakeupMutex);
 			wakeup = CreateEvent(NULL, FALSE, FALSE, NULL);
-			if(conf->ctrlproto == IPPROTO_TCP) {
-				struct ctrlhandshake hh;
-				// connect to the server
-				if(connect(ctrlSocket, (struct sockaddr*) &ctrlsin, sizeof(ctrlsin)) < 0) {
-					infoRecorder->logError("controller client-connect: %s\n", strerror(errno));
-					goto error;
-				}
-				// send handshake
-				hh.length = 1+strlen(ctrlid)+1;	// msg total len, id, null-terminated
-				if(hh.length > sizeof(hh))
-					hh.length = sizeof(hh);
-				strncpy(hh.id, ctrlid, sizeof(hh.id));
-				if(send(ctrlSocket, (char*) &hh, hh.length, 0) <= 0) {
-					infoRecorder->logError("controller client-send(handshake): %s\n", strerror(errno));
-					goto error;
-				}
-			}
-			return 0;
-error:
-			conf->ctrlenable = 0;
-			ctrlenabled = false;
-			infoRecorder->logError("controller client: controller disabled.\n");
-			closesocket(ctrlSocket);
-			ctrlSocket = -1;
-			return -1;
-		}
-		int CtrlMessagerClient::init(CtrlConfig * conf, const char * ctrlid){
-			if (!conf){
-				infoRecorder->logError("[CtrlMessagerClient]: NULL CtrlConsfig.\n");
-				return -1;
-			}
-			this->conf = conf;
-			if (ctrlSocketInit(conf) < 0) {
-				conf->ctrlenable = 0;
-				return -1;
-			}
-
-			//QueueMessager::init(size, maxunit);
-
-			// init the critical sectiona and the event
-			InitializeCriticalSection(&wakeupMutex);
-			wakeup = CreateEvent(NULL, FALSE, FALSE, NULL);
-			if (conf->ctrlproto == IPPROTO_TCP) {
+			if (conf->ctrlProto == IPPROTO_TCP) {
 				struct ctrlhandshake hh;
 				// connect to the server
 				if (connect(ctrlSocket, (struct sockaddr*) &ctrlsin, sizeof(ctrlsin)) < 0) {
@@ -1458,13 +1459,14 @@ error:
 			}
 			return 0;
 error:
-			conf->ctrlenable = 0;
+			conf->ctrlEnable = 0;
 			ctrlenabled = false;
 			infoRecorder->logError("controller client: controller disabled.\n");
 			closesocket(ctrlSocket);
 			ctrlSocket = -1;
 			return -1;
 		}
+
 		BOOL CtrlMessagerClient::onThreadStart(){
 			if (conf == NULL){
 				infoRecorder->logError("CtrlMessagerClient:: NULL rtspconfig\n");
@@ -1473,6 +1475,7 @@ error:
 
 			infoRecorder->logError("controller client-thread started: tid=%ld.\n", getThreadId());
 
+			return TRUE;
 		}
 		BOOL CtrlMessagerClient::run(){
 			struct queuemsg *qm;
@@ -1484,14 +1487,14 @@ error:
 			while ((qm = readMsg()) != NULL) {
 				int wlen;
 				if (qm->msgsize == 0) {
-					infoRecorder->logError("controller client: null messgae received, terminate the thread.\n");
+					infoRecorder->logError("controller client: null message received, terminate the thread.\n");
 					return FALSE;
 				}
 #ifdef ANDROID
 				if (drop > 0)
 					continue;
 #endif
-				if (conf->ctrlproto == IPPROTO_TCP) {
+				if (conf->ctrlProto == IPPROTO_TCP) {
 					if ((wlen = send(ctrlSocket, (char*)qm->msg, qm->msgsize, 0)) < 0) {
 						infoRecorder->logError("controller client-send(tcp): %s, sock:%p\n", strerror(errno), ctrlSocket);
 #ifdef ANDROID
@@ -1502,10 +1505,10 @@ error:
 					}
 					else{
 						unsigned short ms = ntohs(*((unsigned short *)qm->msg));
-						infoRecorder->logError("[controller client]: send(tcp) size:%d, msgsize:%d.\n", wlen, ms);
+						infoRecorder->logTrace("[controller client]: send(tcp) size:%d, msgsize:%d.\n", wlen, ms);
 					}
 				}
-				else if (conf->ctrlproto == IPPROTO_UDP) {
+				else if (conf->ctrlProto == IPPROTO_UDP) {
 					if ((wlen = sendto(ctrlSocket, (char*)qm->msg, qm->msgsize, 0, (struct sockaddr*) &ctrlsin, sizeof(ctrlsin))) < 0) {
 						infoRecorder->logError("controller client-send(udp): %s\n", strerror(errno));
 #ifdef ANDROID
@@ -1517,6 +1520,7 @@ error:
 				}
 				releaseMsg(qm);
 				//ga_error("controller client-debug: send msg (%d bytes)\n", wlen);
+				return TRUE;
 			}
 		}
 		BOOL CtrlMessagerClient::stop(){
@@ -1549,11 +1553,7 @@ error:
 
 		}
 		CtrlMessagerClient::~CtrlMessagerClient(){
-			if (conf){
-				delete conf;
-				conf = NULL;
-			}
-
+			
 		}
 
 		////////////////////////////////////////////////////////////////////
@@ -1565,13 +1565,18 @@ error:
 
 		}
 		CtrlMessagerServer::~CtrlMessagerServer(){
-			if (conf){
-				delete conf;
-				conf = NULL;
+			
+			if(replay){
+				delete replay;
 				replay = NULL;
 			}
 		}
+
+#if 1
 		int CtrlMessagerServer::init(struct RTSPConf *conf, const char *ctrlid) {
+
+			this->conf = conf;
+
 			if (ctrlSocketInit(conf) < 0){
 				infoRecorder->logError("[CtrlMessagerServer]:init socket failed\n");
 				return -1;
@@ -1579,10 +1584,6 @@ error:
 			// init the msg queue
 			//QueueMessager::initQueue(size, maxunit);
 			// init the critical sections
-			currWidth = -1;
-			currHeight = -1;
-			outputWidth = -1;
-			outputHeight = -1;
 			InitializeCriticalSection(&reslock);
 			InitializeCriticalSection(&oreslock);
 
@@ -1604,7 +1605,7 @@ error:
 				goto error;
 			}
 			// TCP listen
-			if(conf->ctrlproto == IPPROTO_TCP) {
+			if(conf->ctrlProto == IPPROTO_TCP) {
 				if (listen(ctrlSocket, 16) < 0) {
 					infoRecorder->logError("[CtrlMessagerServer]:controller server-listen: %s\n", strerror(errno));
 					goto error;
@@ -1616,6 +1617,8 @@ error:
 			ctrlSocket = -1;
 			return -1;
 		}
+
+#else
 		int CtrlMessagerServer::init(CtrlConfig *conf, const char *ctrlid) {
 			if (!conf){
 				infoRecorder->logError("[CtrlMessagerServer]: NULL CtrlConsfig.\n");
@@ -1629,10 +1632,7 @@ error:
 			// init the msg queue
 			//QueueMessager::initQueue(size, maxunit);
 			// init the critical sections
-			currWidth = -1;
-			currHeight = -1;
-			outputWidth = -1;
-			outputHeight = -1;
+			
 			InitializeCriticalSection(&reslock);
 			InitializeCriticalSection(&oreslock);
 
@@ -1666,23 +1666,18 @@ error:
 			ctrlSocket = -1;
 			return -1;
 		}
-
-		msgfunc CtrlMessagerServer::setReplay(msgfunc callback) {
-			msgfunc old = replay;
-			replay = callback;
-			return old;
-		}
+#endif
+		
 		BOOL CtrlMessagerServer::onThreadStart(){
 			struct sockaddr_in csin, xsin;
 			clientaccepted = 0;
-			//
 
 			if (conf == NULL){
-				infoRecorder->logError("CtrlMessagerServer: NULL rtspconfig\n");
+				infoRecorder->logError("[CtrlMessagerServer]: NULL rtsp config\n");
 				return FALSE;
 			}
 
-			infoRecorder->logError("controller server started: tid=%ld.\n", this->getThreadId());
+			infoRecorder->logError("[CtrlMessagerServer]: controller server started: tid=%ld.\n", this->getThreadId());
 
 restart:
 			bzero(&csin, sizeof(csin));
@@ -1690,51 +1685,55 @@ restart:
 			csin.sin_family = AF_INET;
 			clientaccepted = 0;
 			// handle only one client
-			if (conf->ctrlproto == IPPROTO_TCP) {
+			if (conf->ctrlProto == IPPROTO_TCP) {
 				struct ctrlhandshake *hh = (struct ctrlhandshake*) buf;
 				//
 				if ((sock = accept(ctrlSocket, (struct sockaddr*) &csin, &csinlen)) < 0) {
-					infoRecorder->logError("controller server-accept: %s.\n", strerror(errno));
+					infoRecorder->logError("[CtrlMessagerServer]: controller server-accept: %s.\n", strerror(errno));
 					goto restart;
 				}
-				infoRecorder->logError("controller server-thread: accepted TCP client from %s.%d\n",
+				infoRecorder->logError("[CtrlMessagerServer]: controller server-thread: accepted TCP client from %s.%d\n",
 					inet_ntoa(csin.sin_addr), ntohs(csin.sin_port));
 				// check initial handshake message
 				if ((buflen = recv(sock, (char*)buf, sizeof(buf), 0)) <= 0) {
-					infoRecorder->logError("controller server-thread: %s\n", strerror(errno));
+					infoRecorder->logError("[CtrlMessagerServer]: controller server-thread: %s\n", strerror(errno));
 					closesocket(sock);
 					goto restart;
 				}
 				if (hh->length > buflen) {
-					infoRecorder->logError("controller server-thread: bad handshake length (%d > %d)\n",
+					infoRecorder->logError("[CtrlMessagerServer]: controller server-thread: bad handshake length (%d > %d)\n",
 						hh->length, buflen);
 					closesocket(sock);
 					goto restart;
 				}
 				if (memcmp(myctrlid, hh->id, hh->length - 1) != 0) {
-					infoRecorder->logError("controller server-thread: mismatched protocol version (%s != %s), length = %d\n",
+					infoRecorder->logError("[CtrlMessagerServer]: controller server-thread: mismatched protocol version (%s != %s), length = %d\n",
 						hh->id, myctrlid, hh->length - 1);
 					closesocket(sock);
 					goto restart;
 				}
-				infoRecorder->logError("controller server-thread: receiving events ...\n");
+				infoRecorder->logError("[CtrlMessagerServer]: controller server-thread: receiving events ...\n");
 				clientaccepted = 1;
 			}
 
 			buflen = 0;
+
+
+			return TRUE;
 		}
 		BOOL CtrlMessagerServer::run(){
+			infoRecorder->logTrace("[CtrlMessagerServer]: run() called.\n");
 			int rlen, msglen;
 			struct sockaddr_in csin, xsin;
 			int csinlen, xsinlen;
 			//
 			bufhead = 0;
 			//
-			if (conf->ctrlproto == IPPROTO_TCP) {
 tcp_readmore:
+			if (conf->ctrlProto == IPPROTO_TCP) {
+				infoRecorder->logTrace("[CtrlMessagerServer]: run(), TCP recv.\n");
 				if ((rlen = recv(sock, (char*)buf + buflen, sizeof(buf)-buflen, 0)) <= 0) {
-					infoRecorder->logTrace("controller server-read: %s\n", strerror(errno));
-					infoRecorder->logTrace("controller server-thread: conenction closed.\n");
+					infoRecorder->logTrace("[CtrlMessagerServer]: controller server-read: %s\n", strerror(errno));
 					closesocket(sock);
 					return FALSE;
 				}
@@ -1743,9 +1742,10 @@ tcp_readmore:
 					rlen, buf[0], buf[1]);
 #endif
 				buflen += rlen;
-				infoRecorder->logError("[CtrlMessagerServer]: recv %d bytes.\n", rlen);
+				infoRecorder->logTrace("[CtrlMessagerServer]: recv %d bytes.\n", rlen);
 			}
-			else if (conf->ctrlproto == IPPROTO_UDP) {
+			else if (conf->ctrlProto == IPPROTO_UDP) {
+				infoRecorder->logError("[CtrlMessagerServer]: run(), UDP recv.\n");
 				bzero(&xsin, sizeof(xsin));
 				xsinlen = sizeof(xsin);
 				xsin.sin_family = AF_INET;
@@ -1755,55 +1755,56 @@ tcp_readmore:
 					clientaccepted = 1;
 				}
 				else if (memcmp(&csin, &xsin, sizeof(csin)) != 0) {
-					infoRecorder->logError("controller server-thread: NOTICE - UDP client reconnected?\n");
+					infoRecorder->logError("[CtrlMessagerServer]: controller server-thread: NOTICE - UDP client reconnected?\n");
 					bcopy(&xsin, &csin, sizeof(csin));
 					//continue;
 				}
 			}
+			else{
+				infoRecorder->logError("[CtrlMessagerServer]: invalid network protocol.\n");
+				return FALSE;
+			}
 tcp_again:
 			if (buflen < 2) {
-				if (conf->ctrlproto == IPPROTO_TCP)
+				if (conf->ctrlProto == IPPROTO_TCP)
 					goto tcp_readmore;
 				else
 					return TRUE;
 			}
-			//
 			msglen = ntohs(*((unsigned short*)(buf + bufhead)));
-			//
+
 			if (msglen == 0) {
-				infoRecorder->logError("controller server: WARNING - invalid message with size equal to zero!\n");
+				infoRecorder->logError("[CtrlMessagerServer]: controller server: WARNING - invalid message with size equal to zero!\n");
 				return TRUE;
 			}
-			else{
-				infoRecorder->logError("[CtrlMessagerServer]: msglen :%d.\n", msglen);
-			}
+			
 			// buffer checks for TCP - not sufficient?
-			if (conf->ctrlproto == IPPROTO_TCP) {
+			if (conf->ctrlProto == IPPROTO_TCP) {
 				if (buflen < msglen) {
 					bcopy(buf + bufhead, buf, buflen);
 					goto tcp_readmore;
 				}
 			}
-			else if (conf->ctrlproto == IPPROTO_UDP) {
+			else if (conf->ctrlProto == IPPROTO_UDP) {
 				if (buflen != msglen) {
-					infoRecorder->logError("controller server: UDP msg size matched (expected %d, got %d).\n",
+					infoRecorder->logError("[CtrlMessagerServer]: controller server: UDP msg size matched (expected %d, got %d).\n",
 						msglen, buflen);
 					return TRUE;
 				}
 			}
 			// replay or queue the event
 			if (replay != NULL) {
-				replay(buf + bufhead, msglen);
+				(*replay)(buf + bufhead, msglen);
 			}
 			else if (writeMsg(buf + bufhead, msglen) != msglen) {
-				infoRecorder->logError("controller server: queue full, message dropped.\n");
+				infoRecorder->logError("[CtrlMessagerServer]: controller server: queue full, message dropped.\n");
 			}
 			else {
 				SetEvent(wakeup);
 				//pthread_cond_signal(&wakeup);
 			}
 			// handle buffers for TCP
-			if (conf->ctrlproto == IPPROTO_TCP && buflen > msglen) {
+			if (conf->ctrlProto == IPPROTO_TCP && buflen > msglen) {
 				bufhead += msglen;
 				buflen -= msglen;
 				goto tcp_again;
@@ -1813,7 +1814,7 @@ tcp_again:
 		}
 		BOOL CtrlMessagerServer::stop(){
 			clientaccepted = 0;
-			infoRecorder->logError("CtrlMessgerClient thread terminated: tid =%d\n", this->getThreadId());
+			infoRecorder->logError("[CtrlMessagerServer]: thread terminated: tid =%d\n", this->getThreadId());
 			CThread::stop();
 			return TRUE;
 		}
@@ -1842,43 +1843,16 @@ again:
 			// never return from here
 			return 0;
 		}
-		void CtrlMessagerServer::setOutputResolution(int width, int height) {
-			EnterCriticalSection(&oreslock);
-			outputWidth = width;
-			outputHeight = height;
-			LeaveCriticalSection(&oreslock);
-			return;
-		}
-		void CtrlMessagerServer::setResolution(int width, int height) {
-			EnterCriticalSection(&reslock);
-			currWidth = width;
-			currHeight = height;
-			LeaveCriticalSection(&reslock);
-			return;
-		}
-		void CtrlMessagerServer::getResolution(int *width, int *height) {
-			EnterCriticalSection(&reslock);
-			*width = currWidth;
-			*height = currHeight;
-			LeaveCriticalSection(&reslock);
-			return;
-		}
-		void CtrlMessagerServer::getScaleFactor(double *fx, double *fy) {
-			double rx, ry;
-			EnterCriticalSection(&reslock);
-			EnterCriticalSection(&oreslock);
-			rx = 1.0 * currWidth / outputWidth;
-			ry = 1.0 * currHeight / outputHeight;
-			LeaveCriticalSection(&oreslock);
-			LeaveCriticalSection(&reslock);
-			if(rx <= 0.0)	rx = 1.0;
-			if(ry <= 0.0)	ry = 1.0;
-			*fx = rx;
-			*fy = ry;
-			return;
-		}
 
-		CtrlMessagerServer::CtrlMessagerServer(){}
+		CtrlMessagerServer::CtrlMessagerServer(){
+			 ctrlSocket = NULL, sock = NULL;
+			 clientaccepted = 0;
 
+			 bufhead = 0, buflen = 0;
+			 wakeupMutex = NULL;
+			 wakeup = NULL;
+			 replay = NULL;
+			 conf = NULL;
+		}
 	}
 }

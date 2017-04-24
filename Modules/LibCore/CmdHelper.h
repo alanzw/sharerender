@@ -16,6 +16,10 @@ parameter: -f [FPS] -l [log option] -s [save directory] -o [output] -u [url] -d 
 
 */
 
+
+/// when need to test PSNR, we save the picture in server
+#define SERVER_SAVE_BMP
+
 namespace cg{
 	namespace core{
 

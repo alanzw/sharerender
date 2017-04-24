@@ -17,6 +17,8 @@ using namespace std;
 using namespace cg;
 using namespace cg::core;
 //#define ENABLE_CLIENT_CONTROL
+
+
 #pragma comment(lib, "nvapi.lib")
 #pragma comment(lib, "d3d9.lib")
 
@@ -160,9 +162,7 @@ DWORD WINAPI RenderConnectionLitener(LPVOID param){
 		}while(true);
 
 		csSet->addServer(sockConn);
-
 	}
-
 #else
 	ListenServer * server = new ListenServer();
 	event_base * base = event_base_new();
@@ -179,29 +179,59 @@ DWORD WINAPI RenderConnectionLitener(LPVOID param){
 }
 
 DWORD WINAPI GameClientEventProc(LPVOID param){
+
+#if 0
 	infoRecorder->logTrace("[GameClientProc]: enter the event dealing thread for game client.\n");
 	// connect to loader
 	CmdController * ctrl = (CmdController *)param;
 	GameClient * gameClient = new GameClient();
 	char * name = (char *)(ctrl->getObjName().c_str() + 1);
 	gameClient->setName(name);
-	event_base * base = event_base_new();
 
 	IDENTIFIER taskId  = (IDENTIFIER)atoi(cmdCtrl->getIdentifier().c_str());
-
+	gameClient->setTaskID(taskId);
+#else
+	GameClient * gameClient = (GameClient *)param;
+#endif
+	event_base * base = event_base_new();
 	gameClient->setEventBase(base);
 	gameClient->connectToLogicServer();   // connect to logic server
+	
+#if 0
 	gameClient->getCtx()->writeCmd(GAME_READY);
 	gameClient->getCtx()->writeIdentifier(taskId);
 	gameClient->getCtx()->writeToNet();
+#else
+	//gameClient->setTaskID(taskId);
+	DWORD ret = WaitForSingleObject(gameClient->getClientEvent(), INFINITE);
+	switch(ret){
+	case WAIT_OBJECT_0:
+		infoRecorder->logTrace("[GameClientProc]: client event triggered.\n");
+		if(!gameClient->notifyGameReady()){
+			infoRecorder->logError("[GameClientProc]: notify GAME READY failed.\n");
+			return -1;
+		}
+		break;
+	case WAIT_TIMEOUT:
+		infoRecorder->logError("[GameClientProc]: client event time out.\n");
+		return -1;
+		break;
+	case WAIT_FAILED:
+		//GameClient::Release();
+		return -1;
+		break;
 
-	infoRecorder->logTrace("[DllMain]: enter the game process, task id:%p\n", taskId);
+	}
+#endif
+
+	infoRecorder->logTrace("[DllMain]: enter the game process, task id:%p\n", gameClient->getTaskID());
 	gameClient->dispatch();   // dispatch the event
 
 	infoRecorder->logTrace("[GameClientProc]: before exit the event thread, to free GameClient.\n");
-	delete gameClient;
 	return 0;
 }
+
+
 
 // get the socket from command, and connect to the logic manager port( we can use the port 8759)
 BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReserved ) {
@@ -218,7 +248,7 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 	if(NULL == pTimer){
 		pTimer = new cg::core::PTimer();
 	}
-
+	DelayRecorder * delayRecorder = DelayRecorder::GetDelayRecorder();
 	cg::VideoGen::Initialize();
 
 	if(WSAStartup(sockVersion, &wsaData) != 0){
@@ -235,16 +265,14 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 	{
 	case DLL_PROCESS_ATTACH:
 		{ 
-			//Log::init("game_server.log");
-			
+			char * cmdLine = GetCommandLine();
 			infoRecorder->logTrace("[Global]: ");
-			infoRecorder->logTrace(GetCommandLine());
+			infoRecorder->logTrace(cmdLine);
 			infoRecorder->logTrace("\n");
 
 			//enableRender = true;
 #if 1  // no clients
 			// get the task ID, the second argv, add a new parameter to command line, to identify the start mode for game
-			char * cmdLine = GetCommandLine();
 			string exeName;
 			bool enableBackRunning = true;
 			infoRecorder->logTrace("[DllMain]: cmd line :%s.\n", cmdLine);
@@ -263,6 +291,7 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 			if(keyCmdHelper == NULL){
 				// install keyboard hook
 				keyCmdHelper = cg::core::KeyCommandHelper::GetKeyCmdHelper();
+				keyCmdHelper->setPrefix((char*)cmdCtrl->getObjName().c_str());
 				keyCmdHelper->setSendStep(cmdCtrl->getSendStep());
 				keyCmdHelper->installKeyHook(GetCurrentThreadId());
 			}
@@ -272,6 +301,7 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 					){
 					enableBackRunning = false;
 				}
+				enableBackRunning = false;
 				StartHook(enableBackRunning);
 				StartHookCalled = 1;
 			}
@@ -285,6 +315,10 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 				// for 2D games
 			}
 			// disable rendering
+			// init the rtsp config here
+			cg::RTSPConf * config = cg::RTSPConf::GetRTSPConf("config/server.logic.conf");
+
+
 			//cmdCtrl->setFrameStep(0);
 			infoRecorder->logTrace("[DllMain]: render step:%d.\n", cmdCtrl->getFrameStep());
 
@@ -306,14 +340,26 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 						// connect to local host
 						taskId = (IDENTIFIER)atoi(cmdCtrl->getIdentifier().c_str());
 						infoRecorder->logTrace("[DllMain]: task id:%p", taskId);
-						clientThreadHandle = chBEGINTHREADEX(NULL, 0, GameClientEventProc, cmdCtrl, FALSE, &clientThreadId);
+						char * name = (char *)(cmdCtrl->getObjName().c_str() + 1);
+						GameClient * gClient=  GameClient::GetGameClient();
+						gClient->setName(name);
+						gClient->setTaskID(taskId);
+
+						clientThreadHandle = chBEGINTHREADEX(NULL, 0, GameClientEventProc, gClient, FALSE, &clientThreadId);
 						cmdCtrl->setTaskId((HANDLE)taskId);
 					}
 				}
 				else if(cmdCtrl->getMode() == 2){
-					// listen to render proxy, to listen 60000 port
+					// listen to render proxy, to listen 70000 port
 					infoRecorder->logTrace("[DllMain]: to create server for render proxy.\n");
 					clientThreadHandle = chBEGINTHREADEX(NULL, 0, RenderConnectionLitener, cmdCtrl, FALSE, &clientThreadId);
+				}
+				else if(cmdCtrl->getMode() == 3){
+					// test mode, render every frame and render proxy reqeust logic server directly
+
+				}
+				else{
+					infoRecorder->logError("[DllMain]: invalid listen mode:%d.\n", cmdCtrl->getMode());
 				}
 				// how to set cooperate work mode, render proxy and logic server both do the rendering
 
@@ -353,41 +399,8 @@ BOOL APIENTRY DllMain( HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpRese
 
 #else  // no clients
 			
-			
 #endif  // no clients
-			//SetKeyboardHook(NULL, GetCurrentThreadId());
-			
-			// create the input server thread
-			//InitializeCriticalSection(&f9);
 
-#ifdef ENABLE_CLIENT_CONTROL
-			cg::input::CtrlConfig * conf = NULL;
-			conf = cg::input::CtrlConfig::GetCtrlConfig(STREAM_SERVER_CONFIG);
-			cg::input::CtrlMessagerServer * ctrlServer = new cg::input::CtrlMessagerServer();
-			do{
-				if (conf->ctrlenable){
-					if (ctrlServer->initQueue(32768, sizeof(cg::input::sdlmsg_t)) < 0){
-						conf->ctrlenable = 0;
-						break;
-					}
-					//msgfunc * replayer = &(CtrlReplayer::replayCallback);
-					//ctrlServer->setReplay(&(CtrlReplayer::replayCallback));
-					if(ctrlServer->init(conf, CTRL_CURRENT_VERSION)){
-						infoRecorder->logError("[SERVER]: cannot start the input thread.\n");
-					}
-
-					cg::input::CtrlReplayer::setMsgServer(ctrlServer);
-					if (!ctrlServer->start()){
-						infoRecorder->logError("Cannot create controller thread, controller disable\n");
-						conf->ctrlenable = 0;
-						break;
-					}
-				}
-				enableRender = conf->enableRender;
-			} while (0);
-
-			
-#endif  // ENABLE_CLIENT_CONTROL
 			first = 0;
 			infoRecorder->logTrace("[DllMain]: finish dll main.\n");
 			break;

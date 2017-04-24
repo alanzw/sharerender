@@ -11,6 +11,8 @@ class GameClient{
 	evutil_socket_t sock;
 	cg::BaseContext * ctx;
 
+	cg::IDENTIFIER taskId;
+
 	char * gameName;
 	event_base * base;
 
@@ -20,6 +22,8 @@ class GameClient{
 
 	DWORD ctrlThreadId, rtspThreadID;
 	HANDLE ctrlThreadHandle, rtspThreadHandle;
+
+	HANDLE clientEvent;
 
 	bool addRenderConnection(SOCKET sock);
 	bool declineRenderConnection(SOCKET sock);
@@ -34,16 +38,44 @@ class GameClient{
 
 	static DWORD WINAPI CtrlThreadProc(LPVOID param);
 	static DWORD WINAPI RTSPThreadProc(LPVOID param);
-
-public:
+	static GameClient * gameClient;
+	static bool initialized;
 
 	GameClient();
+public:
+
+	HANDLE getClientEvent(){ return clientEvent; }
+
+
+	static GameClient * GetGameClient(){
+		if(!gameClient){
+			gameClient = new GameClient();
+		}
+		return gameClient;
+	}
+	static void Release(){ if(gameClient){ delete gameClient; gameClient = NULL; initialized = false;}}
+	static bool IsInitialized(){ return initialized; }
+	static void	SetInitialized(bool val){ initialized = val; }
+	
 	~GameClient();
 	cg::BaseContext * getCtx(){	return ctx; }
 	void connectToLogicServer();
 	inline void setEventBase(event_base * b){ base = b; }
 	void dispatch(){ event_base_dispatch(base); }
 	bool dealEvent(cg::BaseContext * ctx);
+
+	inline void setTaskID(cg::IDENTIFIER val){ taskId= val;}
+	inline cg::IDENTIFIER getTaskID(){ return taskId; }
+	bool notifyGameReady(){
+		bool ret = false;
+		if(ctx){
+			ctx->writeCmd(cg::GAME_READY);
+			ctx->writeIdentifier(taskId);
+			ctx->writeToNet();
+			ret = true;
+		}
+		return ret;
+	}
 	// only for debug, socket to find the context(new socket in game process)
 	map<cg::IDENTIFIER, cg::BaseContext *> renderCtxMap;
 	map<cg::IDENTIFIER, cg::BaseContext *> rtspCtxMap;

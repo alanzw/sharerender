@@ -1,5 +1,8 @@
 #include "TimeTool.h"
 
+
+cg::core::DelayRecorder * cg::core::DelayRecorder::delayRecorder = NULL;
+
 static u_int64_t
 	filetime_to_unix_epoch(const FILETIME *ft) {
 		u_int64_t res = (u_int64_t)ft->dwHighDateTime << 32;

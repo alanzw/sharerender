@@ -25,6 +25,7 @@ public:
 	cg::IDENTIFIER				taskId;
 	char * rtspObject;  // the rtsp service name
 	cg::VideoGen * generator;	
+	cg::RTSPConf * rtspConf;
 
 	cg::VideoItem * videoItem;
 	IDirect3DDevice9 *		curDevice;
@@ -113,7 +114,20 @@ public:
 
 	int					imageWidth, imageHeight;
 	int					encoderOption;   // 1 for x264, 2 for CUDA, 3 for NVENC, 4 for ADAPTIVE encoder
+
+	unsigned char		specialTag;
+	unsigned char		valueTag;
 };
 
+
+
+#define DIRECT_PROXY_RTSP
+
+#ifdef DIRECT_PROXY_RTSP
+DWORD WINAPI DirectRTSPServerThread(LPVOID param);
+
+void StartDirectThread(void * param);
+
+#endif // DIRECT_PROXY_RTSP
 
 #endif   // __LIBRENDERCHANNEL_H__

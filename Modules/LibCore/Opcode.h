@@ -135,7 +135,9 @@
 
 #define D3DDSetStreamSourceFreq_Opcode		99
 
-#define MaxSizeUntilNow_Opcode				100
+#define D3DSurfaceRelease_Opcode			100
+
+#define MaxSizeUntilNow_Opcode				101
 
 
 #endif

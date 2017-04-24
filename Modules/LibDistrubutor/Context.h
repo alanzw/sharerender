@@ -134,6 +134,7 @@ namespace cg{
 
 		inline void writeCmd(const char * cmd){
 			memset(writeBuffer, 0, MAX_BUFFER_SIZE);
+			writeLen = 0;
 			sprintf(writeBuffer, "%s+", cmd);
 			writeLen = strlen(writeBuffer);
 			writeCurPtr = writeBuffer + writeLen;
@@ -220,7 +221,6 @@ namespace cg{
 		char * path;
 
 		BaseContext * client;
-
 
 		BaseContext * logicCtx;
 		bool logicReady;   // set true when recv logic ready cmd

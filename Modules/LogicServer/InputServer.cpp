@@ -235,9 +235,6 @@ static void
 				}
 			}
 
-
-			
-
 			//in.ki.wScan |= 0x80;
 			//ga_error("sdl replayer: vk=%x scan=%x\n", in.ki.wVk, in.ki.wScan);
 			if(in.ki.wVk ==VK_UP ||in.ki.wVk ==VK_DOWN || in.ki.wVk ==VK_LEFT ||in.ki.wVk ==VK_RIGHT ){
@@ -348,21 +345,10 @@ static void
 int sdlmsg_replay(struct sdlmsg * msg){
 	// convert from network byte order to host byte order
 	sdlmsg_ntoh(msg);
-	//if(msg->type == INPUT_KEYBOARD){
-	//	/*char buff[100];
-	//	sprintf(buff, "vk:%d",msg->ki.wVk);
-	//	MessageBox(NULL,buff,"WARNING", MB_OK);*/
-	//	msg->ki.wScan = MapVirtualKey(msg->ki.wVk, MAPVK_VK_TO_VSC);
-	//}else if(msg->type == INPUT_MOUSE){
-	//	// mouse move event should corrent the coordinate
-
-	//}
-	//SendInput(1,msg,sizeof(INPUT));
 	sdlmsg_replay_native(msg);
 	return 0;
 }
-void
-	sdlmsg_replay_callback(void *msg, int msglen) {
+void sdlmsg_replay_callback(void *msg, int msglen) {
 		if(msglen != sizeof(struct sdlmsg)) {
 			// ...
 			MessageBox(NULL,"Msglen is not the size of INPUT", "WARNING", MB_OK);
@@ -370,8 +356,7 @@ void
 		sdlmsg_replay((struct sdlmsg *)msg);
 		return;
 }
-static void
-	SDLKeyToKeySym_init() {
+static void SDLKeyToKeySym_init() {
 		unsigned short i;
 		//
 		keymap[SDLK_BACKSPACE]	= VK_BACK;		//		= 8,
@@ -663,35 +648,3 @@ again:
 		// never return from here
 		return 0;
 }
-#if 0
-HHOOK kehook = 0;
-extern bool enableRender;
-LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam){
-	if( wParam == VK_DELETE &&  lParam & 0x80000000) // f9 pressed
-	{
-		EnterCriticalSection(&f9);
-		F9Pressed = true;
-		infoRecorder->logTrace("server deal time:%d\n", GetTickCount() - serverInputArrive);
-		LeaveCriticalSection(&f9);
-	}
-	//MessageBox(NULL,"Enter hook", "WARNING", MB_OK);
-	if( lParam & 0x80000000) // pressed
-	{
-		if( wParam == VK_F8) // f8 pressed
-		{
-			//MessageBox(NULL,"F8 pressed", "WARNING", MB_OK);
-			enableRender = false;
-			//infoRecorder->logError("F8 pressed");
-		}
-	}
-	// 
-	return CallNextHookEx(kehook,nCode,wParam,lParam); 
-}
-void SetKeyboardHook(HINSTANCE hmode, DWORD dwThreadId){
-	// set the keyboard hook
-	//MessageBox(NULL,"Enter hook", "WARNING", MB_OK);
-	infoRecorder->logError("set the keyboard hook!\n");
-	kehook = SetWindowsHookEx(WH_KEYBOARD, HookProc, hmode, dwThreadId);
-}
-#endif
-

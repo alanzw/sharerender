@@ -21,7 +21,8 @@ using namespace cg::core;
 // define the hot plug, this definition will enable logic server to hot plug render proxy anytime
 
 // HOT_PLUG means add render proxy whenever needed
-#define ENABLE_HOT_PLUG
+//#define ENABLE_HOT_PLUG
+#define SINGLE_CONTEXT
 
 // context lock will lock the context when needed.
 //#define _CONTEXT_LOCK_
@@ -42,6 +43,7 @@ using namespace cg::core;
 
 
 //#define USE_CACHE
+//#define DISABLE_SHADOW_OBJECT
 
 /// logs
 #if 0
@@ -59,9 +61,9 @@ using namespace cg::core;
 #endif
 
 //#define ENABLE_TEXTURE_LOG
-//#define ENABLE_DEVICE_LOG
 //#define ENBALE_DEVICE_LOG
-
+//#define ENABLE_VERTEX_BUFFER_LOG
+//#define ENABLE_INDEX_LOG
 
 enum CtxStatus{
 	CTX_INIT,   // the initial status
@@ -460,7 +462,7 @@ public:
 		return _ctx_cache ? readUShort(_ctx_cache) : 0;
 	}
 	inline float	readFloat(){
-		return _ctx_cache ? readFloat(_ctx_cache) : -1.0;
+		return _ctx_cache ? readFloat(_ctx_cache) : (float)-1.0;
 	}
 	inline void		readByteArr(char * dst, int length){
 		if(_ctx_cache)

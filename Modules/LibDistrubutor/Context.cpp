@@ -11,14 +11,7 @@ namespace cg{
 	VideoContext * VideoContext::ctx;
 
 	void RTSPListenerCB(struct evconnlistener * listerner, evutil_socket_t sock, struct sockaddr * sddr, int len, void * _ctx){
-#if 0
-		static bool called = false;
-		if(called ==false){
-			called = true;
-		}
-		else
-			return;
-#endif
+
 		cg::core::infoRecorder->logTrace("[RTSPListenerCB]: callback for listen.\n");
 		// we got a new connection ! Set up a bufferevent for it
 #if 1

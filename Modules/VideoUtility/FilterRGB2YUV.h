@@ -40,7 +40,7 @@ namespace cg{
 
 		float getConvertTime(){
 
-			return 1000.0 * convertTime / pTimer->getFreq();
+			return (float)1000.0 * convertTime / pTimer->getFreq();
 		}
 
 		virtual ~Filter();

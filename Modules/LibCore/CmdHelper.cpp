@@ -3,6 +3,7 @@
 #include <Windows.h>
 #include "../LibCore/InfoRecorder.h"
 
+
 using namespace std;
 
 namespace cg{
@@ -149,7 +150,7 @@ namespace cg{
 				}else if(vt[i] == string("-a") || vt[i] == string("-A")){
 					// the socket number if any
 					sockString = string(vt[i+1]);
-					exeName = string(vt[i+1]);
+					//exeName = string(vt[i+2]);
 					useInternalSocket = true;
 				}
 				else if(vt[i] == string("-p") || vt[i] == string("-P")){
@@ -164,6 +165,13 @@ namespace cg{
 		}
 
 		bool CmdController::commitRender(){
+
+#ifdef SERVER_SAVE_BMP  
+			enableToRender = true;
+			return true;
+#endif
+
+
 			if(frameStep != 0){
 				curRender++;
 				if(curRender >= frameStep){

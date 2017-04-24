@@ -26,8 +26,10 @@ int WrapperDirect3DIndexBuffer9::sendCreation(void *ctx){
 	if(pTimer) pTimer->Start();
 	int ret = PrepareIndexBuffer(c);
 	if(pTimer){
-		unsigned interval = pTimer->Stop();
+		unsigned int interval = (UINT)pTimer->Stop();
+#ifdef ENABLE_INDEX_LOG
 		infoRecorder->logError("[WrapeprDirect3DIndexBuffer9]: prepare index buffer %d use %f ms.\n", id, 1000.0 * interval / pTimer->getFreq());
+#endif
 	}
 
 	return ret;
@@ -56,8 +58,10 @@ int WrapperDirect3DIndexBuffer9::sendUpdate(void * ctx){
 	if(pTimer) pTimer->Start();
 	ret = UpdateIndexBuffer(c);
 	if(pTimer){
-		unsigned int interval = pTimer->Stop();
+		unsigned int interval = (UINT)pTimer->Stop();
+#ifdef ENABLE_INDEX_LOG
 		infoRecorder->logError("[WrapperDirect3DeIndexBuffer9]: update index buffer %d use %f ms\n", id, 1000.0 * interval / pTimer->getFreq());
+#endif
 	}
 
 	return ret;
@@ -277,7 +281,6 @@ STDMETHODIMP WrapperDirect3DIndexBuffer9::Lock(THIS_ UINT OffsetToLock,UINT Size
 STDMETHODIMP WrapperDirect3DIndexBuffer9::Unlock(THIS) {
 #ifdef ENABLE_INDEX_LOG
 	infoRecorder->logTrace("WrapperDirect3DIndexBuffer9::Unlock(),id:%d, UnlockSize=%d Bytes, total len:%d, start:%d.\n",id, m_LockData.SizeToLock, length, m_LockData.OffsetToLock);
-
 #endif
 
 	if(pTimer){
@@ -294,8 +297,6 @@ STDMETHODIMP WrapperDirect3DIndexBuffer9::Unlock(THIS) {
 	updateFlag = 0x8fffffff;
 	csSet->checkObj(this);
 #endif  // USE_MEM_INDEX_BUFFER
-
-
 
 #ifndef BUFFER_AND_DELAY_UPDATE
 	base = m_LockData.OffsetToLock;
@@ -400,7 +401,10 @@ int WrapperDirect3DIndexBuffer9::PrepareIndexBuffer(ContextAndCache *ctx){
 // called when to create an index buffer
 int WrapperDirect3DIndexBuffer9::UpdateIndexBuffer(ContextAndCache * ctx) {
 	if(isFirst) {
+#ifdef ENABLE_INDEX_LOG
 		infoRecorder->logError("[WrapperDirect3DIndexBuffer9]: is first is true ? ERROR.\n");
+#endif
+		isFirst = false;
 	}
 
 	int last = 0, cnt = 0, c_len = 0, d = 0;
@@ -414,7 +418,6 @@ int WrapperDirect3DIndexBuffer9::UpdateIndexBuffer(ContextAndCache * ctx) {
 	ctx->write_uint(flag);
 
 	int stride = (Format == D3DFMT_INDEX16) ? 2 : 4;
-
 
 	ctx->write_int(CACHE_MODE_COPY);
 	ctx->write_char(stride);
@@ -436,7 +439,7 @@ int WrapperDirect3DIndexBuffer9::UpdateIndexBuffer(ContextAndCache * ctx) {
 	UCHAR * src = (UCHAR *)(cache_buffer + base);
 	UCHAR * dst = (UCHAR *)((UCHAR *)(m_LockData.pRAMBuffer) + base);
 
-	for(int i=0; i<size; ++i) {
+	for(UINT i=0; i<size; ++i) {
 		if((*src) ^(*dst)) {
 			d = i - last;
 			last = i;

@@ -2,28 +2,26 @@
 =========
 ShareRender is a cloud gaming system that enables fine-grained resource sharing at the frame-level.
 
-##Set up
+## Set up
 
-###Prerequisites
+### Prerequisites
 
-####DirectX SDK
+#### DirectX SDK
 Microsoft Visual Studio (c++) 2010 (If you want to quick start, you can install Microsoft Visual C++ 2010 Redistributable Package, http://www.microsoft.com/en-us/download/details.aspx?id=5555)
 
 DirectX SDK 9.0 c (Recommended: DXSDK_Jun10 version, the version released in June 2010, http://www.microsoft.com/en-us/download/details.aspx?id=6812)
 
-####CUDA SDK
+#### CUDA SDK
 To use NVCUVENC encoding library, CUDA 6.0 is required. And for lastest GPU such maxwell, we can use NVENC instead.
 
-###Configuration
+### Configuration
 Add DirectX install path to System Environment as "DXSDK_DIR" and add CUDA 6.0 install path to "CUDA_PATH".
 
-###Build
+### Build
 
-1. Some dependency libraries are compressed to ShareRenderDeps.v10.zip, you need to unzip this file and copy bin/* to <root dir of ShareRender>/bin/ and copy DepsWin32/* to <root dir of ShareRender>/DepsWin32/
+Start to build the soluation in VS2010, if gets warnings about missing libraries, add them to linker input.
 
-2. Start to build the soluation in VS2010, if gets warnings about missing libraries, add them to linker input.
-
-##Quick Start
+## Quick Start
 
 You can start with our pre-compiled exe files for Windows X86(with visual studio c++ 2010, the reason is that some other dependency library was compiled with VS2010, if using other version, 
 you need to re-compile all libraries).
@@ -40,11 +38,11 @@ you need to re-compile all libraries).
 
 6. Start RenderProxy.exe with IP of DisManager in any physic server.
 
-7. Start client with request of RTSP and rqeust of game. (e.g. )
+7. Start client with request of RTSP and rqeust of game. (e.g. client config/client.rel.conf rtsp:://127.0.0.1:8554/Trine )
 
 8. Some other functions is integrated to system for convenience to query performance data. Please contact author for detailed information.
 
-##Game test cases
+## Game test cases
 
 
 SprillRitchie: http://sprill-ritchie-abenteuerliche-zeitreise.software.informer.com/1.0/
@@ -59,11 +57,16 @@ Unity Angry Bots: http://unity3d.com/showcase/live-demos#angrybots
 
 # ShareRender architecture
 ========
-##System Overview
-![image](https://github.com/alanzw/sharerender/raw/master/pic/system-over-view.png)
-<!-- ##System Flow
-[image](https://github.com/alanzw/sharerender/raw/master/pic/sharerender-flow.png) -->
-##Retrieving Geometry Data
+## System Commparasion
+![image](https://github.com/alanzw/sharerender/raw/master/pic/system-comparasion.png)
+
+## Graphic Task example
+![image](https://github.com/alanzw/sharerender/raw/master/pic/system-comparasion.png)
+
+## Retrieving Geometry Data
 ![image](https://github.com/alanzw/sharerender/raw/master/pic/retrieving-data.png)
-##Context Sync
+
+## Context Sync
 ![image](https://github.com/alanzw/sharerender/raw/master/pic/context-sync.png)
+
+
