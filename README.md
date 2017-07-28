@@ -1,5 +1,5 @@
 # ShareRender manual
-=========
+
 ShareRender is a cloud gaming system that enables fine-grained resource sharing at the frame-level.
 
 ## Set up
