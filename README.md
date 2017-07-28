@@ -1,7 +1,9 @@
 # ShareRender manual
 
-ShareRender is a cloud gaming system that enables fine-grained resource sharing at the frame-level.
+ShareRender is a cloud gaming system that enables fine-grained resource sharing at the frame-level. 
 
+Existing cloud gaming systems suffer from low GPU utilization in the virtualized environment. Moreover, GPU resources are scheduled in units of virtual machines (VMs) and this kind of coarse-grained scheduling at the VM-level fails to fully exploit GPU processing capacity. ShareRender offloads graphics workloads within VMs directly to GPUs, bypassing GPU virtualization. For each game running in a VM, ShareRender starts a graphics wrapper to intercept frame rendering requests and assign them to render agents responsible for frame rendering on GPUs. Thanks to the flexible workload assignment among multiple render agents, ShareRender enables fine-grained resource sharing at the frame-level to significantly improve GPU utilization.
+ 
 ## Set up
 
 ### Prerequisites
