@@ -56,8 +56,8 @@ Trine: http://trine-thegame.com/site/
 Unity Angry Bots: http://unity3d.com/showcase/live-demos#angrybots
 
 # ShareRender architecture
-========
-## System Commparasion
+
+## System Commparison
 ![image](https://github.com/alanzw/sharerender/raw/master/pic/system-comparasion.png)
 
 ## Graphic Task example
